@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'httparty'
+
+API = 'https://riffraff.gutools.co.uk/api/deployinfo'
+API_KEY='8TQMOsrLKeXhWaLmULvtj7wk7AZvtTxv' # 'marauder' key
+
+query = ARGV.map(&:downcase).map {|s| Regexp.new("^#{s}.*")}
+
+data = HTTParty.get(API, :query => {:key => API_KEY})
+hosts = data["response"]["results"]["hosts"]
+
+def tokenize(s)
+  separators = ['-', '_', '::']
+  separators.inject([s]) do |tokens, sep|
+    tokens.map {|t| t.split(sep)}.flatten
+  end
+end
+
+matching = hosts.select do |host|
+  query.all? do |name|
+    tokens = tokenize(host["app"]) + [host["stage"]]
+    tokens.any? {|token| name.match(token.downcase)}
+  end
+end
+
+matching.each do |host|
+  puts "#{host['stage']}\t#{host['app']}\t#{host['hostname']}\t#{host['created_at']}"
+end
