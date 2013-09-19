@@ -8,7 +8,16 @@ API_KEY='8TQMOsrLKeXhWaLmULvtj7wk7AZvtTxv' # 'marauder' key
 query = ARGV.map(&:downcase).map {|s| Regexp.new("^#{s}.*")}
 
 data = HTTParty.get(API, :query => {:key => API_KEY})
-hosts = data["response"]["results"]["hosts"]
+response = data["response"]
+
+stale = response["stale"]
+update_time = response["updateTime"]
+
+if stale
+  STDERR.puts "WARNING: Riff-Raff reports that this deployinfo is stale, it was last updated at #{update_time}"
+end
+
+hosts = response["results"]["hosts"]
 
 def tokenize(s)
   separators = ['-', '_', '::']
