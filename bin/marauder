@@ -28,7 +28,7 @@ end
 
 matching = hosts.select do |host|
   query.all? do |name|
-    tokens = tokenize(host["app"]) + [host["stage"]]
+    tokens = tokenize(host["app"]) + [host["app"]] + [host["stage"]]
     tokens.any? {|token| name.match(token.downcase)}
   end
 end
