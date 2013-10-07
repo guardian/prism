@@ -1,0 +1,31 @@
+<configuration>
+
+    <contextName>prism</contextName>
+
+    <appender name="LOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/prism.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/riff-raff.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%date [%thread{10}] %-5level %logger{20} - %msg%n%xException{20}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date [%thread{10}] %-5level %logger{20} - %msg%n%xException{3}</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.amazonaws.request" level="WARN" />
+
+    <root level="INFO">
+        <appender-ref ref="LOGFILE"/>
+        <!--<appender-ref ref="CONSOLE"/>-->
+    </root>
+
+</configuration>

@@ -1,0 +1,642 @@
+{
+    "data": {
+        "aws-bucket": [
+            {
+                "app": "pasteup", 
+                "stage": "CODE", 
+                "value": "pasteup-code"
+            }, 
+            {
+                "app": "pasteup", 
+                "stage": "PROD", 
+                "value": "pasteup-prod"
+            }
+        ], 
+        "default-recipe": [
+            {
+                "app": ".*", 
+                "comment": "default recipe for everything", 
+                "stage": ".*", 
+                "value": "default"
+            }
+        ]
+    }, 
+    "hosts": [
+        {
+            "app": "frontend::r2football", 
+            "created_at": "Fri Aug 30 12:44:20 UTC 2013", 
+            "dnsname": "ec2-54-216-26-50.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-26-50.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-dc36d693", 
+            "internalname": "ip-10-252-167-127.eu-west-1.compute.internal", 
+            "role": "frontend-r2football", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::phantomjs", 
+            "created_at": "Tue Sep 10 16:20:31 UTC 2013", 
+            "dnsname": "ec2-176-34-94-79.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-176-34-94-79.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-877e6ecb", 
+            "internalname": "ip-10-37-136-88.eu-west-1.compute.internal", 
+            "role": "frontend-phantomjs", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::phantomjs", 
+            "created_at": "Tue Sep 10 16:39:51 UTC 2013", 
+            "dnsname": "ec2-54-217-62-144.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-62-144.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-25df5269", 
+            "internalname": "ip-10-39-42-106.eu-west-1.compute.internal", 
+            "role": "frontend-phantomjs", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::router", 
+            "created_at": "Thu Oct 03 11:25:24 UTC 2013", 
+            "dnsname": "ec2-54-216-248-62.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-248-62.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-2fcfac60", 
+            "internalname": "ip-10-80-16-236.eu-west-1.compute.internal", 
+            "role": "frontend-router", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::router", 
+            "created_at": "Thu Oct 03 11:25:24 UTC 2013", 
+            "dnsname": "ec2-46-137-128-65.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-46-137-128-65.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-28cfac67", 
+            "internalname": "ip-10-37-173-230.eu-west-1.compute.internal", 
+            "role": "frontend-router", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::router", 
+            "created_at": "Thu Oct 03 11:25:25 UTC 2013", 
+            "dnsname": "ec2-54-216-53-163.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-53-163.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-c8245b87", 
+            "internalname": "ip-10-250-141-137.eu-west-1.compute.internal", 
+            "role": "frontend-router", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::diagnostics", 
+            "created_at": "Thu Oct 03 11:25:54 UTC 2013", 
+            "dnsname": "ec2-54-216-50-93.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-50-93.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-afbf58e0", 
+            "internalname": "ip-10-65-17-24.eu-west-1.compute.internal", 
+            "role": "frontend-diagnostics", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::diagnostics", 
+            "created_at": "Thu Oct 03 11:25:54 UTC 2013", 
+            "dnsname": "ec2-54-216-47-40.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-47-40.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-0c8ef043", 
+            "internalname": "ip-10-36-182-103.eu-west-1.compute.internal", 
+            "role": "frontend-diagnostics", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::router", 
+            "created_at": "Fri Oct 04 06:40:25 UTC 2013", 
+            "dnsname": "ec2-54-217-193-181.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-193-181.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-011d784e", 
+            "internalname": "ip-10-59-1-31.eu-west-1.compute.internal", 
+            "role": "frontend-router", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::facia-tool", 
+            "created_at": "Fri Oct 04 09:26:49 UTC 2013", 
+            "dnsname": "ec2-54-217-176-18.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-176-18.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-28221864", 
+            "internalname": "ip-10-252-2-237.eu-west-1.compute.internal", 
+            "role": "frontend-facia-tool", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::facia-tool", 
+            "created_at": "Fri Oct 04 09:36:22 UTC 2013", 
+            "dnsname": "ec2-54-228-30-207.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-228-30-207.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-5cc7be10", 
+            "internalname": "ip-10-37-182-138.eu-west-1.compute.internal", 
+            "role": "frontend-facia-tool", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::r2football", 
+            "created_at": "Sat Oct 05 14:01:37 UTC 2013", 
+            "dnsname": "ec2-54-247-59-146.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-247-59-146.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-0ef27d42", 
+            "internalname": "ip-10-37-145-187.eu-west-1.compute.internal", 
+            "role": "frontend-r2football", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::r2football", 
+            "created_at": "Sat Oct 05 14:01:37 UTC 2013", 
+            "dnsname": "ec2-54-247-45-75.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-247-45-75.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-5ca61710", 
+            "internalname": "ip-10-80-2-55.eu-west-1.compute.internal", 
+            "role": "frontend-r2football", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::r2football", 
+            "created_at": "Sat Oct 05 14:01:38 UTC 2013", 
+            "dnsname": "ec2-54-216-75-19.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-75-19.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-e69cd0aa", 
+            "internalname": "ip-10-65-19-38.eu-west-1.compute.internal", 
+            "role": "frontend-r2football", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::r2football", 
+            "created_at": "Sat Oct 05 14:01:38 UTC 2013", 
+            "dnsname": "ec2-79-125-101-226.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-79-125-101-226.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-179cd05b", 
+            "internalname": "ip-10-65-57-208.eu-west-1.compute.internal", 
+            "role": "frontend-r2football", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::diagnostics", 
+            "created_at": "Mon Oct 07 08:22:57 UTC 2013", 
+            "dnsname": "ec2-54-217-12-231.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-12-231.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-b05ad4fc", 
+            "internalname": "ip-10-56-161-85.eu-west-1.compute.internal", 
+            "role": "frontend-diagnostics", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::router", 
+            "created_at": "Mon Oct 07 08:22:58 UTC 2013", 
+            "dnsname": "ec2-54-217-18-111.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-18-111.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-3a5be476", 
+            "internalname": "ip-10-48-179-43.eu-west-1.compute.internal", 
+            "role": "frontend-router", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::image", 
+            "created_at": "Mon Oct 07 13:59:59 UTC 2013", 
+            "dnsname": "ec2-54-216-94-200.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-94-200.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-26f48e69", 
+            "internalname": "ip-10-246-107-184.eu-west-1.compute.internal", 
+            "role": "frontend-image", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::porter", 
+            "created_at": "Mon Oct 07 14:00:53 UTC 2013", 
+            "dnsname": "ec2-54-217-96-76.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-96-76.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-4cf58f03", 
+            "internalname": "ip-10-48-169-92.eu-west-1.compute.internal", 
+            "role": "frontend-porter", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::identity", 
+            "created_at": "Mon Oct 07 14:00:56 UTC 2013", 
+            "dnsname": "ec2-54-220-252-117.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-220-252-117.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-77201f3b", 
+            "internalname": "ip-10-226-247-233.eu-west-1.compute.internal", 
+            "role": "frontend-identity", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::interactive", 
+            "created_at": "Mon Oct 07 14:01:00 UTC 2013", 
+            "dnsname": "ec2-54-220-225-161.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-220-225-161.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-b219a9fe", 
+            "internalname": "ip-10-252-165-125.eu-west-1.compute.internal", 
+            "role": "frontend-interactive", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::front", 
+            "created_at": "Mon Oct 07 14:01:34 UTC 2013", 
+            "dnsname": "ec2-54-220-238-202.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-220-238-202.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-840bf6cb", 
+            "internalname": "ip-10-56-17-200.eu-west-1.compute.internal", 
+            "role": "frontend-front", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::core-navigation", 
+            "created_at": "Mon Oct 07 14:03:02 UTC 2013", 
+            "dnsname": "ec2-54-220-235-103.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-220-235-103.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-c8abdf84", 
+            "internalname": "ip-10-246-19-207.eu-west-1.compute.internal", 
+            "role": "frontend-core-navigation", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::discussion", 
+            "created_at": "Mon Oct 07 14:03:14 UTC 2013", 
+            "dnsname": "ec2-54-216-128-2.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-128-2.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-4f19a903", 
+            "internalname": "ip-10-248-105-197.eu-west-1.compute.internal", 
+            "role": "frontend-discussion", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::facia", 
+            "created_at": "Mon Oct 07 14:04:54 UTC 2013", 
+            "dnsname": "ec2-54-217-143-133.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-143-133.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-7071773f", 
+            "internalname": "ip-10-56-89-241.eu-west-1.compute.internal", 
+            "role": "frontend-facia", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::applications", 
+            "created_at": "Mon Oct 07 14:05:33 UTC 2013", 
+            "dnsname": "ec2-54-217-170-105.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-170-105.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-4494e008", 
+            "internalname": "ip-10-48-73-135.eu-west-1.compute.internal", 
+            "role": "frontend-applications", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::admin", 
+            "created_at": "Mon Oct 07 14:05:37 UTC 2013", 
+            "dnsname": "ec2-54-217-102-255.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-102-255.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-76717739", 
+            "internalname": "ip-10-248-189-15.eu-west-1.compute.internal", 
+            "role": "frontend-admin", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::facia", 
+            "created_at": "Mon Oct 07 14:12:08 UTC 2013", 
+            "dnsname": "ec2-54-216-248-223.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-248-223.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-c6f78d89", 
+            "internalname": "ip-10-226-195-16.eu-west-1.compute.internal", 
+            "role": "frontend-facia", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::facia", 
+            "created_at": "Mon Oct 07 14:12:09 UTC 2013", 
+            "dnsname": "ec2-54-220-241-79.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-220-241-79.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-8218a8ce", 
+            "internalname": "ip-10-251-31-228.eu-west-1.compute.internal", 
+            "role": "frontend-facia", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::sport", 
+            "created_at": "Mon Oct 07 14:13:00 UTC 2013", 
+            "dnsname": "ec2-54-220-230-76.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-220-230-76.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-d271779d", 
+            "internalname": "ip-10-56-85-176.eu-west-1.compute.internal", 
+            "role": "frontend-sport", 
+            "stage": "CODE"
+        }, 
+        {
+            "app": "frontend::porter", 
+            "created_at": "Mon Oct 07 14:18:17 UTC 2013", 
+            "dnsname": "ec2-54-216-225-33.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-225-33.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-937e78dc", 
+            "internalname": "ip-10-58-237-87.eu-west-1.compute.internal", 
+            "role": "frontend-porter", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::core-navigation", 
+            "created_at": "Mon Oct 07 14:18:27 UTC 2013", 
+            "dnsname": "ec2-79-125-82-146.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-79-125-82-146.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-8ef78dc1", 
+            "internalname": "ip-10-226-146-32.eu-west-1.compute.internal", 
+            "role": "frontend-core-navigation", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::core-navigation", 
+            "created_at": "Mon Oct 07 14:18:28 UTC 2013", 
+            "dnsname": "ec2-54-217-163-136.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-163-136.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-3518a879", 
+            "internalname": "ip-10-57-34-206.eu-west-1.compute.internal", 
+            "role": "frontend-core-navigation", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::core-navigation", 
+            "created_at": "Mon Oct 07 14:18:28 UTC 2013", 
+            "dnsname": "ec2-54-228-56-165.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-228-56-165.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-3218a87e", 
+            "internalname": "ip-10-250-110-55.eu-west-1.compute.internal", 
+            "role": "frontend-core-navigation", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::article", 
+            "created_at": "Mon Oct 07 14:18:31 UTC 2013", 
+            "dnsname": "ec2-54-228-62-46.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-228-62-46.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-977e78d8", 
+            "internalname": "ip-10-58-211-235.eu-west-1.compute.internal", 
+            "role": "frontend-article", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::article", 
+            "created_at": "Mon Oct 07 14:18:31 UTC 2013", 
+            "dnsname": "ec2-54-246-61-118.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-246-61-118.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-907e78df", 
+            "internalname": "ip-10-58-251-252.eu-west-1.compute.internal", 
+            "role": "frontend-article", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::article", 
+            "created_at": "Mon Oct 07 14:18:31 UTC 2013", 
+            "dnsname": "ec2-54-216-16-127.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-16-127.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-8cf78dc3", 
+            "internalname": "ip-10-37-179-161.eu-west-1.compute.internal", 
+            "role": "frontend-article", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::article", 
+            "created_at": "Mon Oct 07 14:18:31 UTC 2013", 
+            "dnsname": "ec2-54-220-255-111.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-220-255-111.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-8df78dc2", 
+            "internalname": "ip-10-36-205-202.eu-west-1.compute.internal", 
+            "role": "frontend-article", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::front", 
+            "created_at": "Mon Oct 07 14:18:35 UTC 2013", 
+            "dnsname": "ec2-54-217-137-10.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-137-10.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-1494e058", 
+            "internalname": "ip-10-37-156-30.eu-west-1.compute.internal", 
+            "role": "frontend-front", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::front", 
+            "created_at": "Mon Oct 07 14:18:35 UTC 2013", 
+            "dnsname": "ec2-54-216-131-78.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-131-78.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-967e78d9", 
+            "internalname": "ip-10-65-17-180.eu-west-1.compute.internal", 
+            "role": "frontend-front", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::interactive", 
+            "created_at": "Mon Oct 07 14:18:40 UTC 2013", 
+            "dnsname": "ec2-46-137-150-179.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-46-137-150-179.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-20a0a06f", 
+            "internalname": "ip-10-251-1-119.eu-west-1.compute.internal", 
+            "role": "frontend-interactive", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::interactive", 
+            "created_at": "Mon Oct 07 14:18:40 UTC 2013", 
+            "dnsname": "ec2-54-217-0-72.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-0-72.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-38f78d77", 
+            "internalname": "ip-10-36-223-33.eu-west-1.compute.internal", 
+            "role": "frontend-interactive", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::discussion", 
+            "created_at": "Mon Oct 07 14:18:40 UTC 2013", 
+            "dnsname": "ec2-54-216-24-86.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-24-86.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-cc211e80", 
+            "internalname": "ip-10-36-164-197.eu-west-1.compute.internal", 
+            "role": "frontend-discussion", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::discussion", 
+            "created_at": "Mon Oct 07 14:18:40 UTC 2013", 
+            "dnsname": "ec2-54-217-9-13.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-9-13.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-957e78da", 
+            "internalname": "ip-10-65-49-25.eu-west-1.compute.internal", 
+            "role": "frontend-discussion", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::identity", 
+            "created_at": "Mon Oct 07 14:18:41 UTC 2013", 
+            "dnsname": "ec2-54-217-123-183.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-123-183.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-a59f9fea", 
+            "internalname": "ip-10-64-61-17.eu-west-1.compute.internal", 
+            "role": "frontend-identity", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::identity", 
+            "created_at": "Mon Oct 07 14:18:41 UTC 2013", 
+            "dnsname": "ec2-54-228-118-125.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-228-118-125.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-90abdfdc", 
+            "internalname": "ip-10-36-136-48.eu-west-1.compute.internal", 
+            "role": "frontend-identity", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::image", 
+            "created_at": "Mon Oct 07 14:18:43 UTC 2013", 
+            "dnsname": "ec2-54-216-127-108.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-216-127-108.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-ee7c22a2", 
+            "internalname": "ip-10-39-65-214.eu-west-1.compute.internal", 
+            "role": "frontend-image", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::image", 
+            "created_at": "Mon Oct 07 14:18:43 UTC 2013", 
+            "dnsname": "ec2-54-217-21-12.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-21-12.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-26a0a069", 
+            "internalname": "ip-10-104-132-131.eu-west-1.compute.internal", 
+            "role": "frontend-image", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::image", 
+            "created_at": "Mon Oct 07 14:18:43 UTC 2013", 
+            "dnsname": "ec2-54-247-139-6.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-247-139-6.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-21a0a06e", 
+            "internalname": "ip-10-64-198-150.eu-west-1.compute.internal", 
+            "role": "frontend-image", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::image", 
+            "created_at": "Mon Oct 07 14:18:43 UTC 2013", 
+            "dnsname": "ec2-54-217-8-215.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-8-215.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-ef7c22a3", 
+            "internalname": "ip-10-39-4-202.eu-west-1.compute.internal", 
+            "role": "frontend-image", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::applications", 
+            "created_at": "Mon Oct 07 14:18:46 UTC 2013", 
+            "dnsname": "ec2-54-220-253-92.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-220-253-92.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-3af78d75", 
+            "internalname": "ip-10-36-157-161.eu-west-1.compute.internal", 
+            "role": "frontend-applications", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::applications", 
+            "created_at": "Mon Oct 07 14:18:47 UTC 2013", 
+            "dnsname": "ec2-54-228-18-236.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-228-18-236.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-3318a87f", 
+            "internalname": "ip-10-210-138-164.eu-west-1.compute.internal", 
+            "role": "frontend-applications", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::sport", 
+            "created_at": "Mon Oct 07 14:19:09 UTC 2013", 
+            "dnsname": "ec2-54-217-99-216.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1a", 
+            "hostname": "ec2-54-217-99-216.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-3df78d72", 
+            "internalname": "ip-10-36-149-156.eu-west-1.compute.internal", 
+            "role": "frontend-sport", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::sport", 
+            "created_at": "Mon Oct 07 14:19:10 UTC 2013", 
+            "dnsname": "ec2-54-216-58-244.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-216-58-244.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-a09f9fef", 
+            "internalname": "ip-10-58-65-121.eu-west-1.compute.internal", 
+            "role": "frontend-sport", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::admin", 
+            "created_at": "Mon Oct 07 14:19:27 UTC 2013", 
+            "dnsname": "ec2-54-217-136-22.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-217-136-22.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-9a7e78d5", 
+            "internalname": "ip-10-104-139-252.eu-west-1.compute.internal", 
+            "role": "frontend-admin", 
+            "stage": "PROD"
+        }, 
+        {
+            "app": "frontend::article", 
+            "created_at": "Mon Oct 07 14:33:55 UTC 2013", 
+            "dnsname": "ec2-54-228-62-47.eu-west-1.compute.amazonaws.com", 
+            "group": "eu-west-1b", 
+            "hostname": "ec2-54-228-62-47.eu-west-1.compute.amazonaws.com", 
+            "instancename": "i-2b5ace67", 
+            "internalname": "ip-10-56-41-107.eu-west-1.compute.internal", 
+            "role": "frontend-article", 
+            "stage": "CODE"
+        }
+    ]
+}
