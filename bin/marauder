@@ -66,6 +66,11 @@ def tokenize(s)
   end
 end
 
+def confirm
+  print "Please confirm [yes/NO]: "
+  STDIN.gets.chomp == 'yes'
+end
+
 matching = hosts.select do |host|
   query.all? do |name|
     tokens = tokenize(host["app"]) + [host["app"], host["stage"]]
@@ -78,26 +83,30 @@ when 'list'
   matching.each do |host|
     puts "#{host['stage']}\t#{host['app']}\t#{host['hostname']}\t#{host['created_at']}"
   end
+
 when 'hosts'
   matching.each do |host|
     puts host['hostname']
   end
+
 when 'ssh'
   if command.nil?
-    puts "Please provide a command"
+    puts "Please provide a command."
     usage
+    exit 1
   else if matching.size > MAX_SSH_HOSTS
-    puts "Do you really want to SSH into #{matching.size} hosts? I doubt it."
-  else
-    puts "ssh into #{matching.size} hosts and run `#{command}`..."
-    puts
+    puts "Do you really want to SSH into #{matching.size} hosts?"
+    exit 1 unless confirm
+  end
 
-    matching.each do |host|
-      Net::SSH.start(host['hostname'], user) do |ssh|
-        puts "== #{host['hostname']} =="
-        puts ssh.exec!(command)
-        puts
-        end
+  puts "ssh into #{matching.size} hosts and run `#{command}`..."
+  puts
+
+  matching.each do |host|
+    Net::SSH.start(host['hostname'], user) do |ssh|
+      puts "== #{host['hostname']} =="
+      puts ssh.exec!(command)
+      puts
       end
     end
   end
