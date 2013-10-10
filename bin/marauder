@@ -30,7 +30,7 @@ action, *remaining =
   when 'ssh', 'list', 'hosts'
     ARGV
   else # default
-    ['list', ARGV]
+    ['list', *ARGV]
   end
 
 query, command =
