@@ -15,6 +15,7 @@ DEFAULT_USER = 'jetty'
 def usage
   puts "usage: marauder <filter>"
   puts "       marauder list <filter>"
+  puts "       marauder hosts <filter>"
   puts "       marauder ssh <filter> -- <command>"
 end
 
@@ -24,12 +25,10 @@ if ARGV.empty?
   exit
 end
 
-action, remaining =
+action, *remaining =
   case ARGV[0]
-  when 'ssh'
-    ['ssh', ARGV.drop(1)]
-  when 'list'
-    ['list', ARGV.drop(1)]
+  when 'ssh', 'list', 'hosts'
+    ARGV
   else # default
     ['list', ARGV]
   end
@@ -78,6 +77,10 @@ case action
 when 'list'
   matching.each do |host|
     puts "#{host['stage']}\t#{host['app']}\t#{host['hostname']}\t#{host['created_at']}"
+  end
+when 'hosts'
+  matching.each do |host|
+    puts host['hostname']
   end
 when 'ssh'
   if command.nil?

@@ -51,9 +51,29 @@ PROD    frontend::interactive   ec2-54-217-32-255.eu-west-1.compute.amazonaws.co
 
 Note: list is the default command, which you can also explicitly call using `marauder list <query>`.
 
+
+### Hosts
+
+To list the names of all matching hosts, use the `hosts` command:
+
+```
+$ marauder hosts flex release
+10-252-163-100.gc2.dev.dc1.gnm
+10-252-163-99.gc2.dev.dc1.gnm
+10-252-167-70.gc2.dev.dc1.gnm
+10-252-167-71.gc2.dev.dc1.gnm
+10-252-163-101.gc2.dev.dc1.gnm
+10-252-163-102.gc2.dev.dc1.gnm
+10-252-139-70.gc2.dev.dc1.gnm
+10-252-139-71.gc2.dev.dc1.gnm
+```
+
+This can be useful to pipe into other commands
+
+
 ### SSH
 
-To run a command on all matching hosts, use the ssh command:
+To run a command on all matching hosts, use the `ssh` command:
 
 ```
 $ marauder ssh flex api release -- uptime
