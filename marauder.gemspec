@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 Gem::Specification.new do |s|
   s.name        = 'marauder'
-  s.version     = '0.2.0'
+  s.version     = '0.3.0'
   s.date        = '2013-09-18'
   s.summary     = "service locator based on riffraff"
   s.description = "Small tool to find services based on simple queries"
