@@ -4,15 +4,16 @@ import play.api.mvc._
 import play.api.libs.json._
 import deployinfo.DeployInfoManager
 import play.api.http.Status
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
+import scala.concurrent.duration.Duration
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
   extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
 
 object ApiResult {
-  def apply(block: => JsValue): Future[SimpleResult] = ApiResult.async(Future.successful(block))
+  def apply(block: => JsValue): SimpleResult = Await.result(ApiResult.async(Future.successful(block)), Duration.Inf)
   def async(block: => Future[JsValue]): Future[SimpleResult] = {
     try {
       block.map { data =>
@@ -38,13 +39,13 @@ object ApiResult {
 
 object Api extends Controller {
 
-  def instanceList = Action.async { implicit request =>
+  def instanceList = Action { implicit request =>
     ApiResult {
       val di = DeployInfoManager.deployInfo
       Json.obj("instances" -> di.hosts.map(_.name))
     }
   }
-  def instance(id:String) = Action.async { implicit request => ApiResult(Json.obj()) }
+  def instance(id:String) = Action { implicit request => ApiResult(Json.obj()) }
 
   def appList = TODO
   def app(id:String) = TODO

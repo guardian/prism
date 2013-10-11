@@ -1,5 +1,3 @@
-import controllers.IllegalApiCallException
-import controllers.IllegalApiCallException
 import controllers.{IllegalApiCallException, ApiResult}
 import org.specs2.mutable._
 import org.specs2.runner._
@@ -9,6 +7,7 @@ import play.api.libs.json._
 import play.api.libs.json.JsArray
 import play.api.test._
 import play.api.test.Helpers._
+import scala.concurrent.Future
 
 /**
  * Add your spec here.
@@ -19,19 +18,19 @@ import play.api.test.Helpers._
 class ApiSpec extends Specification {
   "ApiResult" should {
     "wrap data with status on a successful response" in {
-      val success = ApiResult {
+      val success = Future.successful(ApiResult {
         Json.obj("test" -> "value")
-      }
+      })
       contentType(success) must beSome("application/json")
       status(success) must equalTo(OK)
       contentAsJson(success) \ "status" mustEqual JsString("success")
     }
 
     "wrap data with fail when an Api exception is thrown" in {
-      val fail = ApiResult {
+      val fail = Future.successful(ApiResult {
         if (true) throw IllegalApiCallException(Json.obj("test" -> "just testing the fail state"))
         Json.obj("never" -> "reached")
-      }
+      })
       contentType(fail) must beSome("application/json")
       status(fail) must equalTo(BAD_REQUEST)
       contentAsJson(fail) \ "status" mustEqual JsString("fail")
@@ -39,9 +38,9 @@ class ApiSpec extends Specification {
     }
 
     "return an error when something else goes wrong" in {
-      val error = ApiResult {
+      val error = Future.successful(ApiResult {
         Json.obj("infinity" -> (1 / 0))
-      }
+      })
       contentType(error) must beSome("application/json")
       status(error) must equalTo(INTERNAL_SERVER_ERROR)
       contentAsJson(error) \ "status" mustEqual JsString("error")
