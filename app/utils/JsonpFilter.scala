@@ -5,6 +5,7 @@ import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.ContentTypes.{JSON, JAVASCRIPT}
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
+import play.api.http.Status
 
 /**
  * Transforms JSON responses into JavaScript responses if there is a `paramName` parameter in the request’s query string.
@@ -29,7 +30,7 @@ class JsonpFilter(paramName: String = "callback")(implicit codec: Codec, ex: Exe
     result.header.headers.get(CONTENT_TYPE) match {
       case Some(ct) if ct == JSON =>
         SimpleResult(
-          header = result.header,
+          header = result.header.copy(status = Status.OK),
           body = Enumerator(codec.encode(s"$callback(")) >>> result.body >>> Enumerator(codec.encode(");")),
           connection = result.connection
         ).as(JAVASCRIPT)
