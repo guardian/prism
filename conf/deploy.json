@@ -1,0 +1,10 @@
+{
+    "packages":{
+        "prism":{
+            "type":"executable-jar-webapp",
+            "data":{
+                "healthcheck_paths":[ "/" ]
+            }
+        }
+    }
+}

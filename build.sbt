@@ -13,3 +13,5 @@ libraryDependencies ++= Seq(
 scalacOptions ++= Seq("-feature")
 
 play.Project.playScalaSettings
+
+com.gu.deploy.MagentaArtifact.magentaArtifactSettings
