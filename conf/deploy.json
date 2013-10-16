@@ -2,6 +2,7 @@
     "packages":{
         "prism":{
             "type":"executable-jar-webapp",
+            "app":["prism::app"],
             "data":{
                 "healthcheck_paths":[ "/" ]
             }
