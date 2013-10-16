@@ -42,10 +42,18 @@ object Api extends Controller {
   def instanceList = Action { implicit request =>
     ApiResult {
       val di = DeployInfoManager.deployInfo
-      Json.obj("instances" -> di.hosts.map(_.name))
+      Json.obj(
+        "instances" -> di.hosts.map(host => Json.obj(
+          "id" -> host.id,
+          "href" -> routes.Api.instance(host.id).absoluteURL()
+        ))
+      )
     }
   }
-  def instance(id:String) = Action { implicit request => ApiResult(Json.obj()) }
+  def instance(id:String) = Action { implicit request =>
+    val instance = DeployInfoManager.deployInfo.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
+    ApiResult(Json.obj("id" -> instance.id, "dump" -> instance.toString))
+  }
 
   def appList = TODO
   def app(id:String) = TODO

@@ -25,7 +25,7 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
         host.dnsname.map("dnsname" -> _) ++
         host.instancename.map("instancename" -> _) ++
         host.internalname.map("internalname" -> _)
-    Host(host.hostname, Set(App(host.app)), host.stage, tags = tags.toMap)
+    Host(host.arn, host.hostname, Set(App(host.app)), host.stage, tags = tags.toMap)
   }
 
   def filterHosts(p: Host => Boolean) = this.copy(input = input.copy(hosts = input.hosts.filter(jsonHost => p(asHost(jsonHost)))))
@@ -56,6 +56,7 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
 }
 
 case class Host(
+    id: String,
     name: String,
     apps: Set[App] = Set.empty,
     stage: String = "NO_STAGE",

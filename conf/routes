@@ -3,15 +3,15 @@
 # ~~~~
 
 # API
-GET        /instance               controllers.Api.instanceList
-GET        /instance/:id           controllers.Api.instance(id)
-GET        /app                controllers.Api.appList
-GET        /app/:id            controllers.Api.app(id)
-GET        /stack              controllers.Api.stackList
-GET        /stack/:id          controllers.Api.stack(id)
+GET        /instances            controllers.Api.instanceList
+GET        /instances/:id        controllers.Api.instance(id)
+GET        /apps                 controllers.Api.appList
+GET        /apps/:id             controllers.Api.app(id)
+GET        /stacks               controllers.Api.stackList
+GET        /stacks/:id           controllers.Api.stack(id)
 
 # Web GUI
-GET        /                    controllers.Application.index
+GET        /                     controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file        controllers.Assets.at(path="/public", file)
+GET        /assets/*file         controllers.Assets.at(path="/public", file)

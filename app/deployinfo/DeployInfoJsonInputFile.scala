@@ -14,8 +14,11 @@ case class DeployInfoJsonInputFile(
 case class DeployInfoHost(
   hostname: String,
   app: String,
+  arn: String,
   group: String,
   stage: String,
+  role: String,
+  stack: Option[String],
   instancename: Option[String],
   internalname: Option[String],
   dnsname: Option[String],
