@@ -25,7 +25,7 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
         host.dnsname.map("dnsname" -> _) ++
         host.instancename.map("instancename" -> _) ++
         host.internalname.map("internalname" -> _)
-    Host(host.arn, host.hostname, Set(App(host.app)), host.stage, tags = tags.toMap)
+    Host(host.arn, host.hostname, host.app, host.stage, host.role, tags = tags.toMap)
   }
 
   def filterHosts(p: Host => Boolean) = this.copy(input = input.copy(hosts = input.hosts.filter(jsonHost => p(asHost(jsonHost)))))
@@ -36,9 +36,9 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
   }
 
   lazy val knownHostStages: List[String] = hosts.map(_.stage).distinct.sorted
-  lazy val knownHostApps: List[Set[App]] = hosts.map(_.apps).distinct.sortWith(_.toList.head.name < _.toList.head.name)
+  lazy val knownHostApps: List[String] = hosts.map(_.app).distinct.sorted
 
-  def knownHostApps(stage: String): List[Set[App]] = knownHostApps.filter(stageAppToHostMap.contains(stage, _))
+  def knownHostApps(stage: String): List[String] = knownHostApps.filter(stageAppToHostMap.contains(stage, _))
 
   lazy val knownKeys: List[String] = data.keys.toList.sorted
 
@@ -46,26 +46,24 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
   def knownDataStages(key: String) = data.get(key).toList.flatMap {_.map(_.stage).distinct.sortWith(_.toString < _.toString)}
   def knownDataApps(key: String): List[String] = data.get(key).toList.flatMap{_.map(_.app).distinct.sortWith(_.toString < _.toString)}
 
-  lazy val stageAppToHostMap: Map[(String,Set[App]),List[Host]] = hosts.groupBy(host => (host.stage,host.apps)).mapValues(DeployInfo.transposeHostsByGroup)
+  lazy val stageAppToHostMap: Map[(String,String),List[Host]] = hosts.groupBy(host => (host.stage,host.app)).mapValues(DeployInfo.transposeHostsByGroup)
   def stageAppToDataMap(key: String): Map[(String,String),List[Data]] = data.get(key).map {_.groupBy(key => (key.stage,key.app))}.getOrElse(Map.empty)
 
-  def firstMatchingData(key: String, app:App, stage:String): Option[Data] = {
+  def firstMatchingData(key: String, app:String, stage:String): Option[Data] = {
     val matchingList = data.getOrElse(key, List.empty)
-    matchingList.find(data => data.appRegex.findFirstMatchIn(app.name).isDefined && data.stageRegex.findFirstMatchIn(stage).isDefined)
+    matchingList.find(data => data.appRegex.findFirstMatchIn(app).isDefined && data.stageRegex.findFirstMatchIn(stage).isDefined)
   }
 }
 
 case class Host(
     id: String,
     name: String,
-    apps: Set[App] = Set.empty,
+    app: String,
     stage: String = "NO_STAGE",
+    role: String,
     connectAs: Option[String] = None,
     tags: Map[String, String] = Map.empty)
 {
-  def app(name: String) = this.copy(apps = apps + App(name))
-  def app(app: App) = this.copy(apps= apps + app)
-
   def as(user: String) = this.copy(connectAs = Some(user))
 
   // this allows "resin" @: Host("some-host")
@@ -83,5 +81,3 @@ case class Data(
   lazy val appRegex = ("^%s$" format app).r
   lazy val stageRegex = ("^%s$" format stage).r
 }
-
-case class App(name: String)

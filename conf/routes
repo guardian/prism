@@ -9,6 +9,8 @@ GET        /apps                 controllers.Api.appList
 GET        /apps/:id             controllers.Api.app(id)
 GET        /stacks               controllers.Api.stackList
 GET        /stacks/:id           controllers.Api.stack(id)
+GET        /roles                controllers.Api.roleList
+GET        /mainclasses          controllers.Api.mainclassList
 
 # Web GUI
 GET        /                     controllers.Application.index

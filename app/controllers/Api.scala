@@ -55,6 +55,24 @@ object Api extends Controller {
     ApiResult(Json.obj("id" -> instance.id, "dump" -> instance.toString))
   }
 
+  def roleList = Action { implicit request =>
+    ApiResult {
+      val roles = DeployInfoManager.deployInfo.hosts.map(_.role).distinct.sorted
+      Json.obj(
+        "roles" -> roles
+      )
+    }
+  }
+
+  def mainclassList = Action { implicit request =>
+    ApiResult {
+      val mainClasses = DeployInfoManager.deployInfo.hosts.map(_.app).distinct.sorted
+      Json.obj(
+        "mainclasses" -> mainClasses
+      )
+    }
+  }
+
   def appList = TODO
   def app(id:String) = TODO
 
