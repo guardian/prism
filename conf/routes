@@ -2,18 +2,20 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# API
-GET        /instances            controllers.Api.instanceList
-GET        /instances/:id        controllers.Api.instance(id)
-GET        /apps                 controllers.Api.appList
-GET        /apps/:id             controllers.Api.app(id)
-GET        /stacks               controllers.Api.stackList
-GET        /stacks/:id           controllers.Api.stack(id)
-GET        /roles                controllers.Api.roleList
-GET        /mainclasses          controllers.Api.mainclassList
+GET        /                        controllers.Application.index
+
+# API V1
+GET        /v1/instances            controllers.Api.instanceList
+GET        /v1/instances/:id        controllers.Api.instance(id)
+GET        /v1/apps                 controllers.Api.appList
+GET        /v1/apps/:id             controllers.Api.app(id)
+GET        /v1/stacks               controllers.Api.stackList
+GET        /v1/stacks/:id           controllers.Api.stack(id)
+GET        /v1/roles                controllers.Api.roleList
+GET        /v1/mainclasses          controllers.Api.mainclassList
 
 # Web GUI
-GET        /                     controllers.Application.index
+GET        /v1/                     controllers.Application.indexV1
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file         controllers.Assets.at(path="/public", file)
+GET        /assets/*file            controllers.Assets.at(path="/public", file)

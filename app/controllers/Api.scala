@@ -42,26 +42,50 @@ object Api extends Controller {
 
   implicit val instanceWriter = Json.writes[Host]
 
-  def instanceJson(instance: Host, expand: Boolean = false)(implicit request: RequestHeader): JsValue = {
+  def matchFilter(json: JsObject, filter: Map[String, Seq[String]]): Boolean = {
+    filter.map { case (field, values) =>
+      val value = json \ field
+      value match {
+        case JsString(str) => values contains str
+        case JsNumber(int) => values contains int.toString
+        case JsArray(seq) =>
+          seq.exists { nestedValue =>
+            nestedValue match {
+              case JsString(str) => values contains str
+              case _ => false
+            }
+          }
+        case _ => false
+      }
+
+    } forall(ok => ok)
+  }
+
+  def instanceJson(instance: Host, expand: Boolean = false, filter: Map[String, Seq[String]] = Map.empty)(implicit request: RequestHeader): Option[JsValue] = {
     val json = Json.toJson(instance).as[JsObject]
-    val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
-    filtered ++ Json.obj("meta"-> Json.obj(
-      "href" -> routes.Api.instance(instance.id).absoluteURL()
-    ))
+    if (matchFilter(json, filter)) {
+      val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
+      Some(filtered ++ Json.obj("meta"-> Json.obj(
+        "href" -> routes.Api.instance(instance.id).absoluteURL()
+      )))
+    } else {
+      None
+    }
   }
 
   def instanceList = Action { implicit request =>
     ApiResult {
       val di = DeployInfoManager.deployInfo
       val expand = request.getQueryString("_expand").isDefined
+      val filter = request.queryString.filterKeys(!_.startsWith("_"))
       Json.obj(
-        "instances" -> di.hosts.map(host => instanceJson(host, expand))
+        "instances" -> di.hosts.flatMap(host => instanceJson(host, expand, filter))
       )
     }
   }
   def instance(id:String) = Action { implicit request =>
     val instance = DeployInfoManager.deployInfo.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
-    ApiResult(instanceJson(instance, true))
+    ApiResult(instanceJson(instance, true).get)
   }
 
   def roleList = Action { implicit request =>
@@ -82,7 +106,19 @@ object Api extends Controller {
     }
   }
 
-  def appList = TODO
+  def appList = Action { implicit request =>
+    ApiResult {
+      val apps = DeployInfoManager.deployInfo.hosts.flatMap{ host =>
+        host.stack.map{ stack =>
+          host.apps.map(app => Map("app" -> app, "stack" -> stack))
+        }
+      }.distinct.flatten
+      val filtered = request.getQueryString("stack").map(stackName => apps.filter(_("stack") == stackName)).getOrElse(apps)
+      Json.obj(
+        "apps" -> filtered
+      )
+    }
+  }
   def app(id:String) = TODO
 
   def stackList = Action { implicit request =>

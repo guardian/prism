@@ -1,0 +1,18 @@
+@()
+
+@main("Prism API") {
+
+    <h1>Prism API</h1>
+
+    <p>This server is running the Prism API: the API that provides near real-time information about infrastructure.</p>
+
+    <p>For the sake of everyones sanity, this page lists the endpoints that are available to experiment with.</p>
+
+    <ul>
+        <li><a href="@routes.Api.instanceList">Instances</a></li>
+        <li><a href="@routes.Api.roleList">Roles</a></li>
+        <li><a href="@routes.Api.stackList">Stacks</a></li>
+        <li><a href="@routes.Api.appList">Apps</a></li>
+    </ul>
+
+}
