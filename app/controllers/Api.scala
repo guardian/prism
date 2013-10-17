@@ -2,11 +2,12 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
-import deployinfo.DeployInfoManager
+import deployinfo.{Host, DeployInfoManager}
 import play.api.http.Status
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration.Duration
+import utils.Json._
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -39,20 +40,28 @@ object ApiResult {
 
 object Api extends Controller {
 
+  implicit val instanceWriter = Json.writes[Host]
+
+  def instanceJson(instance: Host, expand: Boolean = false)(implicit request: RequestHeader): JsValue = {
+    val json = Json.toJson(instance).as[JsObject]
+    val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
+    filtered ++ Json.obj("meta"-> Json.obj(
+      "href" -> routes.Api.instance(instance.id).absoluteURL()
+    ))
+  }
+
   def instanceList = Action { implicit request =>
     ApiResult {
       val di = DeployInfoManager.deployInfo
+      val expand = request.getQueryString("_expand").isDefined
       Json.obj(
-        "instances" -> di.hosts.map(host => Json.obj(
-          "id" -> host.id,
-          "href" -> routes.Api.instance(host.id).absoluteURL()
-        ))
+        "instances" -> di.hosts.map(host => instanceJson(host, expand))
       )
     }
   }
   def instance(id:String) = Action { implicit request =>
     val instance = DeployInfoManager.deployInfo.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
-    ApiResult(Json.obj("id" -> instance.id, "dump" -> instance.toString))
+    ApiResult(instanceJson(instance, true))
   }
 
   def roleList = Action { implicit request =>
@@ -66,7 +75,7 @@ object Api extends Controller {
 
   def mainclassList = Action { implicit request =>
     ApiResult {
-      val mainClasses = DeployInfoManager.deployInfo.hosts.map(_.app).distinct.sorted
+      val mainClasses = DeployInfoManager.deployInfo.hosts.map(_.mainclass).distinct.sorted
       Json.obj(
         "mainclasses" -> mainClasses
       )
@@ -76,7 +85,14 @@ object Api extends Controller {
   def appList = TODO
   def app(id:String) = TODO
 
-  def stackList = TODO
+  def stackList = Action { implicit request =>
+    ApiResult {
+      val stacks = DeployInfoManager.deployInfo.hosts.flatMap(_.stack).distinct.sorted
+      Json.obj(
+        "stacks" -> stacks
+      )
+    }
+  }
   def stack(id:String) = TODO
 
 }

@@ -6,7 +6,7 @@
         <file>logs/prism.log</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/riff-raff.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <fileNamePattern>logs/prism.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
 

@@ -1,6 +1,7 @@
 package deployinfo
 
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 object DeployInfo {
   def apply(): DeployInfo = DeployInfo(DeployInfoJsonInputFile(Nil,None,Map.empty), None)
@@ -18,14 +19,24 @@ object DeployInfo {
 
 case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime]) {
 
+  val formatter = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")
+
   def asHost(host: DeployInfoHost) = {
-    val tags:List[(String,String)] =
-      List("group" -> host.group) ++
-        host.created_at.map("created_at" -> _) ++
-        host.dnsname.map("dnsname" -> _) ++
-        host.instancename.map("instancename" -> _) ++
-        host.internalname.map("internalname" -> _)
-    Host(host.arn, host.hostname, host.app, host.stage, host.role, tags = tags.toMap)
+    Host(
+      id = host.arn,
+      name = host.hostname,
+      mainclass = host.app,
+      stage = host.stage,
+      group = host.group,
+      role = host.role,
+      stack = host.stack,
+      apps = host.apps.getOrElse(Nil),
+      dnsName = host.dnsname,
+      createdAt = formatter.parseDateTime(host.created_at),
+      instanceName = host.instancename,
+      internalName = host.internalname,
+      tags = host.tags
+    )
   }
 
   def filterHosts(p: Host => Boolean) = this.copy(input = input.copy(hosts = input.hosts.filter(jsonHost => p(asHost(jsonHost)))))
@@ -36,17 +47,12 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
   }
 
   lazy val knownHostStages: List[String] = hosts.map(_.stage).distinct.sorted
-  lazy val knownHostApps: List[String] = hosts.map(_.app).distinct.sorted
-
-  def knownHostApps(stage: String): List[String] = knownHostApps.filter(stageAppToHostMap.contains(stage, _))
-
   lazy val knownKeys: List[String] = data.keys.toList.sorted
 
   def dataForKey(key: String): List[Data] = data.get(key).getOrElse(List.empty)
   def knownDataStages(key: String) = data.get(key).toList.flatMap {_.map(_.stage).distinct.sortWith(_.toString < _.toString)}
   def knownDataApps(key: String): List[String] = data.get(key).toList.flatMap{_.map(_.app).distinct.sortWith(_.toString < _.toString)}
 
-  lazy val stageAppToHostMap: Map[(String,String),List[Host]] = hosts.groupBy(host => (host.stage,host.app)).mapValues(DeployInfo.transposeHostsByGroup)
   def stageAppToDataMap(key: String): Map[(String,String),List[Data]] = data.get(key).map {_.groupBy(key => (key.stage,key.app))}.getOrElse(Map.empty)
 
   def firstMatchingData(key: String, app:String, stage:String): Option[Data] = {
@@ -58,19 +64,18 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
 case class Host(
     id: String,
     name: String,
-    app: String,
+    mainclass: String,
     stage: String = "NO_STAGE",
+    group: String,
     role: String,
-    connectAs: Option[String] = None,
-    tags: Map[String, String] = Map.empty)
-{
-  def as(user: String) = this.copy(connectAs = Some(user))
-
-  // this allows "resin" @: Host("some-host")
-  def @:(user: String) = as(user)
-
-  lazy val connectStr = (connectAs map { _ + "@" } getOrElse "") + name
-}
+    stack: Option[String],
+    apps: List[String],
+    dnsName: String,
+    createdAt: DateTime,
+    instanceName: String,
+    internalName: String,
+    tags: Map[String, String] = Map.empty
+)
 
 case class Data(
   app: String,

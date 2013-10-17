@@ -19,10 +19,12 @@ case class DeployInfoHost(
   stage: String,
   role: String,
   stack: Option[String],
-  instancename: Option[String],
-  internalname: Option[String],
-  dnsname: Option[String],
-  created_at: Option[String]
+  apps: Option[List[String]],
+  tags: Map[String, String],
+  instancename: String,
+  internalname: String,
+  dnsname: String,
+  created_at: String
 )
 
 case class DeployInfoKey(
