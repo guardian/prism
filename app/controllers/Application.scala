@@ -5,10 +5,9 @@ import play.api.Play
 
 object Application extends Controller {
 
-  def indexV1 = Action {
+  def index = Action {
     import play.api.Play.current
-    Ok(views.html.apiv1(Play.routes.map(_.documentation).getOrElse(Nil)))
+    Ok(views.html.index(Play.routes.map(_.documentation).getOrElse(Nil)))
   }
-  def index = Action { Ok(views.html.index()) }
 
 }
