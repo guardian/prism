@@ -8,6 +8,7 @@ import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration.Duration
 import utils.Json._
+import scala.util.matching.Regex
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -42,26 +43,50 @@ object Api extends Controller {
 
   implicit val instanceWriter = Json.writes[Host]
 
-  def matchFilter(json: JsObject, filter: Map[String, Seq[String]]): Boolean = {
-    filter.map { case (field, values) =>
-      val value = json \ field
-      value match {
-        case JsString(str) => values contains str
-        case JsNumber(int) => values contains int.toString
-        case JsArray(seq) =>
-          seq.exists {
-            case JsString(str) => values contains str
-            case _ => false
-          }
-        case _ => false
-      }
+  trait Matchable[T] {
+    def isMatch(value: T): Boolean
+  }
+  case class StringMatchable(matcher: String) extends Matchable[String] {
+    def isMatch(value: String): Boolean = value == matcher
+  }
+  case class RegExMatchable(matcher: Regex) extends Matchable[String] {
+    def isMatch(value: String): Boolean = matcher.unapplySeq(value).isDefined
+  }
+  case class Filter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] {
+    def isMatch(json: JsValue): Boolean = {
+      filter.map { case (field, values) =>
+        val value = json \ field
+        value match {
+          case JsString(str) => values exists (_.isMatch(str))
+          case JsNumber(int) => values exists (_.isMatch(int.toString))
+          case JsArray(seq) =>
+            seq.exists {
+              case JsString(str) => values exists (_.isMatch(str))
+              case _ => false
+            }
+          case _ => false
+        }
 
-    } forall(ok => ok)
+      } forall(ok => ok)
+    }
+  }
+  object Filter {
+    def fromRequest(implicit request: RequestHeader): Filter = {
+      val regex = request.getQueryString("_regex").isDefined
+      val filterKeys = request.queryString.filterKeys(!_.startsWith("_")).mapValues { valueList => valueList.map { value =>
+          if (regex) RegExMatchable(value.r) else StringMatchable(value)
+        }
+      }
+      Filter(filterKeys)
+    }
+    lazy val all = new Matchable[JsValue] {
+      def isMatch(value: JsValue): Boolean = true
+    }
   }
 
-  def instanceJson(instance: Host, expand: Boolean = false, filter: Map[String, Seq[String]] = Map.empty)(implicit request: RequestHeader): Option[JsValue] = {
+  def instanceJson(instance: Host, expand: Boolean = false, filter: Matchable[JsValue] = Filter.all)(implicit request: RequestHeader): Option[JsValue] = {
     val json = Json.toJson(instance).as[JsObject]
-    if (matchFilter(json, filter)) {
+    if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
       Some(filtered ++ Json.obj("meta"-> Json.obj(
         "href" -> routes.Api.instance(instance.id).absoluteURL()
@@ -75,7 +100,7 @@ object Api extends Controller {
     ApiResult {
       val di = DeployInfoManager.deployInfo
       val expand = request.getQueryString("_expand").isDefined
-      val filter = request.queryString.filterKeys(!_.startsWith("_"))
+      val filter = Filter.fromRequest
       Json.obj(
         "instances" -> di.hosts.flatMap(host => instanceJson(host, expand, filter))
       )
@@ -123,10 +148,11 @@ object Api extends Controller {
   }
 
   def appList = Action { implicit request =>
+    val filter = Filter.fromRequest
     ApiResult {
       val apps = instanceSummary{ host =>
         host.apps.flatMap{ app =>
-          host.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app)).as[JsObject]).filter(matchFilter(_,request.queryString.filterKeys(!_.startsWith("_"))))
+          host.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))).filter(filter.isMatch)
         }.toSeq
       }
       Json.obj(

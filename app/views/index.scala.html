@@ -9,8 +9,9 @@
 
     <ul>
         <li><a href="@routes.Api.instanceList">Instances</a> - try this with
-            <a href="@routes.Api.instanceList?_expand">_expand</a> or filter using any key as a query param e.g.
-            <a href="@routes.Api.instanceList?vendor=openstack">vendor=openstack</a>
+            <a href="@routes.Api.instanceList?_expand">_expand</a>, filter using any key as a query param e.g.
+            <a href="@routes.Api.instanceList?vendor=openstack">vendor=openstack</a> or a more complex example
+            <a href="@routes.Api.instanceList?_regex&mainclasses=soulmates.*&stage=TEST">switching on regexes</a>.
         </li>
         <li><a href="@routes.Api.roleList">Roles</a></li>
         <li><a href="@routes.Api.stackList">Stacks</a></li>
