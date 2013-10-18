@@ -5,16 +5,19 @@
 GET        /                        controllers.Application.index
 
 # API V1
-GET        /instances            controllers.Api.instanceList
-GET        /instances/:id        controllers.Api.instance(id)
-GET        /regions              controllers.Api.regionList
-GET        /accounts             controllers.Api.accountList
-GET        /vendors              controllers.Api.vendorList
-GET        /apps                 controllers.Api.appList
-GET        /stacks               controllers.Api.stackList
-GET        /stages               controllers.Api.stageList
-GET        /roles                controllers.Api.roleList
-GET        /mainclasses          controllers.Api.mainclassList
+GET        /instances               controllers.Api.instanceList
+GET        /instances/:id           controllers.Api.instance(id)
+GET        /regions                 controllers.Api.regionList
+GET        /accounts                controllers.Api.accountList
+GET        /vendors                 controllers.Api.vendorList
+GET        /apps                    controllers.Api.appList
+GET        /stacks                  controllers.Api.stackList
+GET        /stages                  controllers.Api.stageList
+GET        /roles                   controllers.Api.roleList
+GET        /mainclasses             controllers.Api.mainclassList
+
+GET        /data/list               controllers.Api.dataList
+GET        /data/lookup/:key        controllers.Api.dataLookup(key)
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file            controllers.Assets.at(path="/public", file)

@@ -2,13 +2,13 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
-import deployinfo.{Host, DeployInfoManager}
+import deployinfo.{Data, Host, DeployInfoManager}
 import play.api.http.Status
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration.Duration
-import utils.Json._
 import scala.util.matching.Regex
+import play.api.libs.json.Json._
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -42,6 +42,7 @@ object ApiResult {
 object Api extends Controller {
 
   implicit val instanceWriter = Json.writes[Host]
+  implicit val dataWriter = Json.writes[Data]
 
   trait Matchable[T] {
     def isMatch(value: T): Boolean
@@ -161,4 +162,25 @@ object Api extends Controller {
     }
   }
 
+  def dataList = Action { implicit request =>
+    ApiResult {
+      Json.obj("data" -> DeployInfoManager.deployInfo.data)
+    }
+  }
+
+  def dataLookup(key:String) = Action { implicit request =>
+    ApiResult {
+      val app = request.getQueryString("app")
+      val stage = request.getQueryString("stage")
+      val validKey = DeployInfoManager.deployInfo.knownKeys.contains(key)
+
+      val errors:Map[String,String] = Map.empty ++
+        (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++
+        (if (stage.isEmpty) Some("stage" -> "Must specify stage") else None) ++
+        (if (validKey) None else Some("key" -> s"The key name $key was not found"))
+      if (!errors.isEmpty) throw IllegalApiCallException(Json.toJson(errors).as[JsObject])
+
+      Json.toJson(DeployInfoManager.deployInfo.firstMatchingData(key, app.get, stage.get))
+    }
+  }
 }

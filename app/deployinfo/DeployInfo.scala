@@ -73,7 +73,7 @@ case class Host(
     id: String,
     name: String,
     mainclasses: List[String],
-    stage: String = "NO_STAGE",
+    stage: String,
     group: String,
     role: String,
     stack: Option[String],
