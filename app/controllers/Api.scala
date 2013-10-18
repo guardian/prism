@@ -99,7 +99,7 @@ object Api extends Controller {
 
   def mainclassList = Action { implicit request =>
     ApiResult {
-      val mainClasses = DeployInfoManager.deployInfo.hosts.map(_.mainclass).distinct.sorted
+      val mainClasses = DeployInfoManager.deployInfo.hosts.flatMap(_.mainclasses).distinct.sorted
       Json.obj(
         "mainclasses" -> mainClasses
       )

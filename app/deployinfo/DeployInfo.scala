@@ -2,6 +2,7 @@ package deployinfo
 
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import scala.util.Try
 
 object DeployInfo {
   def apply(): DeployInfo = DeployInfo(DeployInfoJsonInputFile(Nil,None,Map.empty), None)
@@ -19,20 +20,26 @@ object DeployInfo {
 
 case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime]) {
 
-  val formatter = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")
+  val formatterRuby18 = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")
+  val formatterRuby19 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
 
   def asHost(host: DeployInfoHost) = {
     Host(
       id = host.arn,
       name = host.hostname,
-      mainclass = host.app,
+      mainclasses = host.app.split(",").toList,
       stage = host.stage,
       group = host.group,
       role = host.role,
       stack = host.stack,
       apps = host.apps.getOrElse(Nil),
       dnsName = host.dnsname,
-      createdAt = formatter.parseDateTime(host.created_at),
+      createdAt = Try {
+        formatterRuby18.parseDateTime(host.created_at)
+      } recover {
+        case e:IllegalArgumentException =>
+          formatterRuby19.parseDateTime(host.created_at)
+      } get,
       instanceName = host.instancename,
       internalName = host.internalname,
       tags = host.tags
@@ -64,7 +71,7 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
 case class Host(
     id: String,
     name: String,
-    mainclass: String,
+    mainclasses: List[String],
     stage: String = "NO_STAGE",
     group: String,
     role: String,
