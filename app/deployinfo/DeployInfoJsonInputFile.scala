@@ -24,6 +24,9 @@ case class DeployInfoHost(
   instancename: String,
   internalname: String,
   dnsname: String,
+  region: String,
+  account: String,
+  vendor: String,
   created_at: String
 )
 

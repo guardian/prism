@@ -43,6 +43,9 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
       } get,
       instanceName = host.instancename,
       internalName = host.internalname,
+      region = host.region,
+      account = host.account,
+      vendor = host.vendor,
       tags = host.tags
     )
   }
@@ -82,6 +85,9 @@ case class Host(
     createdAt: DateTime,
     instanceName: String,
     internalName: String,
+    region: String,
+    account: String,
+    vendor: String,
     tags: Map[String, String] = Map.empty
 ) {
   def +(other:Host):Host = {

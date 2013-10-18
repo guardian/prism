@@ -49,11 +49,9 @@ object Api extends Controller {
         case JsString(str) => values contains str
         case JsNumber(int) => values contains int.toString
         case JsArray(seq) =>
-          seq.exists { nestedValue =>
-            nestedValue match {
-              case JsString(str) => values contains str
-              case _ => false
-            }
+          seq.exists {
+            case JsString(str) => values contains str
+            case _ => false
           }
         case _ => false
       }
@@ -88,47 +86,51 @@ object Api extends Controller {
     ApiResult(instanceJson(instance, true).get)
   }
 
-  def roleList = Action { implicit request =>
-    ApiResult {
-      val roles = DeployInfoManager.deployInfo.hosts.map(_.role).distinct.sorted
-      Json.obj(
-        "roles" -> roles
-      )
-    }
+  def instanceSummary(transform: Host => Seq[JsValue]) = {
+    def sortString(jsv: JsValue):String =
+      jsv match {
+        case JsString(str) => str
+        case JsArray(seq) => seq.map(sortString).mkString
+        case JsObject(fields) => fields.map{case(key, value) => s"${key}${sortString(value)}"}.mkString
+        case _ => ""
+      }
+
+    DeployInfoManager.deployInfo.hosts.flatMap(transform).distinct.sortBy(sortString)
   }
 
+  def roleList = Action { implicit request =>
+    ApiResult { Json.obj( "roles" -> instanceSummary(host => Seq(Json.toJson(host.role))) ) }
+  }
   def mainclassList = Action { implicit request =>
-    ApiResult {
-      val mainClasses = DeployInfoManager.deployInfo.hosts.flatMap(_.mainclasses).distinct.sorted
-      Json.obj(
-        "mainclasses" -> mainClasses
-      )
-    }
+    ApiResult { Json.obj("mainclasses" -> instanceSummary(host => host.mainclasses.map(Json.toJson(_)))) }
+  }
+  def stackList = Action { implicit request =>
+    ApiResult { Json.obj("stacks" -> instanceSummary(host => Seq(Json.toJson(host.stack)))) }
+  }
+  def stageList = Action { implicit request =>
+    ApiResult { Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))) }
+  }
+  def regionList = Action { implicit request =>
+    ApiResult { Json.obj("regions" -> instanceSummary(host => Seq(Json.toJson(host.region)))) }
+  }
+  def accountList = Action { implicit request =>
+    ApiResult { Json.obj("accounts" -> instanceSummary(host => Seq(Json.toJson(host.account)))) }
+  }
+  def vendorList = Action { implicit request =>
+    ApiResult { Json.obj("vendors" -> instanceSummary(host => Seq(Json.toJson(host.vendor)))) }
   }
 
   def appList = Action { implicit request =>
     ApiResult {
-      val apps = DeployInfoManager.deployInfo.hosts.flatMap{ host =>
-        host.stack.map{ stack =>
-          host.apps.map(app => Map("app" -> app, "stack" -> stack))
-        }
-      }.distinct.flatten
-      val filtered = request.getQueryString("stack").map(stackName => apps.filter(_("stack") == stackName)).getOrElse(apps)
+      val apps = instanceSummary{ host =>
+        host.apps.flatMap{ app =>
+          host.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app)).as[JsObject]).filter(matchFilter(_,request.queryString.filterKeys(!_.startsWith("_"))))
+        }.toSeq
+      }
       Json.obj(
-        "apps" -> filtered
+        "apps" -> apps
       )
     }
   }
-  def app(id:String) = TODO
-
-  def stackList = Action { implicit request =>
-    ApiResult {
-      val stacks = DeployInfoManager.deployInfo.hosts.flatMap(_.stack).distinct.sorted
-      Json.obj(
-        "stacks" -> stacks
-      )
-    }
-  }
-  def stack(id:String) = TODO
 
 }

@@ -7,10 +7,12 @@ GET        /                        controllers.Application.index
 # API V1
 GET        /v1/instances            controllers.Api.instanceList
 GET        /v1/instances/:id        controllers.Api.instance(id)
+GET        /v1/regions              controllers.Api.regionList
+GET        /v1/accounts             controllers.Api.accountList
+GET        /v1/vendors              controllers.Api.vendorList
 GET        /v1/apps                 controllers.Api.appList
-GET        /v1/apps/:id             controllers.Api.app(id)
 GET        /v1/stacks               controllers.Api.stackList
-GET        /v1/stacks/:id           controllers.Api.stack(id)
+GET        /v1/stages               controllers.Api.stageList
 GET        /v1/roles                controllers.Api.roleList
 GET        /v1/mainclasses          controllers.Api.mainclassList
 
