@@ -19,7 +19,7 @@ object DeployInfo {
 
 case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime]) {
 
-  val formatter = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")
+  val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
 
   def asHost(host: DeployInfoHost) = {
     Host(
