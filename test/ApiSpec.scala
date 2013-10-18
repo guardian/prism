@@ -14,7 +14,6 @@ import scala.concurrent.Future
  * You can mock out a whole application including requests, plugins etc.
  * For more information, consult the wiki.
  */
-@RunWith(classOf[JUnitRunner])
 class ApiSpec extends Specification {
   "ApiResult" should {
     "wrap data with status on a successful response" in {
@@ -54,13 +53,13 @@ class ApiSpec extends Specification {
     }
 
     "return a list of instances" in new WithApplication{
-      val home = route(FakeRequest(GET, "/instance")).get
+      val home = route(FakeRequest(GET, "/v1/instances")).get
 
       status(home) must equalTo(OK)
       contentType(home) must beSome("application/json")
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
       jsonInstances must beLike { case JsArray(_) => ok }
-      jsonInstances.as[JsArray].value.length mustEqual(56)
+      jsonInstances.as[JsArray].value.length mustEqual(4)
     }
   }
 }
