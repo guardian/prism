@@ -23,14 +23,16 @@
     }, 
     "hosts": [
         {
+            "account": "aws-frontend",
             "app": "frontend::r2football",
-            "arn": "arn:aws:eu-west-1:aws-frontend:instance/i-dc36d693",
+            "arn": "arn:aws:ec2:eu-west-1:aws-frontend:instance/i-dc36d693",
             "created_at": "Fri Aug 30 12:44:20 UTC 2013",
             "dnsname": "ec2-54-216-26-50.eu-west-1.compute.amazonaws.com",
             "group": "eu-west-1b",
             "hostname": "ec2-54-216-26-50.eu-west-1.compute.amazonaws.com",
             "instancename": "i-dc36d693",
             "internalname": "ip-10-252-167-127.eu-west-1.compute.internal",
+            "region": "eu-west-1",
             "role": "frontend-r2football",
             "stage": "CODE",
             "tags": {
@@ -42,17 +44,20 @@
                 "aws:cloudformation:logical-id": "R2FootballAutoscalingGroup",
                 "aws:cloudformation:stack-id": "arn:aws:cloudformation:eu-west-1:642631414762:stack/frontend-CODE/fc412b50-0ca6-11e2-9a79-506921498aea",
                 "aws:cloudformation:stack-name": "frontend-CODE"
-            }
+            },
+            "vendor": "aws"
         },
         {
+            "account": "aws-frontend",
             "app": "frontend::phantomjs",
-            "arn": "arn:aws:eu-west-1:aws-frontend:instance/i-877e6ecb",
+            "arn": "arn:aws:ec2:eu-west-1:aws-frontend:instance/i-877e6ecb",
             "created_at": "Tue Sep 10 16:20:31 UTC 2013",
             "dnsname": "ec2-176-34-94-79.eu-west-1.compute.amazonaws.com",
             "group": "eu-west-1a",
             "hostname": "ec2-176-34-94-79.eu-west-1.compute.amazonaws.com",
             "instancename": "i-877e6ecb",
             "internalname": "ip-10-37-136-88.eu-west-1.compute.internal",
+            "region": "eu-west-1",
             "role": "frontend-phantomjs",
             "stage": "CODE",
             "tags": {
@@ -64,17 +69,20 @@
                 "aws:cloudformation:logical-id": "PhantomjsAutoscalingGroup",
                 "aws:cloudformation:stack-id": "arn:aws:cloudformation:eu-west-1:642631414762:stack/frontend-CODE/fc412b50-0ca6-11e2-9a79-506921498aea",
                 "aws:cloudformation:stack-name": "frontend-CODE"
-            }
+            },
+            "vendor": "aws"
         },
         {
+            "account": "aws-frontend",
             "app": "frontend::phantomjs",
-            "arn": "arn:aws:eu-west-1:aws-frontend:instance/i-25df5269",
+            "arn": "arn:aws:ec2:eu-west-1:aws-frontend:instance/i-25df5269",
             "created_at": "Tue Sep 10 16:39:51 UTC 2013",
             "dnsname": "ec2-54-217-62-144.eu-west-1.compute.amazonaws.com",
             "group": "eu-west-1a",
             "hostname": "ec2-54-217-62-144.eu-west-1.compute.amazonaws.com",
             "instancename": "i-25df5269",
             "internalname": "ip-10-39-42-106.eu-west-1.compute.internal",
+            "region": "eu-west-1",
             "role": "frontend-phantomjs",
             "stage": "PROD",
             "tags": {
@@ -86,17 +94,20 @@
                 "aws:cloudformation:logical-id": "PhantomjsAutoscalingGroup",
                 "aws:cloudformation:stack-id": "arn:aws:cloudformation:eu-west-1:642631414762:stack/frontend-PROD/487e0a80-1399-11e2-9a79-506921498aea",
                 "aws:cloudformation:stack-name": "frontend-PROD"
-            }
+            },
+            "vendor": "aws"
         },
         {
+            "account": "aws-frontend",
             "app": "frontend::router",
-            "arn": "arn:aws:eu-west-1:aws-frontend:instance/i-e0cfb3ac",
-            "created_at": "Wed Oct 16 12:18:57 UTC 2013",
-            "dnsname": "ec2-54-217-117-87.eu-west-1.compute.amazonaws.com",
+            "arn": "arn:aws:ec2:eu-west-1:aws-frontend:instance/i-b3561fff",
+            "created_at": "Thu Oct 17 13:22:17 UTC 2013",
+            "dnsname": "ec2-54-220-188-25.eu-west-1.compute.amazonaws.com",
             "group": "eu-west-1a",
-            "hostname": "ec2-54-217-117-87.eu-west-1.compute.amazonaws.com",
-            "instancename": "i-e0cfb3ac",
-            "internalname": "ip-10-37-156-30.eu-west-1.compute.internal",
+            "hostname": "ec2-54-220-188-25.eu-west-1.compute.amazonaws.com",
+            "instancename": "i-b3561fff",
+            "internalname": "ip-10-49-105-41.eu-west-1.compute.internal",
+            "region": "eu-west-1",
             "role": "frontend-router",
             "stage": "PROD",
             "tags": {
@@ -108,7 +119,8 @@
                 "aws:cloudformation:logical-id": "RouterAutoscalingGroup",
                 "aws:cloudformation:stack-id": "arn:aws:cloudformation:eu-west-1:642631414762:stack/frontend-PROD/487e0a80-1399-11e2-9a79-506921498aea",
                 "aws:cloudformation:stack-name": "frontend-PROD"
-            }
+            },
+            "vendor": "aws"
         }
     ]
 }
