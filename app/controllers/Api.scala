@@ -132,7 +132,7 @@ object Api extends Controller {
     ApiResult { Json.obj("mainclasses" -> instanceSummary(host => host.mainclasses.map(Json.toJson(_)))) }
   }
   def stackList = Action { implicit request =>
-    ApiResult { Json.obj("stacks" -> instanceSummary(host => Seq(Json.toJson(host.stack)))) }
+    ApiResult { Json.obj("stacks" -> instanceSummary(host => host.stack.map(Json.toJson(_)).toSeq)) }
   }
   def stageList = Action { implicit request =>
     ApiResult { Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))) }
