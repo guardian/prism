@@ -53,13 +53,24 @@ class ApiSpec extends Specification {
     }
 
     "return a list of instances" in new WithApplication{
-      val home = route(FakeRequest(GET, "/v1/instances")).get
-
+      val home = route(FakeRequest(GET, "/instances")).get
       status(home) must equalTo(OK)
       contentType(home) must beSome("application/json")
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
       jsonInstances must beLike { case JsArray(_) => ok }
       jsonInstances.as[JsArray].value.length mustEqual(4)
+    }
+
+    "filter a list of instances" in new WithApplication {
+      val home = route(FakeRequest(GET, "/instances?stage=PROD")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual(2)
+    }
+
+    "filter a list of instances using a regex" in new WithApplication {
+      val home = route(FakeRequest(GET, "/instances?_match=regex&mainclasses=.*r2football")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual(1)
     }
   }
 }

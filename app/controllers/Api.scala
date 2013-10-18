@@ -72,11 +72,11 @@ object Api extends Controller {
   }
   object Filter {
     def fromRequest(implicit request: RequestHeader): Filter = {
-      val regex = request.getQueryString("_regex").isDefined
-      val filterKeys = request.queryString.filterKeys(!_.startsWith("_")).mapValues { valueList => valueList.map { value =>
-          if (regex) RegExMatchable(value.r) else StringMatchable(value)
-        }
+      val matcher = (value:String) => request.getQueryString("_match") match {
+        case Some("regex") => RegExMatchable(value.r)
+        case _ => StringMatchable(value)
       }
+      val filterKeys = request.queryString.filterKeys(!_.startsWith("_")).mapValues {valueList => valueList.map(matcher)}
       Filter(filterKeys)
     }
     lazy val all = new Matchable[JsValue] {
