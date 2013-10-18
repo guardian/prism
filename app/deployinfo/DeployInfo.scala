@@ -3,6 +3,7 @@ package deployinfo
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import scala.util.Try
+import scala.language.postfixOps
 
 object DeployInfo {
   def apply(): DeployInfo = DeployInfo(DeployInfoJsonInputFile(Nil,None,Map.empty), None)
@@ -48,7 +49,7 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
 
   def filterHosts(p: Host => Boolean) = this.copy(input = input.copy(hosts = input.hosts.filter(jsonHost => p(asHost(jsonHost)))))
 
-  val hosts = input.hosts.map(asHost)
+  val hosts = input.hosts.map(asHost).groupBy(_.id).values.map { toMerge => toMerge.reduce(_+_) }.toList
   val data = input.data mapValues { dataList =>
     dataList.map { data => Data(data.app, data.stage, data.value, data.comment) }
   }
@@ -82,7 +83,15 @@ case class Host(
     instanceName: String,
     internalName: String,
     tags: Map[String, String] = Map.empty
-)
+) {
+  def +(other:Host):Host = {
+    this.copy(
+      mainclasses = (this.mainclasses ++ other.mainclasses).distinct,
+      apps = (this.apps ++ other.apps).distinct,
+      tags = this.tags ++ other.tags
+    )
+  }
+}
 
 case class Data(
   app: String,
