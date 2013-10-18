@@ -82,8 +82,10 @@ object Api extends Controller {
     }
   }
   def instance(id:String) = Action { implicit request =>
-    val instance = DeployInfoManager.deployInfo.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
-    ApiResult(instanceJson(instance, true).get)
+    ApiResult {
+      val instance = DeployInfoManager.deployInfo.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
+      instanceJson(instance, true).get
+    }
   }
 
   def instanceSummary(transform: Host => Seq[JsValue]) = {
