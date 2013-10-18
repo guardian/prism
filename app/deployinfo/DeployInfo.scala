@@ -1,9 +1,7 @@
 package deployinfo
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import scala.util.Try
-import scala.language.postfixOps
+import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.format.{DateTimeFormatterBuilder, DateTimeFormat}
 
 object DeployInfo {
   def apply(): DeployInfo = DeployInfo(DeployInfoJsonInputFile(Nil,None,Map.empty), None)
@@ -20,9 +18,13 @@ object DeployInfo {
 }
 
 case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime]) {
-
-  val formatterRuby18 = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")
-  val formatterRuby19 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+  val formatter = {
+    val builder = new DateTimeFormatterBuilder()
+    val rb18 = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")
+    val rb19 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+    builder.append(rb18.getPrinter, Array(rb18.getParser,rb19.getParser))
+    builder.toFormatter.withZone(DateTimeZone.UTC)
+  }
 
   def asHost(host: DeployInfoHost) = {
     Host(
@@ -35,12 +37,7 @@ case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime])
       stack = host.stack,
       apps = host.apps.getOrElse(Nil),
       dnsName = host.dnsname,
-      createdAt = Try {
-        formatterRuby18.parseDateTime(host.created_at)
-      } recover {
-        case e:IllegalArgumentException =>
-          formatterRuby19.parseDateTime(host.created_at)
-      } get,
+      createdAt = formatter.parseDateTime(host.created_at),
       instanceName = host.instancename,
       internalName = host.internalname,
       region = host.region,
