@@ -15,13 +15,30 @@ case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQ
   extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
 
 object ApiResult {
+  def addCountToJson(data: JsValue):JsValue = {
+    data match {
+      case JsObject(fields) =>
+        JsObject(fields.flatMap { case (key, value) =>
+          value match {
+            case JsArray(array) =>
+              List((s"$key.length",JsNumber(array.size)), (key, addCountToJson(value)))
+            case _ => List((key, addCountToJson(value)))
+          }
+        })
+      case JsArray(values) =>
+        JsArray(values.map(addCountToJson))
+      case other => other
+    }
+  }
+
   def apply(block: => JsValue): SimpleResult = Await.result(ApiResult.async(Future.successful(block)), Duration.Inf)
   def async(block: => Future[JsValue]): Future[SimpleResult] = {
     try {
       block.map { data =>
+        val dataWithCounts = addCountToJson(data)
         Results.Ok(Json.obj(
           "status" -> "success",
-          "data" -> data
+          "data" -> dataWithCounts
         ))
       }
     } catch {
