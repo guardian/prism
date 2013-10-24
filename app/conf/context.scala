@@ -25,7 +25,7 @@ class Configuration(val application: String, val webappConfDirectory: String = "
     lazy val staleMinutes: Int = configuration.getIntegerProperty("deployinfo.staleMinutes", 15)
     lazy val refreshSeconds: Int = configuration.getIntegerProperty("deployinfo.refreshSeconds", 60)
     lazy val timeoutSeconds: Int = configuration.getIntegerProperty("deployinfo.timeoutSeconds", 180)
-    lazy val lazyStartup: Boolean = configuration.getStringProperty("deployinfo.lazyStartup", "true") == "true"
+    lazy val lazyStartup: Boolean = configuration.getStringProperty("deployinfo.lazyStartup", "false") == "true"
   }
 
   object logging {
