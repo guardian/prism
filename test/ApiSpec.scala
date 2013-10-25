@@ -45,6 +45,13 @@ class ApiSpec extends Specification {
       contentAsJson(error) \ "status" mustEqual JsString("error")
       contentAsJson(error) \ "message" mustEqual JsString("/ by zero")
     }
+
+    "add a length companion field to arrays contained in objects" in {
+      val success = Future.successful(ApiResult {
+        Json.obj("test" -> List("first", "second", "third"))
+      })
+      contentAsJson(success) \ "data" \ "test.length" mustEqual JsNumber(3)
+    }
   }
 
   "Application" should {
