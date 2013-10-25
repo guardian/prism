@@ -19,12 +19,6 @@ import play.api.libs.json._
 
 object DeployInfoManager extends LifecycleWithoutApp with Logging {
 
-  implicit class DeployInfoWithStale(di: DeployInfo) {
-    def stale: Boolean = {
-      di.createdAt.exists(new Duration(_, new DateTime).getStandardMinutes > Configuration.deployinfo.staleMinutes)
-    }
-  }
-
   private val classpathHandler = new URLStreamHandler {
     override def openConnection(u: URL): URLConnection = {
       Option(getClass.getResource(u.getPath)).map(_.openConnection()).getOrElse{
@@ -70,7 +64,7 @@ object DeployInfoManager extends LifecycleWithoutApp with Logging {
       val deployInfo = json \ "response" match {
         case response:JsObject => {
           val updateTime = (response \ "updateTime").asOpt[String].map(s => new DateTime(s))
-          DeployInfoJsonReader.parse(response \ "results").copy(createdAt = updateTime.orElse(Some(new DateTime())))
+          DeployInfoJsonReader.parse(response \ "results").copy(lastUpdated = updateTime.getOrElse(new DateTime()))
         }
         case _ => DeployInfoJsonReader.parse(deployInfoJson)
       }
@@ -103,7 +97,7 @@ object DeployInfoManager extends LifecycleWithoutApp with Logging {
   }
 
   def deployInfo = agent.map(_()).getOrElse(DeployInfo())
-  def stale = deployInfo.stale
+  def isStale = deployInfo.isStale
 
   def stageList = deployInfo.knownHostStages.sorted(conf.Configuration.stages.ordering)
   def hostList = deployInfo.hosts

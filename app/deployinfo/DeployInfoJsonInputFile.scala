@@ -52,7 +52,7 @@ object DeployInfoJsonReader {
 
   def parse(f: File): DeployInfo = parse(Source.fromFile(f).mkString)
 
-  def parse(inputFile: DeployInfoJsonInputFile): DeployInfo = DeployInfo(inputFile, Some(new DateTime()))
+  def parse(inputFile: DeployInfoJsonInputFile): DeployInfo = DeployInfo(inputFile, new DateTime())
 
   def parse(json: JsValue): DeployInfo = parse(json.as[DeployInfoJsonInputFile])
 

@@ -1,10 +1,12 @@
 package deployinfo
 
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{Duration, DateTimeZone, DateTime}
 import org.joda.time.format.{DateTimeFormatterBuilder, DateTimeFormat}
+import model.DataContainer
+import conf.Configuration
 
 object DeployInfo {
-  def apply(): DeployInfo = DeployInfo(DeployInfoJsonInputFile(Nil,None,Map.empty), None)
+  def apply(): DeployInfo = DeployInfo(DeployInfoJsonInputFile(Nil,None,Map.empty), new DateTime(0L))
 
   def transpose[A](xs: List[List[A]]): List[List[A]] = xs.filter(_.nonEmpty) match {
     case Nil => Nil
@@ -17,7 +19,11 @@ object DeployInfo {
   }
 }
 
-case class DeployInfo(input:DeployInfoJsonInputFile, createdAt:Option[DateTime]) {
+case class DeployInfo(input:DeployInfoJsonInputFile, lastUpdated:DateTime) extends DataContainer {
+  lazy val isStale = new Duration(lastUpdated, new DateTime).getStandardMinutes > Configuration.deployinfo.staleMinutes
+
+  val name = getClass.getSimpleName
+
   val formatter = {
     val builder = new DateTimeFormatterBuilder()
     val rb18 = DateTimeFormat.forPattern("EEE MMM dd HH:mm:ss 'UTC' yyyy")

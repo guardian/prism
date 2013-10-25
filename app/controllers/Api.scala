@@ -2,19 +2,28 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
-import deployinfo.{Data, Host, DeployInfoManager}
+import deployinfo.{DeployInfo, Data, Host, DeployInfoManager}
 import play.api.http.Status
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration.Duration
 import scala.util.matching.Regex
 import play.api.libs.json.Json._
+import model.DataContainer
+import org.joda.time.DateTime
+import utils.Json.DefaultJodaDateWrites
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
   extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
 
 object ApiResult {
+  val noSourceContainer = new DataContainer {
+    val name = "no data source"
+    def lastUpdated: DateTime = new DateTime
+    val isStale = false
+  }
+
   def addCountToJson(data: JsValue):JsValue = {
     data match {
       case JsObject(fields) =>
@@ -31,28 +40,37 @@ object ApiResult {
     }
   }
 
-  def apply(block: => JsValue): SimpleResult = Await.result(ApiResult.async(Future.successful(block)), Duration.Inf)
-  def async(block: => Future[JsValue]): Future[SimpleResult] = {
-    try {
-      block.map { data =>
-        val dataWithCounts = addCountToJson(data)
-        Results.Ok(Json.obj(
-          "status" -> "success",
-          "data" -> dataWithCounts
-        ))
+  def apply[T <: DataContainer](source: T)(block: T => JsValue): SimpleResult =
+    Await.result(ApiResult.async(source)(source => Future.successful(block(source))), Duration.Inf)
+  def noSource(block: => JsValue): SimpleResult = apply(noSourceContainer)(_ => block)
+
+  object async {
+    def apply[T <: DataContainer](source: T)(block: T => Future[JsValue]): Future[SimpleResult] = {
+      try {
+        block(source).map { data =>
+          val dataWithCounts = addCountToJson(data)
+          Results.Ok(Json.obj(
+            "status" -> "success",
+            "sources" -> Seq(source.name),
+            "lastUpdated" -> source.lastUpdated,
+            "stale" -> source.isStale,
+            "data" -> dataWithCounts
+          ))
+        }
+      } catch {
+        case IllegalApiCallException(failure, status) =>
+          Future.successful(Results.Status(status)(Json.obj(
+            "status" -> "fail",
+            "data" -> failure
+          )))
+        case e:Exception =>
+          Future.successful(Results.InternalServerError(Json.obj(
+            "status" -> "error",
+            "message" -> e.getMessage
+          )))
       }
-    } catch {
-      case IllegalApiCallException(failure, status) =>
-        Future.successful(Results.Status(status)(Json.obj(
-          "status" -> "fail",
-          "data" -> failure
-        )))
-      case e:Exception =>
-        Future.successful(Results.InternalServerError(Json.obj(
-          "status" -> "error",
-          "message" -> e.getMessage
-        )))
     }
+    def noSource(block: => Future[JsValue]): Future[SimpleResult] = async(noSourceContainer)(_ => block)
   }
 }
 
@@ -114,9 +132,10 @@ object Api extends Controller {
     }
   }
 
+  def DeployApiResult = ApiResult(DeployInfoManager.deployInfo) _
+
   def instanceList = Action { implicit request =>
-    ApiResult {
-      val di = DeployInfoManager.deployInfo
+    DeployApiResult { di =>
       val expand = request.getQueryString("_expand").isDefined
       val filter = Filter.fromRequest
       Json.obj(
@@ -125,13 +144,13 @@ object Api extends Controller {
     }
   }
   def instance(id:String) = Action { implicit request =>
-    ApiResult {
-      val instance = DeployInfoManager.deployInfo.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
+    DeployApiResult { di =>
+      val instance = di.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
       instanceJson(instance, true).get
     }
   }
 
-  def instanceSummary(transform: Host => Seq[JsValue]) = {
+  def instanceSummary(transform: Host => Seq[JsValue])(implicit di:DeployInfo) = {
     def sortString(jsv: JsValue):String =
       jsv match {
         case JsString(str) => str
@@ -140,34 +159,34 @@ object Api extends Controller {
         case _ => ""
       }
 
-    DeployInfoManager.deployInfo.hosts.flatMap(transform).distinct.sortBy(sortString)
+    di.hosts.flatMap(transform).distinct.sortBy(sortString)
   }
 
   def roleList = Action { implicit request =>
-    ApiResult { Json.obj( "roles" -> instanceSummary(host => Seq(Json.toJson(host.role))) ) }
+    DeployApiResult { implicit di => Json.obj( "roles" -> instanceSummary(host => Seq(Json.toJson(host.role))) ) }
   }
   def mainclassList = Action { implicit request =>
-    ApiResult { Json.obj("mainclasses" -> instanceSummary(host => host.mainclasses.map(Json.toJson(_)))) }
+    DeployApiResult { implicit di => Json.obj("mainclasses" -> instanceSummary(host => host.mainclasses.map(Json.toJson(_)))) }
   }
   def stackList = Action { implicit request =>
-    ApiResult { Json.obj("stacks" -> instanceSummary(host => host.stack.map(Json.toJson(_)).toSeq)) }
+    DeployApiResult { implicit di => Json.obj("stacks" -> instanceSummary(host => host.stack.map(Json.toJson(_)).toSeq)) }
   }
   def stageList = Action { implicit request =>
-    ApiResult { Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))) }
+    DeployApiResult { implicit di => Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))) }
   }
   def regionList = Action { implicit request =>
-    ApiResult { Json.obj("regions" -> instanceSummary(host => Seq(Json.toJson(host.region)))) }
+    DeployApiResult { implicit di => Json.obj("regions" -> instanceSummary(host => Seq(Json.toJson(host.region)))) }
   }
   def accountList = Action { implicit request =>
-    ApiResult { Json.obj("accounts" -> instanceSummary(host => Seq(Json.toJson(host.account)))) }
+    DeployApiResult { implicit di => Json.obj("accounts" -> instanceSummary(host => Seq(Json.toJson(host.account)))) }
   }
   def vendorList = Action { implicit request =>
-    ApiResult { Json.obj("vendors" -> instanceSummary(host => Seq(Json.toJson(host.vendor)))) }
+    DeployApiResult { implicit di => Json.obj("vendors" -> instanceSummary(host => Seq(Json.toJson(host.vendor)))) }
   }
 
   def appList = Action { implicit request =>
     val filter = Filter.fromRequest
-    ApiResult {
+    DeployApiResult { implicit di =>
       val apps = instanceSummary{ host =>
         host.apps.flatMap{ app =>
           host.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))).filter(filter.isMatch)
@@ -180,13 +199,13 @@ object Api extends Controller {
   }
 
   def dataList = Action { implicit request =>
-    ApiResult {
+    DeployApiResult { implicit di =>
       Json.obj("data" -> DeployInfoManager.deployInfo.data)
     }
   }
 
   def dataLookup(key:String) = Action { implicit request =>
-    ApiResult {
+    DeployApiResult { di =>
       val app = request.getQueryString("app")
       val stage = request.getQueryString("stage")
       val validKey = DeployInfoManager.deployInfo.knownKeys.contains(key)
@@ -197,7 +216,7 @@ object Api extends Controller {
         (if (validKey) None else Some("key" -> s"The key name $key was not found"))
       if (!errors.isEmpty) throw IllegalApiCallException(Json.toJson(errors).as[JsObject])
 
-      Json.toJson(DeployInfoManager.deployInfo.firstMatchingData(key, app.get, stage.get))
+      Json.toJson(di.firstMatchingData(key, app.get, stage.get))
     }
   }
 }

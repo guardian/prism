@@ -1,4 +1,7 @@
 import controllers.{IllegalApiCallException, ApiResult}
+import model.DataContainer
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
@@ -17,7 +20,7 @@ import scala.concurrent.Future
 class ApiSpec extends Specification {
   "ApiResult" should {
     "wrap data with status on a successful response" in {
-      val success = Future.successful(ApiResult {
+      val success = Future.successful(ApiResult.noSource {
         Json.obj("test" -> "value")
       })
       contentType(success) must beSome("application/json")
@@ -26,7 +29,7 @@ class ApiSpec extends Specification {
     }
 
     "wrap data with fail when an Api exception is thrown" in {
-      val fail = Future.successful(ApiResult {
+      val fail = Future.successful(ApiResult.noSource {
         if (true) throw IllegalApiCallException(Json.obj("test" -> "just testing the fail state"))
         Json.obj("never" -> "reached")
       })
@@ -37,7 +40,7 @@ class ApiSpec extends Specification {
     }
 
     "return an error when something else goes wrong" in {
-      val error = Future.successful(ApiResult {
+      val error = Future.successful(ApiResult.noSource {
         Json.obj("infinity" -> (1 / 0))
       })
       contentType(error) must beSome("application/json")
@@ -47,10 +50,25 @@ class ApiSpec extends Specification {
     }
 
     "add a length companion field to arrays contained in objects" in {
-      val success = Future.successful(ApiResult {
+      val success = Future.successful(ApiResult.noSource {
         Json.obj("test" -> List("first", "second", "third"))
       })
       contentAsJson(success) \ "data" \ "test.length" mustEqual JsNumber(3)
+    }
+
+    "add data source name, age and data stale fields based on sources of data" in {
+      case class FakeDataContainer(lastUpdated: DateTime) extends DataContainer {
+        val name: String = "fake"
+        val data = Json.obj("test" -> "the data source")
+        val isStale = false
+      }
+      val fakeSource = FakeDataContainer(new DateTime())
+      val success = Future.successful(ApiResult(fakeSource) { source =>
+        source.data
+      })
+      contentAsJson(success) \ "sources" mustEqual JsArray(Seq(JsString("fake")))
+      contentAsJson(success) \ "stale" mustEqual JsBoolean(false)
+      contentAsJson(success) \ "lastUpdated" mustEqual JsString(ISODateTimeFormat.dateTime().print(fakeSource.lastUpdated))
     }
   }
 
