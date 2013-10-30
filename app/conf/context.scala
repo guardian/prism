@@ -34,7 +34,7 @@ class Configuration(val application: String, val webappConfDirectory: String = "
 
   object stages {
     lazy val order = configuration.getStringPropertiesSplitByComma("stages.order").filterNot(""==)
-    lazy val ordering = UnnaturalOrdering(order, aliensAtEnd = false)
+    lazy val ordering = UnnaturalOrdering(order, aliensAtEnd = true)
   }
 
   object urls {

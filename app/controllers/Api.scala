@@ -175,7 +175,7 @@ object Api extends Controller {
     DeployApiResult { implicit di => Json.obj("stacks" -> instanceSummary(host => host.stack.map(Json.toJson(_)).toSeq)) }
   }
   def stageList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))(di, conf.Configuration.stages.ordering).reverse) }
+    DeployApiResult { implicit di => Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))(di, conf.Configuration.stages.ordering)) }
   }
   def regionList = Action { implicit request =>
     DeployApiResult { implicit di => Json.obj("regions" -> instanceSummary(host => Seq(Json.toJson(host.region)))) }
