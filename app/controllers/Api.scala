@@ -204,6 +204,12 @@ object Api extends Controller {
     }
   }
 
+  def dataKeysList = Action { implicit request =>
+    DeployApiResult { implicit di =>
+      Json.obj("keys" -> DeployInfoManager.deployInfo.data.keys)
+    }
+  }
+
   def dataLookup(key:String) = Action { implicit request =>
     DeployApiResult { di =>
       val app = request.getQueryString("app")

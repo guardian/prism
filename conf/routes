@@ -16,6 +16,7 @@ GET        /stages                  controllers.Api.stageList
 GET        /roles                   controllers.Api.roleList
 GET        /mainclasses             controllers.Api.mainclassList
 
+GET        /data/keys               controllers.Api.dataKeysList
 GET        /data/list               controllers.Api.dataList
 GET        /data/lookup/:key        controllers.Api.dataLookup(key)
 
