@@ -134,6 +134,9 @@ object Api extends Controller {
 
   def DeployApiResult = ApiResult(DeployInfoManager.deployInfo) _
 
+  // an empty endpoint simply for getting metadata from
+  def empty = Action { DeployApiResult { di => Json.obj() }}
+
   def instanceList = Action { implicit request =>
     DeployApiResult { di =>
       val expand = request.getQueryString("_expand").isDefined

@@ -15,6 +15,7 @@ GET        /stacks                  controllers.Api.stackList
 GET        /stages                  controllers.Api.stageList
 GET        /roles                   controllers.Api.roleList
 GET        /mainclasses             controllers.Api.mainclassList
+GET        /empty                   controllers.Api.empty
 
 GET        /data/keys               controllers.Api.dataKeysList
 GET        /data/list               controllers.Api.dataList
