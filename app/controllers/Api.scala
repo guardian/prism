@@ -153,7 +153,7 @@ object Api extends Controller {
     }
   }
 
-  def instanceSummary(transform: Host => Seq[JsValue])(implicit di:DeployInfo) = {
+  def instanceSummary(transform: Host => Seq[JsValue])(implicit di:DeployInfo, ordering:Ordering[String]) = {
     def sortString(jsv: JsValue):String =
       jsv match {
         case JsString(str) => str
@@ -162,7 +162,7 @@ object Api extends Controller {
         case _ => ""
       }
 
-    di.hosts.flatMap(transform).distinct.sortBy(sortString)
+    di.hosts.flatMap(transform).distinct.sortBy(sortString)(ordering)
   }
 
   def roleList = Action { implicit request =>
@@ -175,7 +175,7 @@ object Api extends Controller {
     DeployApiResult { implicit di => Json.obj("stacks" -> instanceSummary(host => host.stack.map(Json.toJson(_)).toSeq)) }
   }
   def stageList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))) }
+    DeployApiResult { implicit di => Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))(di, conf.Configuration.stages.ordering).reverse) }
   }
   def regionList = Action { implicit request =>
     DeployApiResult { implicit di => Json.obj("regions" -> instanceSummary(host => Seq(Json.toJson(host.region)))) }
