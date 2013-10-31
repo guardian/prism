@@ -5,19 +5,45 @@
     <h1>Prism API</h1>
 
     <p>This server is running the Prism API: the API that provides near real-time information about infrastructure.</p>
+
+    <h2>Examples</h2>
+
     <p>For the sake of everyones sanity, this page lists the endpoints that are available to experiment with.</p>
 
     <ul>
         <li><a href="@routes.Api.instanceList">Instances</a> - try this with
             <a href="@routes.Api.instanceList?_expand">_expand</a>, filter using any key as a query param e.g.
             <a href="@routes.Api.instanceList?vendor=openstack">vendor=openstack</a> or a more complex example
-            <a href="@routes.Api.instanceList?_match=regex&mainclasses=soulmates.*&stage=TEST">switching on regexes</a>
-            (this switches on regexes for all parts of the filter, so you'll need to escape anything you don't need escaped).
+            <a href="@routes.Api.instanceList?mainclasses~=soulmates.*&stage!=PROD">mainclasses~=soulmates.*&stage!=PROD</a>
         </li>
         <li><a href="@routes.Api.roleList">Roles</a></li>
         <li><a href="@routes.Api.stackList">Stacks</a></li>
         <li><a href="@routes.Api.appList">Apps</a> - again, filters work with either key</li>
     </ul>
+
+    <h2>Query parameters</h2>
+    <p>Fields that are prefixed with an _ control the query format in some way - they are meta paramters. Fields that
+    are not prefixed with an _ are interpreted as field filters. Field filters are only useful when the endpoint returns
+    an array of objects, and they are used to filter the objects that are returned. You simply add a query parameter
+    with the same name as a top level field and the parameter value will be used to find matching objects.</p>
+
+    <p>Some simple examples:</p>
+    <table>
+        <tbody>
+            <tr><td><tt>_expand</tt> or <tt>_expand=true</tt></td><td>return all fields of objects in a list</td></tr>
+            <tr><td><tt>_length</tt> or <tt>_length=true</tt></td><td>add companion fields to objects detailing the size of any arrays that are members of the object</td></tr>
+            <tr><td><tt>stage=TEST</tt></td><td>return objects whose stage field has the value of TEST</td></tr>
+            <tr><td><tt>stage!=TEST</tt></td><td>invert - return objects whose stage field does not have the value of TEST</td></tr>
+            <tr><td><tt>role~=id.*</tt></td><td>regexs - return objects whose role field matches the regular expression id.* (i.e. starts with id)</td></tr>
+            <tr><td><tt>role!~=id.*</tt></td><td>inverted regex - return objects whose role field does not match the regular expression</td></tr>
+            <tr><td><tt>stage=TEST&role~=id.*</tt></td><td>multiple fields - an exact match of stage and a regex match of role; this returns objects whose stage field has value of TEST <strong>AND</strong> whose role field matches the regular expression</strong></td></tr>
+            <tr><td><tt>stage=TEST&stage=CODE&nbsp;&nbsp;</tt></td><td>fields can be specified twice - here we return objects whose stage field has the value of TEST <strong>OR</strong> CODE</td></tr>
+            <tr><td><tt>stage!=TEST&stage!=CODE&nbsp;&nbsp;</tt></td><td><strong>this makes no sense</strong> - here we return objects whose stage field has a value that is not TEST <strong>OR</strong> not CODE (i.e. all objects)</td></tr>
+        </tbody>
+    </table>
+
+    <p>Note that multiple filters for the same field have the sense of an OR operation and then the filters for each
+        individual field have the sense of an AND operation.</p>
 
     <h2>Play routes</h2>
     <table>

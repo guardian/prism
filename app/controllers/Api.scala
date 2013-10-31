@@ -40,21 +40,21 @@ object ApiResult {
     }
   }
 
-  def apply[T <: DataContainer](source: T)(block: T => JsValue): SimpleResult =
+  def apply[T <: DataContainer](source: T)(block: T => JsValue)(implicit request:RequestHeader): SimpleResult =
     Await.result(ApiResult.async(source)(source => Future.successful(block(source))), Duration.Inf)
-  def noSource(block: => JsValue): SimpleResult = apply(noSourceContainer)(_ => block)
+  def noSource(block: => JsValue)(implicit request:RequestHeader): SimpleResult = apply(noSourceContainer)(_ => block)
 
   object async {
-    def apply[T <: DataContainer](source: T)(block: T => Future[JsValue]): Future[SimpleResult] = {
+    def apply[T <: DataContainer](source: T)(block: T => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
       try {
         block(source).map { data =>
-          val dataWithCounts = addCountToJson(data)
+          val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
           Results.Ok(Json.obj(
             "status" -> "success",
             "sources" -> Seq(source.name),
             "lastUpdated" -> source.lastUpdated,
             "stale" -> source.isStale,
-            "data" -> dataWithCounts
+            "data" -> dataWithMods
           ))
         }
       } catch {
@@ -70,7 +70,7 @@ object ApiResult {
           )))
       }
     }
-    def noSource(block: => Future[JsValue]): Future[SimpleResult] = async(noSourceContainer)(_ => block)
+    def noSource(block: => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = async(noSourceContainer)(_ => block)
   }
 }
 
@@ -87,6 +87,9 @@ object Api extends Controller {
   }
   case class RegExMatchable(matcher: Regex) extends Matchable[String] {
     def isMatch(value: String): Boolean = matcher.unapplySeq(value).isDefined
+  }
+  case class InverseMatchable[T](matcher: Matchable[T]) extends Matchable[T] {
+    def isMatch(value: T): Boolean = !matcher.isMatch(value)
   }
   case class Filter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] {
     def isMatch(json: JsValue): Boolean = {
@@ -107,14 +110,28 @@ object Api extends Controller {
     }
   }
   object Filter {
-    def fromRequest(implicit request: RequestHeader): Filter = {
-      val matcher = (value:String) => request.getQueryString("_match") match {
-        case Some("regex") => RegExMatchable(value.r)
-        case _ => StringMatchable(value)
+    val InverseRegexMatch = """^([a-zA-Z0-9]*)(?:!~|~!)$""".r
+    val InverseMatch = """^([a-zA-Z0-9]*)!$""".r
+    val RegexMatch = """^([a-zA-Z0-9]*)~$""".r
+    val SimpleMatch = """^([a-zA-Z0-9]*)$""".r
+
+    def matcher(key:String, value:String): Option[(String, Matchable[String])] = {
+      key match {
+        case InverseRegexMatch(bareKey) => Some(bareKey -> InverseMatchable(RegExMatchable(value.r)))
+        case RegexMatch(bareKey) => Some(bareKey -> RegExMatchable(value.r))
+        case InverseMatch(bareKey) => Some(bareKey -> InverseMatchable(StringMatchable(value)))
+        case SimpleMatch(bareKey) => Some(bareKey -> StringMatchable(value))
+        case _ => None
       }
-      val filterKeys = request.queryString.filterKeys(!_.startsWith("_")).mapValues {valueList => valueList.map(matcher)}
+    }
+
+    def fromRequest(implicit request: RequestHeader): Filter = {
+      val filterKeys = request.queryString.toSeq.flatMap { case (key, values) =>
+        values.flatMap(matcher(key,_))
+      }.groupBy(_._1).mapValues(_.map(_._2))
       Filter(filterKeys)
     }
+
     lazy val all = new Matchable[JsValue] {
       def isMatch(value: JsValue): Boolean = true
     }
@@ -132,10 +149,10 @@ object Api extends Controller {
     }
   }
 
-  def DeployApiResult = ApiResult(DeployInfoManager.deployInfo) _
+  def DeployApiResult(block: DeployInfo => JsValue)(implicit request:RequestHeader) = ApiResult(DeployInfoManager.deployInfo)(block)
 
   // an empty endpoint simply for getting metadata from
-  def empty = Action { DeployApiResult { di => Json.obj() }}
+  def empty = Action { implicit request => DeployApiResult { di => Json.obj() }}
 
   def instanceList = Action { implicit request =>
     DeployApiResult { di =>

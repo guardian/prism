@@ -20,6 +20,7 @@ import scala.concurrent.Future
 class ApiSpec extends Specification {
   "ApiResult" should {
     "wrap data with status on a successful response" in {
+      implicit val request = FakeRequest(GET, "/test")
       val success = Future.successful(ApiResult.noSource {
         Json.obj("test" -> "value")
       })
@@ -29,6 +30,7 @@ class ApiSpec extends Specification {
     }
 
     "wrap data with fail when an Api exception is thrown" in {
+      implicit val request = FakeRequest(GET, "/test")
       val fail = Future.successful(ApiResult.noSource {
         if (true) throw IllegalApiCallException(Json.obj("test" -> "just testing the fail state"))
         Json.obj("never" -> "reached")
@@ -40,6 +42,7 @@ class ApiSpec extends Specification {
     }
 
     "return an error when something else goes wrong" in {
+      implicit val request = FakeRequest(GET, "/test")
       val error = Future.successful(ApiResult.noSource {
         Json.obj("infinity" -> (1 / 0))
       })
@@ -49,7 +52,8 @@ class ApiSpec extends Specification {
       contentAsJson(error) \ "message" mustEqual JsString("/ by zero")
     }
 
-    "add a length companion field to arrays contained in objects" in {
+    "add a length companion field to arrays contained in objects when requested" in {
+      implicit val request = FakeRequest(GET, "/test?_length=true")
       val success = Future.successful(ApiResult.noSource {
         Json.obj("test" -> List("first", "second", "third"))
       })
@@ -63,6 +67,7 @@ class ApiSpec extends Specification {
         val isStale = false
       }
       val fakeSource = FakeDataContainer(new DateTime())
+      implicit val request = FakeRequest(GET, "/test")
       val success = Future.successful(ApiResult(fakeSource) { source =>
         source.data
       })
@@ -92,8 +97,14 @@ class ApiSpec extends Specification {
       jsonInstances.as[JsArray].value.length mustEqual(2)
     }
 
+    "invert filter a list of instances" in new WithApplication {
+      val home = route(FakeRequest(GET, "/instances?stage!=CODE")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual(2)
+    }
+
     "filter a list of instances using a regex" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?_match=regex&mainclasses=.*r2football")).get
+      val home = route(FakeRequest(GET, "/instances?mainclasses~=.*r2football")).get
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
       jsonInstances.as[JsArray].value.length mustEqual(1)
     }
