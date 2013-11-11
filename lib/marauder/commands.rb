@@ -70,10 +70,10 @@ command :hosts do |c|
 end
 
 command :ssh do |c|
-  c.syntax = 'marauder ssh <filter> -- <command>'
+  c.syntax = 'marauder ssh <filter>'
   c.description = 'Execute command on matching hosts' 
   c.option '-u', '--user STRING', String, 'Remote username'
-  c.option '-c', '--cmd STRING', String, 'Command to execute'
+  c.option '-c', '--cmd STRING', String, 'Command to execute (quote this if it contains a space)'
   c.action do |args, options|
     options.default :user => DEFAULT_USER
 

@@ -12,9 +12,8 @@ Obviously, you need Ruby.
 Build the gem and install it:
 
 ```
-$ bundle install
-$ gem build marauder.gemspec
-$ gem install marauder-0.1.0.gem
+$ rake build
+$ gem install pkg/marauder-0.4.0.gem
 ```
 
 ## Usage
