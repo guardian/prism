@@ -6,6 +6,7 @@ resolvers += "Guardian Github Snapshots" at "http://guardian.github.com/maven/re
 
 libraryDependencies ++= Seq(
     "com.amazonaws" % "aws-java-sdk" % "1.6.0",
+    "com.gu" %% "management-play" % "6.0" exclude("javassist", "javassist"), // http://code.google.com/p/reflections/issues/detail?id=140
     "com.gu" %% "configuration" % "3.9",
     "com.typesafe.akka" %% "akka-agent" % "2.1.2"
 )

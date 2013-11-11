@@ -4,7 +4,13 @@ import com.gu.conf.ConfigurationFactory
 import utils.{UnnaturalOrdering, Logging}
 import scala.language.postfixOps
 import play.api.{Mode, Play}
+import com.gu.management._
+import com.gu.management.play.{RequestMetrics, Management => GuManagement}
+import com.gu.management.logback.LogbackLevelPage
 
+object App {
+  val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
+}
 
 class Configuration(val application: String, val webappConfDirectory: String = "env") extends Logging {
   protected val configuration = ConfigurationFactory.getConfiguration(application, webappConfDirectory)
@@ -44,9 +50,24 @@ class Configuration(val application: String, val webappConfDirectory: String = "
   override def toString: String = configuration.toString
 }
 
-object Configuration extends Configuration(if (Play.current.mode == Mode.Test) "prism-test" else "prism", webappConfDirectory = "env")
+object Configuration extends Configuration(App.name, webappConfDirectory = "env")
 
 object DeployInfoMode extends Enumeration {
   val URL = Value("URL")
   val Execute = Value("Execute")
+}
+
+object PlayRequestMetrics extends RequestMetrics.Standard
+
+object Management extends GuManagement {
+  val applicationName = App.name
+
+  lazy val pages = List(
+    new ManifestPage(),
+    new Switchboard(applicationName, Seq()),
+    new HealthcheckManagementPage,
+    StatusPage(applicationName, PlayRequestMetrics.asMetrics),
+    new PropertiesPage(Configuration.toString),
+    new LogbackLevelPage(applicationName)
+  )
 }

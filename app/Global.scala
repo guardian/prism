@@ -1,11 +1,12 @@
 import collection.mutable
+import conf.PlayRequestMetrics
 import deployinfo.DeployInfoManager
 import play.api.mvc.WithFilters
 import utils.{JsonpFilter, Logging, Lifecycle, ScheduledAgent}
 import play.api.Application
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object Global extends WithFilters(new JsonpFilter()) with Logging {
+object Global extends WithFilters(new JsonpFilter() :: PlayRequestMetrics.asFilters : _*) with Logging {
 
   val lifecycleSingletons = mutable.Buffer[Lifecycle]()
 
