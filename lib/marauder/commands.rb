@@ -16,29 +16,11 @@ API_KEY='8TQMOsrLKeXhWaLmULvtj7wk7AZvtTxv' # 'marauder' key
 MAX_SSH_HOSTS = 4
 DEFAULT_USER = 'jetty'
 
-# def usage
-#   puts "usage: marauder <filter>"
-#   puts "       marauder list <filter>"
-#   puts "       marauder hosts <filter>"
-#   puts "       marauder ssh <filter> -- <command>"
-# end
-
-# if ARGV.empty?
-#   usage
-#   exit
-# end
-
-
 def tokenize(s)
   separators = ['-', '_', '::']
   separators.inject([s]) do |tokens, sep|
     tokens.map {|t| t.split(sep)}.flatten
   end
-end
-
-def confirm
-  print "Please confirm [yes/NO]: "
-  STDIN.gets.chomp == 'yes'
 end
 
 def find_hosts(filter)
@@ -64,6 +46,7 @@ def find_hosts(filter)
   end
 end
 
+###### COMMANDS ######
 
 command :list do |c|
   c.description = 'Display list of hosts' 
@@ -89,8 +72,8 @@ end
 command :ssh do |c|
   c.syntax = 'marauder ssh <filter> -- <command>'
   c.description = 'Execute command on matching hosts' 
-  c.option '--user STRING', String, 'Remote username'
-  c.option '--cmd STRING', String, 'Command to execute'
+  c.option '-u', '--user STRING', String, 'Remote username'
+  c.option '-c', '--cmd STRING', String, 'Command to execute'
   c.action do |args, options|
     options.default :user => DEFAULT_USER
 
@@ -109,11 +92,10 @@ command :ssh do |c|
       usage
       exit 1
     else if matching.size > MAX_SSH_HOSTS
-      puts "Do you really want to SSH into #{matching.size} hosts?"
-      exit 1 unless confirm
+      exit 1 unless agree("Do you really want to SSH into #{matching.size} hosts?")
     end
 
-    puts "ssh into #{matching.size} hosts and run `#{cmd}`..."
+    puts "ssh into #{matching.size} hosts as #{options.user} and run `#{cmd}`..."
     puts
 
     matching.each do |host|
@@ -126,5 +108,3 @@ command :ssh do |c|
     end
   end
 end
-
-default_command :list
