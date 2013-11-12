@@ -6,7 +6,7 @@ require 'marauder/marauder'
 Gem::Specification.new do |s|
   s.name          = 'marauder'
   s.version       = Marauder::VERSION
-  s.summary       = "service locator based on riffraff"
+  s.summary       = "service locator based on prism"
   s.description   = "Small tool to find services based on simple queries"
   s.authors       = ["Sébastien Cevey"]
   s.email         = 'seb@cine7.net'

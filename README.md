@@ -2,8 +2,7 @@
 
 Small command-line tool to locate services.
 
-Uses the [RiffRaff's host deploy info](https://riffraff.gutools.co.uk/deployinfo/hosts)
-API to locate any service deployed via RiffRaff.
+Uses the [Prism](http://prism.gutools.co.uk/) API to locate any service across the Guardian estate.
 
 ## Install
 
@@ -13,12 +12,12 @@ Build the gem and install it:
 
 ```
 $ rake build
-$ gem install pkg/marauder-0.4.0.gem
+$ gem install pkg/marauder-0.5.0.gem
 ```
 
 ## Usage
 
-For inline usage help, run the `marauder` command without any arguments.
+For inline usage help, run `marauder help` or `marauder help <command>` for help on a specific sub command.
 
 ### List hosts
 
@@ -26,26 +25,39 @@ To find a service, just specify its name and the stage you're interested in, e.g
 
 ```
 $ marauder hosts r2frontend qa
-QA      r2frontend      10-252-163-240.gc2.dev.dc1.gnm  Mon May 06 05:18:35 UTC 2013
-QA      r2frontend      10-252-163-239.gc2.dev.dc1.gnm  Mon May 06 05:18:54 UTC 2013
+QA	r2frontend	10-252-163-240.gc2.dev.dc1.gnm	2013-05-06T05:18:35.000Z
+QA	r2frontend	10-252-163-239.gc2.dev.dc1.gnm	2013-05-06T05:18:54.000Z
 ```
 
 You can match names and stages using suffixes:
 
 ```
 $ marauder hosts flex api rel
-RELEASE flexible-api    10-252-163-100.gc2.dev.dc1.gnm  Tue May 28 16:14:31 UTC 2013
-RELEASE flexible-api    10-252-163-99.gc2.dev.dc1.gnm   Tue May 28 16:14:45 UTC 2013
+RELEASE	flexible-api	10-252-163-100.gc2.dev.dc1.gnm	2013-05-28T16:14:31.000Z
+RELEASE	flexible-api	10-252-163-99.gc2.dev.dc1.gnm 	2013-05-28T16:14:45.000Z
 ```
 
 All parameters (stage and name) are optional:
 
 ```
-$ marauder hosts frontend interactive
-PROD    frontend::interactive   ec2-54-217-106-20.eu-west-1.compute.amazonaws.com       Tue Sep 17 15:03:57 UTC 2013
-CODE    frontend::interactive   ec2-54-217-185-66.eu-west-1.compute.amazonaws.com       Tue Sep 17 22:37:58 UTC 2013
-PROD    frontend::interactive   ec2-46-137-138-116.eu-west-1.compute.amazonaws.com      Wed Sep 18 02:52:51 UTC 2013
-PROD    frontend::interactive   ec2-54-217-32-255.eu-west-1.compute.amazonaws.com       Wed Sep 18 02:52:52 UTC 2013
+$ marauder hosts frontend router
+PROD	frontend::router	ec2-54-220-181-89.eu-west-1.compute.amazonaws.com 	2013-11-06T17:38:39.000Z
+PROD	frontend::router	ec2-54-228-78-179.eu-west-1.compute.amazonaws.com 	2013-11-06T17:46:55.000Z
+CODE	frontend::router	ec2-54-216-101-152.eu-west-1.compute.amazonaws.com	2013-11-12T09:24:38.000Z
+PROD	frontend::router	ec2-54-216-197-194.eu-west-1.compute.amazonaws.com	2013-11-06T17:40:48.000Z
+```
+
+All of the above examples use loose regex matching on the stage and mainclass of an instance. For
+more control you can use the filter style documented on the 
+[Prism homepage](http://prism.gutools.co.uk/). Any filter with an equals sign in it will be passed
+straight onto Prism and behave as if you were using the API directly:
+
+```
+$ marauder hosts stage=PROD region=eu-west-1 createdAt~=2011-.*
+PROD	arts_music           	ec2-79-125-89-233.eu-west-1.compute.amazonaws.com	2011-06-02T11:28:53.000Z
+PROD	soulmates-scheduler  	ec2-79-125-101-87.eu-west-1.compute.amazonaws.com	2011-12-20T16:13:00.000Z
+PROD	soulmatesadmin       	ec2-46-137-52-22.eu-west-1.compute.amazonaws.com 	2011-07-06T15:03:38.000Z
+...
 ```
 
 To list just the names of all matching hosts, use the `--short` option:
@@ -63,7 +75,6 @@ $ marauder hosts -s flex release
 ```
 
 This can be useful to pipe into other commands
-
 
 ### SSH
 
