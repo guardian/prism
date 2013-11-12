@@ -48,23 +48,17 @@ end
 
 ###### COMMANDS ######
 
-command :list do |c|
-  c.description = 'Display list of hosts' 
-  c.option '--test STRING', String, 'Test a parameter'
-  c.action do |args, options|
-    matching = find_hosts(args)
-    matching.each do |host|
-      puts "#{host['stage']}\t#{host['app']}\t#{host['hostname']}\t#{host['created_at']}"
-    end
-  end
-end
-
 command :hosts do |c|
   c.description = 'Display only hostnames' 
+  c.option '-s', '--short', 'Only return hostnames'
   c.action do |args, options|
     matching = find_hosts(args)
     matching.each do |host|
-      puts host['hostname']
+      if options.short 
+        puts host['hostname']
+      else
+        puts "#{host['stage']}\t#{host['app']}\t#{host['hostname']}\t#{host['created_at']}"
+      end
     end
   end
 end
