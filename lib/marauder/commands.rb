@@ -33,17 +33,23 @@ def tokenize(s)
 end
 
 def find_hosts(filter)
-  query = filter.map(&:downcase).map{|s| Regexp.new("^#{s}.*")}
+  prism_filters = filter.select{ |f| f =~ /=/ }
+  api_query = Hash[prism_filters.map { |f|
+    param = f.split('=')
+    [param[0], param[1]]
+  }]
 
-  data = HTTParty.get(API, :query => {:_expand => true})
+  data = HTTParty.get(API, :query => {:_expand => true}.merge(api_query))
 
-  stale = data["stale"]
-  update_time = data["updateTime"]
-  if stale
+  if data["stale"]
+    update_time = data["lastUpdated"]
     STDERR.puts "WARNING: Prism reports that this deployinfo is stale, it was last updated at #{update_time}"
   end
 
   hosts = data["data"]["instances"]
+
+  dumb_filters = filter.reject{ |f| f =~ /=/ }
+  query = dumb_filters.map(&:downcase).map{|s| Regexp.new("^#{s}.*")}
 
   hosts.select do |host|
     query.all? do |name|
