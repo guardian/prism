@@ -118,3 +118,5 @@ command :ssh do |c|
     end
   end
 end
+
+default_command :hosts
