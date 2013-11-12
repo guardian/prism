@@ -15,6 +15,9 @@ $ rake build
 $ gem install pkg/marauder-0.5.0.gem
 ```
 
+**Note**: If you are installing on a host that only has Ruby 1.8.7 then you should install httparty version 
+0.11.0 using `gem install httparty -v 0.11.0` as later versions of httparty will not install successfully.
+
 ## Usage
 
 For inline usage help, run `marauder help` or `marauder help <command>` for help on a specific sub command.
