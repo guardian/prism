@@ -9,8 +9,7 @@ require 'commander/import'
 program :version, Marauder::VERSION
 program :description, 'command-line tool to locate infrastructure'
 
-API = 'https://riffraff.gutools.co.uk/api/deployinfo'
-API_KEY='8TQMOsrLKeXhWaLmULvtj7wk7AZvtTxv' # 'marauder' key
+API = 'http://prism.gutools.co.uk/instances'
 
 # If you're sshing into too many hosts, you might be doing something wrong
 MAX_SSH_HOSTS = 4
@@ -22,7 +21,7 @@ def table(rows)
   rows.map { |row| 
     col_widths.each_with_index.map { |width, index| 
       row[index].ljust(width)
-    }.join("  ")
+    }.join("\t")
   }.join("\n")
 end
 
@@ -36,21 +35,19 @@ end
 def find_hosts(filter)
   query = filter.map(&:downcase).map{|s| Regexp.new("^#{s}.*")}
 
-  data = HTTParty.get(API, :query => {:key => API_KEY})
-  response = data["response"]
+  data = HTTParty.get(API, :query => {:_expand => true})
 
-  stale = response["stale"]
-  update_time = response["updateTime"]
-
+  stale = data["stale"]
+  update_time = data["updateTime"]
   if stale
-    STDERR.puts "WARNING: Riff-Raff reports that this deployinfo is stale, it was last updated at #{update_time}"
+    STDERR.puts "WARNING: Prism reports that this deployinfo is stale, it was last updated at #{update_time}"
   end
 
-  hosts = response["results"]["hosts"]
+  hosts = data["data"]["instances"]
 
   hosts.select do |host|
     query.all? do |name|
-      tokens = tokenize(host["app"]) + [host["app"], host["stage"]]
+      tokens = host["mainclasses"].map{|mc| tokenize(mc)}.flatten + host["mainclasses"] + [host["stage"]]
       tokens.any? {|token| name.match(token.downcase)}
     end
   end
@@ -59,14 +56,19 @@ end
 ###### COMMANDS ######
 
 command :hosts do |c|
-  c.description = 'Display only hostnames' 
+  c.description = 'List hosts that match the search filter' 
+  c.syntax = 'marauder hosts <filter>'
   c.option '-s', '--short', 'Only return hostnames'
   c.action do |args, options|
     matching = find_hosts(args)
-    if options.short 
-      matching.each { |host| puts host['hostname'] }
+    if matching.empty?
+      STDERR.puts "No hosts found"
     else
-      puts table(matching.map { |host| [host['stage'], host['app'], host['hostname'], host['created_at']] })
+      if options.short 
+        matching.each { |host| puts host['dnsName'] }
+      else
+        puts table(matching.map { |host| [host['stage'], host['mainclasses'].join(','), host['dnsName'], host['createdAt']] })
+      end
     end
   end
 end
@@ -101,8 +103,8 @@ command :ssh do |c|
     puts
 
     matching.each do |host|
-      Net::SSH.start(host['hostname'], options.user) do |ssh|
-        puts "== #{host['hostname']} =="
+      Net::SSH.start(host['dnsName'], options.user) do |ssh|
+        puts "== #{host['dnsName']} =="
         puts ssh.exec!(cmd)
         puts
         end
