@@ -16,6 +16,16 @@ API_KEY='8TQMOsrLKeXhWaLmULvtj7wk7AZvtTxv' # 'marauder' key
 MAX_SSH_HOSTS = 4
 DEFAULT_USER = 'jetty'
 
+def table(rows)
+  lengths = rows.map { |row| row.map { |value| value.size } }
+  col_widths = lengths.transpose.map { |column| column.max }
+  rows.map { |row| 
+    col_widths.each_with_index.map { |width, index| 
+      row[index].ljust(width)
+    }.join("  ")
+  }.join("\n")
+end
+
 def tokenize(s)
   separators = ['-', '_', '::']
   separators.inject([s]) do |tokens, sep|
@@ -53,12 +63,10 @@ command :hosts do |c|
   c.option '-s', '--short', 'Only return hostnames'
   c.action do |args, options|
     matching = find_hosts(args)
-    matching.each do |host|
-      if options.short 
-        puts host['hostname']
-      else
-        puts "#{host['stage']}\t#{host['app']}\t#{host['hostname']}\t#{host['created_at']}"
-      end
+    if options.short 
+      matching.each { |host| puts host['hostname'] }
+    else
+      puts table(matching.map { |host| [host['stage'], host['app'], host['hostname'], host['created_at']] })
     end
   end
 end
