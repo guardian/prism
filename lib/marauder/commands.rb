@@ -13,7 +13,8 @@ API = 'http://prism.gutools.co.uk/instances'
 
 # If you're sshing into too many hosts, you might be doing something wrong
 MAX_SSH_HOSTS = 4
-DEFAULT_USER = 'jetty'
+
+LOGGED_IN_USER = ENV['USER']
 
 def table(rows)
   lengths = rows.map { |row| row.map { |value| value.size } }
@@ -59,6 +60,10 @@ def find_hosts(filter)
   end
 end
 
+def user_for_host(hostname)
+  Net::SSH.configuration_for(hostname)[:user]
+end
+
 ###### COMMANDS ######
 
 command :hosts do |c|
@@ -85,7 +90,6 @@ command :ssh do |c|
   c.option '-u', '--user STRING', String, 'Remote username'
   c.option '-c', '--cmd STRING', String, 'Command to execute (quote this if it contains a space)'
   c.action do |args, options|
-    options.default :user => DEFAULT_USER
 
     STDERR.puts "#{args}"
 
@@ -105,12 +109,14 @@ command :ssh do |c|
       exit 1 unless agree("Do you really want to SSH into #{matching.size} hosts?")
     end
 
-    puts "ssh into #{matching.size} hosts as #{options.user} and run `#{cmd}`..."
+    puts "ssh into #{matching.size} hosts and run `#{cmd}`..."
     puts
 
     matching.each do |host|
-      Net::SSH.start(host['dnsName'], options.user) do |ssh|
-        puts "== #{host['dnsName']} =="
+      hostname = host['dnsName']
+      user = options.user || user_for_host(hostname) || LOGGED_IN_USER
+      Net::SSH.start(hostname, user) do |ssh|
+        puts "== #{hostname} as #{user} =="
         puts ssh.exec!(cmd)
         puts
         end
