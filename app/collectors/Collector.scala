@@ -47,6 +47,26 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector {
     }
   }
 
+  def getInstancesViaAbstraction:Iterable[Instance] = {
+    val nodes = compute.listNodes()
+    nodes.map{ node =>
+      val instance = getUnderlyingInstance(node.getProviderId)
+      Instance(
+        id = s"arn:aws:ec2:${node.getLocation.getParent.getId}:${origin.account}:instance/${node.getProviderId}",
+        name = instance.getDnsName,
+        group = node.getLocation.getId,
+        dnsName = instance.getDnsName,
+        createdAt = new DateTime(instance.getLaunchTime),
+        instanceName = node.getProviderId,
+        internalName = instance.getPrivateDnsName,
+        region = node.getLocation.getParent.getId,
+        vendor = "aws",
+        account = origin.account,
+        tags = node.getUserMetadata.toMap
+      )
+    }
+  }
+
   def getUnderlyingInstance(providerId:String):RunningInstance = {
     instanceApi.describeInstancesInRegion(origin.region, providerId).head match {
       case r:Reservation[RunningInstance] => r.head match {
