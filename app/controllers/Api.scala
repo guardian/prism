@@ -198,9 +198,7 @@ object Api extends Controller with Logging {
 
   def instanceList = Action.async { implicit request =>
     ApiResult.mr[Instance] {
-      val sources = Prism.instanceAgent.get()
-      log.info(s"Found ${sources.size} sources")
-      sources
+      Prism.instanceAgent.get()
     } { collection =>
       val instances = collection.map(_.data).flatten
       val expand = request.getQueryString("_expand").isDefined
