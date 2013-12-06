@@ -12,6 +12,10 @@ import play.api.libs.json.Json._
 import model.DataContainer
 import org.joda.time.DateTime
 import utils.Json.DefaultJodaDateWrites
+import collectors.{Instance, BadLabel, GoodLabel, Datum}
+import scala.util.Try
+import scala.language.postfixOps
+import utils.Logging
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -37,6 +41,48 @@ object ApiResult {
       case JsArray(values) =>
         JsArray(values.map(addCountToJson))
       case other => other
+    }
+  }
+
+  object mr {
+    def apply[D](mapSources: => Iterable[Datum[D]])(reduce: Iterable[Datum[D]] => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
+      async[D](mapSources)(sources => Future.successful(reduce(sources)))
+    }
+    def async[D](mapSources: => Iterable[Datum[D]])(reduce: Iterable[Datum[D]] => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
+      Try {
+        val sources:Iterable[Datum[D]] = mapSources
+        val labels = sources.map(_.label)
+        reduce(sources).map { data =>
+          val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
+          Results.Ok(Json.obj(
+                "status" -> "success",
+                "sources" -> sources.map(_.label.toString),
+                "lastUpdated" -> labels.flatMap{
+                  case GoodLabel(_,_,bb) => Some(bb.created)
+                  case _ => None
+                }.min(new Ordering[DateTime] {
+                  def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
+                }),
+                "stale" -> labels.exists{
+                  case GoodLabel(_,_,bb) if bb.isStale => true
+                  case BadLabel(_,_,_) => true
+                  case _ => false
+                },
+                "data" -> dataWithMods
+              ))
+        }
+      } recover {
+        case IllegalApiCallException(failure, status) =>
+          Future.successful(Results.Status(status)(Json.obj(
+            "status" -> "fail",
+            "data" -> failure
+          )))
+        case e:Exception =>
+          Future.successful(Results.InternalServerError(Json.obj(
+            "status" -> "error",
+            "message" -> e.getMessage
+          )))
+      } get
     }
   }
 
@@ -74,9 +120,10 @@ object ApiResult {
   }
 }
 
-object Api extends Controller {
+object Api extends Controller with Logging {
 
-  implicit val instanceWriter = Json.writes[Host]
+  implicit val hostWriter = Json.writes[Host]
+  implicit val instanceWriter = Json.writes[Instance]
   implicit val dataWriter = Json.writes[Data]
 
   trait Matchable[T] {
@@ -137,7 +184,7 @@ object Api extends Controller {
     }
   }
 
-  def instanceJson(instance: Host, expand: Boolean = false, filter: Matchable[JsValue] = Filter.all)(implicit request: RequestHeader): Option[JsValue] = {
+  def instanceJson(instance: Instance, expand: Boolean = false, filter: Matchable[JsValue] = Filter.all)(implicit request: RequestHeader): Option[JsValue] = {
     val json = Json.toJson(instance).as[JsObject]
     if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
@@ -149,24 +196,62 @@ object Api extends Controller {
     }
   }
 
+  def instanceList = Action.async { implicit request =>
+    ApiResult.mr[Instance] {
+      val sources = Prism.instanceAgent.get()
+      log.info(s"Found ${sources.size} sources")
+      sources
+    } { collection =>
+      val instances = collection.map(_.data).flatten
+      val expand = request.getQueryString("_expand").isDefined
+      val filter = Filter.fromRequest
+      Json.obj(
+        "instances" -> instances.flatMap(host => instanceJson(host, expand, filter))
+      )
+    }
+  }
+
+  def instance(id:String) = Action.async { implicit request =>
+    ApiResult.mr[Instance] {
+      val sources = Prism.instanceAgent.get()
+      val source = sources.find{ _.data.exists(_.id == id) }
+      source.map(Seq(_)).getOrElse(sources)
+    } { sources =>
+      val instance = sources.map(_.data).flatten.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
+      instanceJson(instance, true).get
+    }
+  }
+
+  def hostJson(instance: Host, expand: Boolean = false, filter: Matchable[JsValue] = Filter.all)(implicit request: RequestHeader): Option[JsValue] = {
+    val json = Json.toJson(instance).as[JsObject]
+    if (filter.isMatch(json)) {
+      val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
+      Some(filtered ++ Json.obj("meta"-> Json.obj(
+        "href" -> routes.Api.host(instance.id).absoluteURL()
+      )))
+    } else {
+      None
+    }
+  }
+
   def DeployApiResult(block: DeployInfo => JsValue)(implicit request:RequestHeader) = ApiResult(DeployInfoManager.deployInfo)(block)
 
   // an empty endpoint simply for getting metadata from
   def empty = Action { implicit request => DeployApiResult { di => Json.obj() }}
 
-  def instanceList = Action { implicit request =>
+  def hostList = Action { implicit request =>
     DeployApiResult { di =>
       val expand = request.getQueryString("_expand").isDefined
       val filter = Filter.fromRequest
       Json.obj(
-        "instances" -> di.hosts.flatMap(host => instanceJson(host, expand, filter))
+        "instances" -> di.hosts.flatMap(host => hostJson(host, expand, filter))
       )
     }
   }
-  def instance(id:String) = Action { implicit request =>
+  def host(id:String) = Action { implicit request =>
     DeployApiResult { di =>
       val instance = di.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
-      instanceJson(instance, true).get
+      hostJson(instance, true).get
     }
   }
 

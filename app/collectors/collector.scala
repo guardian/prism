@@ -17,16 +17,17 @@ class CollectorAgent[T](val collectors:Seq[Collector[T]]) extends Logging with L
       val agent = ScheduledAgent[Datum[T]](0 seconds, 60 seconds, Datum.empty[T](collector)) { previous =>
         val datum = Datum[T](collector)
         datum.label match {
-          case good:GoodLabel =>
+          case GoodLabel(product, origin, bb) =>
+            log.info(s"Crawl of ${product.name} from $origin successful: ${datum.data.size} records, $bb")
             datum
           case BadLabel(product, origin, error) =>
             previous.label match {
               case GoodLabel(_,_,bb) if bb.isStale =>
-                log.error(s"Crawl of $product from $origin failed: leaving previously crawled STALE data (${bb.age.getStandardSeconds} seconds old)", error)
+                log.error(s"Crawl of ${product.name} from $origin failed: leaving previously crawled STALE data (${bb.age.getStandardSeconds} seconds old)", error)
               case GoodLabel(_,_,bb) if !bb.isStale =>
-                log.warn(s"Crawl of $product from $origin failed: leaving previously crawled data (${bb.age.getStandardSeconds} seconds old)", error)
+                log.warn(s"Crawl of ${product.name} from $origin failed: leaving previously crawled data (${bb.age.getStandardSeconds} seconds old)", error)
               case BadLabel(_,_,_) =>
-                log.error(s"Crawl of $product from $origin failed: NO data available as this has not been crawled successfuly since Prism started")
+                log.error(s"Crawl of ${product.name} from $origin failed: NO data available as this has not been crawled successfuly since Prism started", error)
             }
             previous
         }

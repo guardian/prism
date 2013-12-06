@@ -8,8 +8,8 @@ import scala.language.postfixOps
 trait Origin {
   def account: String
 }
-case class AmazonOrigin(account:String, region:String, accessKey:String, secretKey:String) extends Origin
-case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String, secret:String) extends Origin {
+case class AmazonOrigin(account:String, region:String, accessKey:String)(val secretKey:String) extends Origin
+case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String)(val secret:String) extends Origin {
   lazy val account = s"$tenant@$region"
 }
 

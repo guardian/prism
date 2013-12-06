@@ -60,7 +60,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
     val nodes = compute.listNodes()
     nodes.map{ node =>
       val instance = getUnderlyingInstance(node.getProviderId)
-      Instance(
+      Instance.fromApiData(
         id = s"arn:aws:ec2:${node.getLocation.getParent.getId}:${origin.account}:instance/${node.getProviderId}",
         name = instance.getDnsName,
         group = node.getLocation.getId,
@@ -87,7 +87,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
 
   def crawl:Iterable[Instance] = {
     getReservationInstances.map { case (reservation, instance) =>
-      Instance(
+      Instance.fromApiData(
         id = s"arn:aws:ec2:${origin.region}:${reservation.getOwnerId}:instance/${instance.getId}",
         name = instance.getDnsName,
         group = instance.getAvailabilityZone,
@@ -136,7 +136,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
     getServers.map{ s =>
       val dnsName = getDnsFQDN(s)
       val instanceId = s.getExtendedAttributes.asSet.headOption.map(_.getInstanceName).getOrElse("UNKNOWN").replace("instance", "i")
-      Instance(
+      Instance.fromApiData(
         id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
         name = dnsName,
         group = origin.region,
@@ -155,7 +155,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
 }
 
 object Instance {
-  def apply( id: String,
+  def fromApiData( id: String,
              name: String,
              group: String,
              dnsName: String,

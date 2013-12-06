@@ -10,7 +10,7 @@ import com.gu.management.logback.LogbackLevelPage
 import collectors.{OpenstackOrigin, AmazonOrigin}
 
 object App {
-  val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
+  val name: String = "prism" //if (Play.current.mode == Mode.Test) "prism-test" else "prism"
 }
 
 class Configuration(val application: String, val webappConfDirectory: String = "env") extends Logging {
@@ -56,7 +56,7 @@ class Configuration(val application: String, val webappConfDirectory: String = "
           val region = getStringProperty(name, "region", defaultRegion)
           val accessKey = getStringProperty(name, "accessKey")
           val secretKey = getStringProperty(name, "secretKey")
-          AmazonOrigin(name, region, accessKey, secretKey)
+          AmazonOrigin(name, region, accessKey)(secretKey)
         }
     }
     object openstack extends NamedProperties(configuration, "accounts.openstack") {
@@ -66,7 +66,7 @@ class Configuration(val application: String, val webappConfDirectory: String = "
         val endpoint = getStringProperty(name, "endpoint")
         val accessKey = getStringProperty(name, "user")
         val secretKey = getStringProperty(name, "secret")
-        OpenstackOrigin(endpoint, region, tenant, accessKey, secretKey)
+        OpenstackOrigin(endpoint, region, tenant, accessKey)(secretKey)
       }
     }
   }
