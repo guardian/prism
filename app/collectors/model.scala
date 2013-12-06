@@ -32,11 +32,6 @@ object Datum {
 }
 case class Datum[T](label:Label, data:Seq[T])
 
-trait Store[T] {
-  def origins:Seq[Origin]
-  def get(origin:Origin):Datum[T]
-}
-
 trait Label {
   def product:Product
   def origin:Origin

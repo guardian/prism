@@ -1,5 +1,6 @@
 import collection.mutable
 import conf.PlayRequestMetrics
+import controllers.Prism
 import deployinfo.DeployInfoManager
 import play.api.mvc.WithFilters
 import utils.{JsonpFilter, Logging, Lifecycle, ScheduledAgent}
@@ -16,6 +17,7 @@ object Global extends WithFilters(new JsonpFilter() :: PlayRequestMetrics.asFilt
       ScheduledAgent,
       DeployInfoManager
     )
+    lifecycleSingletons ++= Prism.allAgents
 
     log.info("Calling init() on Lifecycle singletons: %s" format lifecycleSingletons.map(_.getClass.getName).mkString(", "))
     lifecycleSingletons foreach { singleton =>

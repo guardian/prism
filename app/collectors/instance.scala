@@ -154,10 +154,6 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
   }
 }
 
-object Prism {
-  def collectors: Set[Collector[Any]] = ???
-}
-
 object Instance {
   def apply( id: String,
              name: String,
