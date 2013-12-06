@@ -24,7 +24,7 @@ object InstanceCollector {
 }
 
 trait InstanceCollector extends Collector[Instance] {
-  def product: Product = Product("instance", Duration.standardMinutes(15L))
+  def product: Resource = Resource("instance", Duration.standardMinutes(15L))
 }
 
 case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector with Logging {

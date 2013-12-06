@@ -12,10 +12,11 @@ import play.api.libs.json.Json._
 import model.DataContainer
 import org.joda.time.DateTime
 import utils.Json.DefaultJodaDateWrites
-import collectors.{Instance, BadLabel, GoodLabel, Datum}
+import collectors._
 import scala.util.Try
 import scala.language.postfixOps
 import utils.Logging
+
 
 // use this when a
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -45,18 +46,47 @@ object ApiResult {
   }
 
   object mr {
-    def apply[D](mapSources: => Iterable[Datum[D]])(reduce: Iterable[Datum[D]] => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
+    implicit val labelWriter = new Writes[Label] {
+      def writes(l: Label): JsValue = {
+        Json.obj(
+          "origin" -> Json.obj(
+            "vendor" -> l.origin.vendor,
+            "account" -> l.origin.account
+          ),
+          "resource" -> l.resource.name,
+          "error" -> l.isError
+        ) ++
+          {
+            l match {
+              case GoodLabel(_,_,bb) => Json.obj(
+                "createdAt" -> bb.created,
+                "age" -> bb.age.getStandardSeconds
+              )
+              case BadLabel(_,_,error) => Json.obj(
+                "errorReason" -> error.getMessage
+              )
+            }
+          }
+      }
+    }
+
+    def apply[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
       async[D](mapSources)(sources => Future.successful(reduce(sources)))
     }
-    def async[D](mapSources: => Iterable[Datum[D]])(reduce: Iterable[Datum[D]] => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
+    def async[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
       Try {
-        val sources:Iterable[Datum[D]] = mapSources
-        val labels = sources.map(_.label)
+        val sources = mapSources
+        val labels = sources.filter {
+          case (_,data) => !data.isEmpty
+        }.keys
+        val staleLabels = sources.keys.filter {
+          case GoodLabel(_,_,bb) => bb.isStale
+          case BadLabel(_,_,_) => true
+        }
         reduce(sources).map { data =>
           val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
           Results.Ok(Json.obj(
                 "status" -> "success",
-                "sources" -> sources.map(_.label.toString),
                 "lastUpdated" -> labels.flatMap{
                   case GoodLabel(_,_,bb) => Some(bb.created)
                   case _ => None
@@ -68,7 +98,9 @@ object ApiResult {
                   case BadLabel(_,_,_) => true
                   case _ => false
                 },
-                "data" -> dataWithMods
+                "staleSources" -> staleLabels,
+                "data" -> dataWithMods,
+                "sources" -> labels
               ))
         }
       } recover {
@@ -197,26 +229,25 @@ object Api extends Controller with Logging {
   }
 
   def instanceList = Action.async { implicit request =>
-    ApiResult.mr[Instance] {
-      Prism.instanceAgent.get()
-    } { collection =>
-      val instances = collection.map(_.data).flatten
+    ApiResult.mr {
       val expand = request.getQueryString("_expand").isDefined
       val filter = Filter.fromRequest
+      Prism.instanceAgent.get().map { agent => agent.label -> agent.data.flatMap(host => instanceJson(host, expand, filter)) }.toMap
+    } { collection =>
       Json.obj(
-        "instances" -> instances.flatMap(host => instanceJson(host, expand, filter))
+        "instances" -> toJson(collection.values.flatten)
       )
     }
   }
 
   def instance(id:String) = Action.async { implicit request =>
-    ApiResult.mr[Instance] {
+    ApiResult.mr {
       val sources = Prism.instanceAgent.get()
-      val source = sources.find{ _.data.exists(_.id == id) }
-      source.map(Seq(_)).getOrElse(sources)
+      sources.flatMap{ datum =>
+        datum.data.find(_.id == id).map(datum.label -> Seq(_))
+      }.toMap
     } { sources =>
-      val instance = sources.map(_.data).flatten.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
-      instanceJson(instance, true).get
+      instanceJson(sources.values.flatten.head, true).get
     }
   }
 
