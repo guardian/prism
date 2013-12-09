@@ -17,11 +17,12 @@ MAX_SSH_HOSTS = 4
 LOGGED_IN_USER = ENV['USER']
 
 def table(rows)
-  lengths = rows.map { |row| row.map { |value| value.size } }
+  lengths = rows.map { |row| row.map { |value| value.nil? ? 0 : value.size } }
   col_widths = lengths.transpose.map { |column| column.max }
   rows.map { |row| 
     col_widths.each_with_index.map { |width, index| 
-      row[index].ljust(width)
+      cell = row[index].nil? ? "" : row[index]
+      cell.ljust(width)
     }.join("\t")
   }.join("\n")
 end
@@ -55,7 +56,7 @@ def find_hosts(filter)
   hosts.select do |host|
     query.all? do |name|
       tokens = host["mainclasses"].map{|mc| tokenize(mc)}.flatten + host["mainclasses"] + [host["stage"]]
-      tokens.any? {|token| name.match(token.downcase)}
+      tokens.reject{ |t| t.nil? }.any? {|token| name.match(token.downcase)}
     end
   end
 end
