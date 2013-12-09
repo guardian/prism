@@ -147,7 +147,7 @@ object Api extends Controller with Logging {
   def instanceList = Action.async { implicit request =>
     ApiResult.mr {
       val expand = request.getQueryString("_expand").isDefined
-      val filter = ResourceFilter.fromRequestWithDefaults("state" -> "running", "state" -> "ACTIVE")
+      val filter = ResourceFilter.fromRequestWithDefaults("vendorState" -> "running", "vendorState" -> "ACTIVE")
       Prism.instanceAgent.get().map { agent => agent.label -> agent.data.flatMap(host => instanceJson(host, expand, filter)) }.toMap
     } { collection =>
       Json.obj(
