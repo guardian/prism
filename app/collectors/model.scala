@@ -8,13 +8,17 @@ import scala.language.postfixOps
 trait Origin {
   def vendor: String
   def account: String
+  def filterMap: Map[String,String] = Map.empty
 }
+
 case class AmazonOrigin(account:String, region:String, accessKey:String)(val secretKey:String) extends Origin {
   lazy val vendor = "aws"
+  override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
 }
 case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String)(val secret:String) extends Origin {
   lazy val vendor = "openstack"
   lazy val account = s"$tenant@$region"
+  override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "account" -> tenant, "accountName" -> tenant)
 }
 
 trait Collector[T] {
@@ -36,25 +40,20 @@ object Datum {
 }
 case class Datum[T](label:Label, data:Seq[T])
 
-trait Label {
-  def resource:Resource
-  def origin:Origin
-  def isError:Boolean
-}
-
 object Label {
-  def apply[T](c: Collector[T]) =
-    GoodLabel(c.product, c.origin, BestBefore(new DateTime(), c.product.shelfLife))
-  def apply[T](c: Collector[T], error: Throwable) =
-    BadLabel(c.product, c.origin, error)
+  def apply[T](c: Collector[T]): Label = Label(c.product, c.origin)
+  def apply[T](c: Collector[T], error: Throwable): Label = Label(c.product, c.origin, error = Some(error))
 }
-case class GoodLabel(resource:Resource, origin:Origin, bestBefore:BestBefore) extends Label { val isError = false }
-case class BadLabel(resource:Resource, origin:Origin, error:Throwable) extends Label { val isError = true }
+case class Label(resource:Resource, origin:Origin, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
+  lazy val isError = error.isDefined
+  lazy val status = if (isError) "error" else "success"
+  lazy val bestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)
+}
 
 case class Resource( name: String, shelfLife: Duration )
 
-case class BestBefore(created:DateTime, shelfLife:Duration) {
+case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
   val bestBefore:DateTime = created plus shelfLife
-  def isStale:Boolean = (new DateTime() compareTo bestBefore) >= 0
+  def isStale:Boolean = error || (new DateTime() compareTo bestBefore) >= 0
   def age:Duration = new Duration(created, new DateTime)
 }

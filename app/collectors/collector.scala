@@ -3,6 +3,9 @@ package collectors
 import utils.{LifecycleWithoutApp, Logging, ScheduledAgent}
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import akka.agent.Agent
+import org.joda.time.DateTime
+import akka.actor.ActorSystem
 
 class CollectorAgent[T](val collectors:Seq[Collector[T]]) extends Logging with LifecycleWithoutApp {
 
@@ -11,23 +14,28 @@ class CollectorAgent[T](val collectors:Seq[Collector[T]]) extends Logging with L
   def get(collector: Collector[T]): Datum[T] = datumAgents(collector)()
 
   def get(): Iterable[Datum[T]] = datumAgents.values.map(_())
+  
+  def getLabels: Seq[Label] = get().map(_.label).toSeq
 
   def init() {
     datumAgents = collectors.map { collector =>
-      val agent = ScheduledAgent[Datum[T]](0 seconds, 60 seconds, Datum.empty[T](collector)) { previous =>
+      val initial = Datum.empty[T](collector)
+      CollectorAgent.update(initial.label)
+      val agent = ScheduledAgent[Datum[T]](0 seconds, 60 seconds, initial) { previous =>
         val datum = Datum[T](collector)
+        CollectorAgent.update(datum.label)
         datum.label match {
-          case GoodLabel(product, origin, bb) =>
-            log.info(s"Crawl of ${product.name} from $origin successful: ${datum.data.size} records, $bb")
+          case l@Label(product, origin, _, None) =>
+            log.info(s"Crawl of ${product.name} from $origin successful: ${datum.data.size} records, ${l.bestBefore}")
             datum
-          case BadLabel(product, origin, error) =>
+          case Label(product, origin, _, Some(error)) =>
             previous.label match {
-              case GoodLabel(_,_,bb) if bb.isStale =>
-                log.error(s"Crawl of ${product.name} from $origin failed: leaving previously crawled STALE data (${bb.age.getStandardSeconds} seconds old)", error)
-              case GoodLabel(_,_,bb) if !bb.isStale =>
-                log.warn(s"Crawl of ${product.name} from $origin failed: leaving previously crawled data (${bb.age.getStandardSeconds} seconds old)", error)
-              case BadLabel(_,_,_) =>
+              case bad if bad.isError =>
                 log.error(s"Crawl of ${product.name} from $origin failed: NO data available as this has not been crawled successfuly since Prism started", error)
+              case stale if stale.bestBefore.isStale =>
+                log.error(s"Crawl of ${product.name} from $origin failed: leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
+              case notYetStale if !notYetStale.bestBefore.isStale =>
+                log.warn(s"Crawl of ${product.name} from $origin failed: leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
             }
             previous
         }
@@ -39,5 +47,41 @@ class CollectorAgent[T](val collectors:Seq[Collector[T]]) extends Logging with L
   def shutdown() {
     datumAgents.values.foreach(_.shutdown())
     datumAgents = Map.empty
+  }
+}
+
+case class SourceStatus(state: Label, error: Option[Label] = None) {
+  lazy val latest = error.getOrElse(state)
+}
+
+object CollectorAgent {
+  implicit val actorSystem = ActorSystem("collector-agent")
+  val labelAgent = Agent[Map[(Resource, Origin),SourceStatus]](Map.empty)
+
+  def update(label:Label) {
+    labelAgent.send { previousMap =>
+      val key = (label.resource, label.origin)
+      val previous = previousMap.get(key)
+      val next = label match {
+        case good if !good.isError => SourceStatus(good)
+        case bad => SourceStatus(previous.map(_.state).getOrElse(bad), Some(bad))
+      }
+      previousMap + (key -> next)
+    }
+  }
+
+  def sources:Datum[SourceStatus] = {
+    val statusList = labelAgent().values
+    val statusDates = statusList.map(_.latest.createdAt)
+    val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
+    val label = Label(
+      Resource("sources", org.joda.time.Duration.standardMinutes(5L)),
+      new Origin {
+        def vendor: String = "prism"
+        def account: String = "prism"
+      },
+      oldestDate
+    )
+    Datum(label, statusList.toSeq)
   }
 }

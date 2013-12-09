@@ -53,43 +53,12 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
     }
   }
 
-  /*
-   This performs badly and probably shouldn't be used - here only as an example of this approach
-   */
-  def getInstancesViaAbstraction:Iterable[Instance] = {
-    val nodes = compute.listNodes()
-    nodes.map{ node =>
-      val instance = getUnderlyingInstance(node.getProviderId)
-      Instance.fromApiData(
-        id = s"arn:aws:ec2:${node.getLocation.getParent.getId}:${origin.account}:instance/${node.getProviderId}",
-        name = instance.getDnsName,
-        group = node.getLocation.getId,
-        dnsName = instance.getDnsName,
-        createdAt = new DateTime(instance.getLaunchTime),
-        instanceName = node.getProviderId,
-        internalName = instance.getPrivateDnsName,
-        region = node.getLocation.getParent.getId,
-        vendor = "aws",
-        account = origin.account,
-        accountName = origin.account,
-        tags = node.getUserMetadata.toMap
-      )
-    }
-  }
-
-  def getUnderlyingInstance(providerId:String):RunningInstance = {
-    instanceApi.describeInstancesInRegion(origin.region, providerId).head match {
-      case r:Reservation[RunningInstance] => r.head match {
-        case i:RunningInstance => i
-      }
-    }
-  }
-
   def crawl:Iterable[Instance] = {
     getReservationInstances.map { case (reservation, instance) =>
       Instance.fromApiData(
         id = s"arn:aws:ec2:${origin.region}:${reservation.getOwnerId}:instance/${instance.getId}",
         name = instance.getDnsName,
+        state = instance.getInstanceState.value,
         group = instance.getAvailabilityZone,
         dnsName = instance.getDnsName,
         createdAt = new DateTime(instance.getLaunchTime),
@@ -103,9 +72,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
       )
     }
   }
-
 }
-
 
 case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector {
 
@@ -139,6 +106,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
       Instance.fromApiData(
         id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
         name = dnsName,
+        state = s.getStatus.value,
         group = origin.region,
         dnsName = dnsName,
         createdAt = new DateTime(s.getCreated),
@@ -157,6 +125,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
 object Instance {
   def fromApiData( id: String,
              name: String,
+             state: String,
              group: String,
              dnsName: String,
              createdAt: DateTime,
@@ -173,6 +142,7 @@ object Instance {
     apply(
       id = id,
       name = name,
+      state = state,
       group = group,
       dnsName = dnsName,
       createdAt = createdAt,
@@ -195,6 +165,7 @@ object Instance {
 case class Instance(
                  id: String,
                  name: String,
+                 state: String,
                  group: String,
                  dnsName: String,
                  createdAt: DateTime,

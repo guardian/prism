@@ -7,22 +7,19 @@ import play.api.http.Status
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration.Duration
-import scala.util.matching.Regex
 import play.api.libs.json.Json._
 import model.DataContainer
 import org.joda.time.DateTime
-import utils.Json.DefaultJodaDateWrites
 import collectors._
 import scala.util.Try
 import scala.language.postfixOps
-import utils.Logging
+import utils.{ResourceFilter, Matchable, Logging}
 
-
-// use this when a
+// use this when the API call has illegal parameters
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
   extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
 
-object ApiResult {
+object ApiResult extends Logging {
   val noSourceContainer = new DataContainer {
     val name = "no data source"
     def lastUpdated: DateTime = new DateTime
@@ -46,61 +43,43 @@ object ApiResult {
   }
 
   object mr {
-    implicit val labelWriter = new Writes[Label] {
-      def writes(l: Label): JsValue = {
-        Json.obj(
-          "origin" -> Json.obj(
-            "vendor" -> l.origin.vendor,
-            "account" -> l.origin.account
-          ),
-          "resource" -> l.resource.name,
-          "error" -> l.isError
-        ) ++
-          {
-            l match {
-              case GoodLabel(_,_,bb) => Json.obj(
-                "createdAt" -> bb.created,
-                "age" -> bb.age.getStandardSeconds
-              )
-              case BadLabel(_,_,error) => Json.obj(
-                "errorReason" -> error.getMessage
-              )
-            }
-          }
-      }
-    }
+    import json.writes.model.labelWriter
 
     def apply[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
       async[D](mapSources)(sources => Future.successful(reduce(sources)))
     }
     def async[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
       Try {
-        val sources = mapSources
-        val labels = sources.filter {
+        val filter = ResourceFilter.fromRequest
+        val filteredSources = mapSources.groupBy{ case (label, data) => filter.isMatch(label.origin.filterMap) }
+        if (filteredSources(false).values.exists(_.size == 0)) log.warn("The origin filter contract map has been violated: data exists in a discarded source")
+
+        val sources = filteredSources(true)
+        
+        val usedLabels = sources.filter {
           case (_,data) => !data.isEmpty
         }.keys
-        val staleLabels = sources.keys.filter {
-          case GoodLabel(_,_,bb) => bb.isStale
-          case BadLabel(_,_,_) => true
+        
+        val staleLabels = sources.keys.filter { label => label.bestBefore.isStale }
+
+        val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
+          case dates:Seq[DateTime] if !dates.isEmpty => dates.min(new Ordering[DateTime] {
+            def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
+          })
+          case _ => new DateTime(0)
         }
+
+        val stale = sources.keys.exists(_.bestBefore.isStale)
+
         reduce(sources).map { data =>
           val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
           Results.Ok(Json.obj(
                 "status" -> "success",
-                "lastUpdated" -> labels.flatMap{
-                  case GoodLabel(_,_,bb) => Some(bb.created)
-                  case _ => None
-                }.min(new Ordering[DateTime] {
-                  def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
-                }),
-                "stale" -> labels.exists{
-                  case GoodLabel(_,_,bb) if bb.isStale => true
-                  case BadLabel(_,_,_) => true
-                  case _ => false
-                },
+                "lastUpdated" -> lastUpdated,
+                "stale" -> stale,
                 "staleSources" -> staleLabels,
                 "data" -> dataWithMods,
-                "sources" -> labels
+                "sources" -> usedLabels
               ))
         }
       } recover {
@@ -124,28 +103,16 @@ object ApiResult {
 
   object async {
     def apply[T <: DataContainer](source: T)(block: T => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
-      try {
-        block(source).map { data =>
-          val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
-          Results.Ok(Json.obj(
-            "status" -> "success",
-            "sources" -> Seq(source.name),
-            "lastUpdated" -> source.lastUpdated,
-            "stale" -> source.isStale,
-            "data" -> dataWithMods
-          ))
-        }
-      } catch {
-        case IllegalApiCallException(failure, status) =>
-          Future.successful(Results.Status(status)(Json.obj(
-            "status" -> "fail",
-            "data" -> failure
-          )))
-        case e:Exception =>
-          Future.successful(Results.InternalServerError(Json.obj(
-            "status" -> "error",
-            "message" -> e.getMessage
-          )))
+      val sourceLabel:Label = Label(
+        Resource(source.name, org.joda.time.Duration.standardMinutes(15)),
+        new Origin {
+          def account: String = "unknown"
+          def vendor: String = "unknown"
+        },
+        source.lastUpdated
+      )
+      mr.async(Map(sourceLabel -> Seq())){ emptyMap =>
+        block(source)
       }
     }
     def noSource(block: => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = async(noSourceContainer)(_ => block)
@@ -154,69 +121,18 @@ object ApiResult {
 
 object Api extends Controller with Logging {
 
-  implicit val hostWriter = Json.writes[Host]
-  implicit val instanceWriter = Json.writes[Instance]
-  implicit val dataWriter = Json.writes[Data]
+  import json.writes.model._
 
-  trait Matchable[T] {
-    def isMatch(value: T): Boolean
-  }
-  case class StringMatchable(matcher: String) extends Matchable[String] {
-    def isMatch(value: String): Boolean = value == matcher
-  }
-  case class RegExMatchable(matcher: Regex) extends Matchable[String] {
-    def isMatch(value: String): Boolean = matcher.unapplySeq(value).isDefined
-  }
-  case class InverseMatchable[T](matcher: Matchable[T]) extends Matchable[T] {
-    def isMatch(value: T): Boolean = !matcher.isMatch(value)
-  }
-  case class Filter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] {
-    def isMatch(json: JsValue): Boolean = {
-      filter.map { case (field, values) =>
-        val value = json \ field
-        value match {
-          case JsString(str) => values exists (_.isMatch(str))
-          case JsNumber(int) => values exists (_.isMatch(int.toString))
-          case JsArray(seq) =>
-            seq.exists {
-              case JsString(str) => values exists (_.isMatch(str))
-              case _ => false
-            }
-          case _ => false
-        }
-
-      } forall(ok => ok)
-    }
-  }
-  object Filter {
-    val InverseRegexMatch = """^([a-zA-Z0-9]*)(?:!~|~!)$""".r
-    val InverseMatch = """^([a-zA-Z0-9]*)!$""".r
-    val RegexMatch = """^([a-zA-Z0-9]*)~$""".r
-    val SimpleMatch = """^([a-zA-Z0-9]*)$""".r
-
-    def matcher(key:String, value:String): Option[(String, Matchable[String])] = {
-      key match {
-        case InverseRegexMatch(bareKey) => Some(bareKey -> InverseMatchable(RegExMatchable(value.r)))
-        case RegexMatch(bareKey) => Some(bareKey -> RegExMatchable(value.r))
-        case InverseMatch(bareKey) => Some(bareKey -> InverseMatchable(StringMatchable(value)))
-        case SimpleMatch(bareKey) => Some(bareKey -> StringMatchable(value))
-        case _ => None
-      }
-    }
-
-    def fromRequest(implicit request: RequestHeader): Filter = {
-      val filterKeys = request.queryString.toSeq.flatMap { case (key, values) =>
-        values.flatMap(matcher(key,_))
-      }.groupBy(_._1).mapValues(_.map(_._2))
-      Filter(filterKeys)
-    }
-
-    lazy val all = new Matchable[JsValue] {
-      def isMatch(value: JsValue): Boolean = true
+  def sources = Action.async { implicit request =>
+    ApiResult.mr[SourceStatus] {
+      val sources = CollectorAgent.sources
+      Map(sources.label -> sources.data)
+    } { collection =>
+      toJson(collection.map(_._2).flatten)
     }
   }
 
-  def instanceJson(instance: Instance, expand: Boolean = false, filter: Matchable[JsValue] = Filter.all)(implicit request: RequestHeader): Option[JsValue] = {
+  def instanceJson(instance: Instance, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader): Option[JsValue] = {
     val json = Json.toJson(instance).as[JsObject]
     if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
@@ -231,7 +147,7 @@ object Api extends Controller with Logging {
   def instanceList = Action.async { implicit request =>
     ApiResult.mr {
       val expand = request.getQueryString("_expand").isDefined
-      val filter = Filter.fromRequest
+      val filter = ResourceFilter.fromRequestWithDefaults("state" -> "running", "state" -> "ACTIVE")
       Prism.instanceAgent.get().map { agent => agent.label -> agent.data.flatMap(host => instanceJson(host, expand, filter)) }.toMap
     } { collection =>
       Json.obj(
@@ -251,7 +167,7 @@ object Api extends Controller with Logging {
     }
   }
 
-  def hostJson(instance: Host, expand: Boolean = false, filter: Matchable[JsValue] = Filter.all)(implicit request: RequestHeader): Option[JsValue] = {
+  def hostJson(instance: Host, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader): Option[JsValue] = {
     val json = Json.toJson(instance).as[JsObject]
     if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
@@ -271,7 +187,7 @@ object Api extends Controller with Logging {
   def hostList = Action { implicit request =>
     DeployApiResult { di =>
       val expand = request.getQueryString("_expand").isDefined
-      val filter = Filter.fromRequest
+      val filter = ResourceFilter.fromRequest
       Json.obj(
         "instances" -> di.hosts.flatMap(host => hostJson(host, expand, filter))
       )
@@ -319,7 +235,7 @@ object Api extends Controller with Logging {
   }
 
   def appList = Action { implicit request =>
-    val filter = Filter.fromRequest
+    val filter = ResourceFilter.fromRequest
     DeployApiResult { implicit di =>
       val apps = instanceSummary{ host =>
         host.apps.flatMap{ app =>

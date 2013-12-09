@@ -5,6 +5,8 @@
 GET        /                        controllers.Application.index
 
 # API V1
+GET        /sources                 controllers.Api.sources
+
 GET        /instances               controllers.Api.hostList
 GET        /instances/:id           controllers.Api.host(id)
 GET        /new/instances           controllers.Api.instanceList
