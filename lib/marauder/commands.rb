@@ -21,8 +21,7 @@ def table(rows)
   col_widths = lengths.transpose.map { |column| column.max }
   rows.map { |row| 
     col_widths.each_with_index.map { |width, index| 
-      cell = row[index].nil? ? "" : row[index]
-      cell.ljust(width)
+      (row[index] || "").ljust(width)
     }.join("\t")
   }.join("\n")
 end
@@ -56,7 +55,7 @@ def find_hosts(filter)
   hosts.select do |host|
     query.all? do |name|
       tokens = host["mainclasses"].map{|mc| tokenize(mc)}.flatten + host["mainclasses"] + [host["stage"]]
-      tokens.reject{ |t| t.nil? }.any? {|token| name.match(token.downcase)}
+      tokens.compact.any? {|token| name.match(token.downcase)}
     end
   end
 end
