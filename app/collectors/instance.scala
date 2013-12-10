@@ -156,7 +156,7 @@ object Instance {
       stage = tags.get("Stage"),
       stack = stack,
       apps = apps,
-      mainclasses = tags.get("Mainclass").map(_.split(",").toList).getOrElse(apps.map(a => s"$stack::$a")),
+      mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => apps.map(a => s"$stack::$a"))).getOrElse(Nil),
       role = tags.get("Role")
     )
   }

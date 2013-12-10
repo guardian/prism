@@ -2,28 +2,26 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET        /                        controllers.Application.index
+GET        /                              controllers.Application.index
 
 # API V1
-GET        /sources                 controllers.Api.sources
+GET        /empty                         controllers.Api.empty
+GET        /sources                       controllers.Api.sources
 
-GET        /instances               controllers.Api.hostList
-GET        /instances/:id           controllers.Api.host(id)
-GET        /new/instances           controllers.Api.instanceList
-GET        /new/instances/:id       controllers.Api.instance(id)
-GET        /regions                 controllers.Api.regionList
-GET        /accounts                controllers.Api.accountList
-GET        /vendors                 controllers.Api.vendorList
-GET        /apps                    controllers.Api.appList
-GET        /stacks                  controllers.Api.stackList
-GET        /stages                  controllers.Api.stageList
-GET        /roles                   controllers.Api.roleList
-GET        /mainclasses             controllers.Api.mainclassList
-GET        /empty                   controllers.Api.empty
+GET        /instances                     controllers.Api.instanceList
+GET        /instances/regions             controllers.Api.regionList
+GET        /instances/accountNames        controllers.Api.accountNameList
+GET        /instances/vendors             controllers.Api.vendorList
+GET        /instances/apps                controllers.Api.appList
+GET        /instances/stacks              controllers.Api.stackList
+GET        /instances/stages              controllers.Api.stageList
+GET        /instances/roles               controllers.Api.roleList
+GET        /instances/mainclasses         controllers.Api.mainclassList
+GET        /instances/:id                 controllers.Api.instance(id)
 
-GET        /data/keys               controllers.Api.dataKeysList
-GET        /data/list               controllers.Api.dataList
-GET        /data/lookup/:key        controllers.Api.dataLookup(key)
+GET        /data/keys                     controllers.Api.dataKeysList
+GET        /data/list                     controllers.Api.dataList
+GET        /data/lookup/:key              controllers.Api.dataLookup(key)
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file            controllers.Assets.at(path="/public", file)
+GET        /assets/*file                  controllers.Assets.at(path="/public", file)

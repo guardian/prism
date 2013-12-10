@@ -14,6 +14,7 @@ import collectors._
 import scala.util.Try
 import scala.language.postfixOps
 import utils.{ResourceFilter, Matchable, Logging}
+import json.writes.joda._
 
 // use this when the API call has illegal parameters
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -52,14 +53,14 @@ object ApiResult extends Logging {
       Try {
         val filter = ResourceFilter.fromRequest
         val filteredSources = mapSources.groupBy{ case (label, data) => filter.isMatch(label.origin.filterMap) }
-        if (filteredSources(false).values.exists(_.size == 0)) log.warn("The origin filter contract map has been violated: data exists in a discarded source")
+        filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn("The origin filter contract map has been violated: data exists in a discarded source"))
 
-        val sources = filteredSources(true)
-        
+        val sources:Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
+
         val usedLabels = sources.filter {
           case (_,data) => !data.isEmpty
         }.keys
-        
+
         val staleLabels = sources.keys.filter { label => label.bestBefore.isStale }
 
         val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
@@ -91,7 +92,8 @@ object ApiResult extends Logging {
         case e:Exception =>
           Future.successful(Results.InternalServerError(Json.obj(
             "status" -> "error",
-            "message" -> e.getMessage
+            "message" -> e.getMessage,
+            "stacktrace" -> e.getStackTrace.map(_.toString)
           )))
       } get
     }
@@ -111,7 +113,7 @@ object ApiResult extends Logging {
         },
         source.lastUpdated
       )
-      mr.async(Map(sourceLabel -> Seq())){ emptyMap =>
+      mr.async(Map(sourceLabel -> Seq("dummy"))){ emptyMap =>
         block(source)
       }
     }
@@ -122,6 +124,29 @@ object ApiResult extends Logging {
 object Api extends Controller with Logging {
 
   import json.writes.model._
+
+  def sortString(jsv: JsValue):String =
+    jsv match {
+      case JsString(str) => str
+      case JsArray(seq) => seq.map(sortString).mkString
+      case JsObject(fields) => fields.map{case(key, value) => s"${key}${sortString(value)}"}.mkString
+      case _ => ""
+    }
+
+
+  def summary[T](sourceAgent: CollectorAgent[T], transform: T => Iterable[JsValue], key: String, enableFilter: Boolean = false)(implicit ordering:Ordering[String]) =
+    Action.async { implicit request =>
+      ApiResult.mr[JsValue] {
+        sourceAgent.get().map { datum => datum.label -> datum.data.flatMap(transform)}.toMap
+      } { transformed =>
+        val objects = transformed.values.toSeq.flatten.distinct.sortBy(sortString)(ordering)
+        val filteredObjects = if (enableFilter) {
+          val filter = ResourceFilter.fromRequest
+          objects.filter(filter.isMatch)
+        } else objects
+        Json.obj(key -> Json.toJson(filteredObjects))
+      }
+    }
 
   def sources = Action.async { implicit request =>
     ApiResult.mr[SourceStatus] {
@@ -167,86 +192,25 @@ object Api extends Controller with Logging {
     }
   }
 
-  def hostJson(instance: Host, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader): Option[JsValue] = {
-    val json = Json.toJson(instance).as[JsObject]
-    if (filter.isMatch(json)) {
-      val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
-      Some(filtered ++ Json.obj("meta"-> Json.obj(
-        "href" -> routes.Api.host(instance.id).absoluteURL()
-      )))
-    } else {
-      None
-    }
-  }
-
-  def DeployApiResult(block: DeployInfo => JsValue)(implicit request:RequestHeader) = ApiResult(DeployInfoManager.deployInfo)(block)
-
   // an empty endpoint simply for getting metadata from
   def empty = Action { implicit request => DeployApiResult { di => Json.obj() }}
 
-  def hostList = Action { implicit request =>
-    DeployApiResult { di =>
-      val expand = request.getQueryString("_expand").isDefined
-      val filter = ResourceFilter.fromRequest
-      Json.obj(
-        "instances" -> di.hosts.flatMap(host => hostJson(host, expand, filter))
-      )
-    }
-  }
-  def host(id:String) = Action { implicit request =>
-    DeployApiResult { di =>
-      val instance = di.hosts.find(_.id == id).getOrElse(throw new IllegalApiCallException(Json.obj("id" -> "unknown ID")))
-      hostJson(instance, true).get
-    }
-  }
+  def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
+  def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
+  def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
+  def stageList =
+    summary[Instance](Prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(conf.Configuration.stages.ordering)
+  def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
+  def accountNameList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.accountName)), "accountNames")
+  def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "regions")
+  def appList = summary[Instance](
+    Prism.instanceAgent,
+    i => i.apps.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
+    "apps",
+    enableFilter = true
+  )
 
-  def instanceSummary(transform: Host => Seq[JsValue])(implicit di:DeployInfo, ordering:Ordering[String]) = {
-    def sortString(jsv: JsValue):String =
-      jsv match {
-        case JsString(str) => str
-        case JsArray(seq) => seq.map(sortString).mkString
-        case JsObject(fields) => fields.map{case(key, value) => s"${key}${sortString(value)}"}.mkString
-        case _ => ""
-      }
-
-    di.hosts.flatMap(transform).distinct.sortBy(sortString)(ordering)
-  }
-
-  def roleList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj( "roles" -> instanceSummary(host => Seq(Json.toJson(host.role))) ) }
-  }
-  def mainclassList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("mainclasses" -> instanceSummary(host => host.mainclasses.map(Json.toJson(_)))) }
-  }
-  def stackList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("stacks" -> instanceSummary(host => host.stack.map(Json.toJson(_)).toSeq)) }
-  }
-  def stageList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("stages" -> instanceSummary(host => Seq(Json.toJson(host.stage)))(di, conf.Configuration.stages.ordering)) }
-  }
-  def regionList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("regions" -> instanceSummary(host => Seq(Json.toJson(host.region)))) }
-  }
-  def accountList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("accounts" -> instanceSummary(host => Seq(Json.toJson(host.account)))) }
-  }
-  def vendorList = Action { implicit request =>
-    DeployApiResult { implicit di => Json.obj("vendors" -> instanceSummary(host => Seq(Json.toJson(host.vendor)))) }
-  }
-
-  def appList = Action { implicit request =>
-    val filter = ResourceFilter.fromRequest
-    DeployApiResult { implicit di =>
-      val apps = instanceSummary{ host =>
-        host.apps.flatMap{ app =>
-          host.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))).filter(filter.isMatch)
-        }.toSeq
-      }
-      Json.obj(
-        "apps" -> apps
-      )
-    }
-  }
+  def DeployApiResult(block: DeployInfo => JsValue)(implicit request:RequestHeader) = ApiResult(DeployInfoManager.deployInfo)(block)
 
   def dataList = Action { implicit request =>
     DeployApiResult { implicit di =>
