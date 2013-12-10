@@ -2,7 +2,7 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
-import deployinfo.{DeployInfo, Data, Host, DeployInfoManager}
+import deployinfo.{DeployInfo, DeployInfoManager}
 import play.api.http.Status
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._

@@ -2,7 +2,7 @@ package json
 
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
-import deployinfo.{Data, Host}
+import deployinfo.{Data}
 import collectors.{SourceStatus, Label, Origin, Instance}
 import play.api.libs.json.JsString
 
@@ -16,7 +16,6 @@ object writes {
   object model {
     import joda.dateTime
 
-    implicit val hostWriter = Json.writes[Host]
     implicit val instanceWriter = Json.writes[Instance]
     implicit val dataWriter = Json.writes[Data]
 
