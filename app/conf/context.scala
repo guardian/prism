@@ -7,10 +7,10 @@ import play.api.{Mode, Play}
 import com.gu.management._
 import com.gu.management.play.{RequestMetrics, Management => GuManagement}
 import com.gu.management.logback.LogbackLevelPage
-import collectors.{OpenstackOrigin, AmazonOrigin}
+import collectors.{JsonOrigin, OpenstackOrigin, AmazonOrigin}
 
 object App {
-  val name: String = "prism" //if (Play.current.mode == Mode.Test) "prism-test" else "prism"
+  val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
 }
 
 class Configuration(val application: String, val webappConfDirectory: String = "env") extends Logging {
@@ -50,8 +50,10 @@ class Configuration(val application: String, val webappConfDirectory: String = "
   }
 
   object accounts {
+    lazy val lazyStartup = configuration.getStringProperty("accounts.lazyStartup", "true") == "true"
+    lazy val all = aws.list ++ openstack.list ++ json.list
     object aws extends NamedProperties(configuration, "accounts.aws") {
-      val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
+      lazy val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
       val list = names.toSeq.sorted.map { name =>
           val region = getStringProperty(name, "region", defaultRegion)
           val accessKey = getStringProperty(name, "accessKey")
@@ -60,13 +62,21 @@ class Configuration(val application: String, val webappConfDirectory: String = "
         }
     }
     object openstack extends NamedProperties(configuration, "accounts.openstack") {
-      val list = names.toSeq.sorted.map { name =>
+      lazy val list = names.toSeq.sorted.map { name =>
         val tenant = getStringProperty(name, "tenant")
         val region = getStringProperty(name, "region")
         val endpoint = getStringProperty(name, "endpoint")
         val accessKey = getStringProperty(name, "user")
         val secretKey = getStringProperty(name, "secret")
         OpenstackOrigin(endpoint, region, tenant, accessKey)(secretKey)
+      }
+    }
+    object json extends NamedProperties(configuration, "accounts.json") {
+      lazy val list = names.toSeq.sorted.map { name =>
+        val vendor = getStringProperty(name, "vendor", "file")
+        val account = getStringProperty(name, "account")
+        val url = getStringProperty(name, "url")
+        JsonOrigin(vendor, account, url)
       }
     }
   }

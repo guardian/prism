@@ -11,20 +11,28 @@ import org.jclouds.openstack.nova.v2_0.NovaApi
 import org.jclouds.openstack.nova.v2_0.domain.Server
 import java.net.InetAddress
 import conf.Configuration.accounts
+import play.api.libs.json.Json
 
 object InstanceCollector {
   def apply(origin:Origin): InstanceCollector = {
     origin match {
+      case json:JsonOrigin => JsonInstanceCollector(json)
       case amazon:AmazonOrigin => AWSInstanceCollector(amazon)
       case openstack:OpenstackOrigin => OSInstanceCollector(openstack)
     }
   }
 
-  val collectors = (accounts.aws.list ++ accounts.openstack.list).map(InstanceCollector(_))
+  val collectors = accounts.all.map(InstanceCollector(_))
 }
 
 trait InstanceCollector extends Collector[Instance] {
-  def product: Resource = Resource("instance", Duration.standardMinutes(15L))
+  def resource: Resource = Resource("instance", Duration.standardMinutes(15L))
+}
+
+case class JsonInstanceCollector(origin:JsonOrigin) extends InstanceCollector with JsonCollector[Instance] {
+  import jsonimplicits.joda.dateTimeReads
+  implicit val instanceReads = Json.reads[Instance]
+  def crawl: Iterable[Instance] = crawlJson
 }
 
 case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector with Logging {

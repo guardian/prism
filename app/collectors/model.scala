@@ -4,6 +4,13 @@ import org.joda.time.{Duration, DateTime}
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
+import play.api.libs.json._
+import scala.io.Source
+import java.net.{URLConnection, URL, URLStreamHandler}
+import java.io.FileNotFoundException
+import play.api.libs.json.JsArray
+import scala.Some
+import utils.Logging
 
 trait Origin {
   def vendor: String
@@ -20,11 +27,29 @@ case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:S
   lazy val account = s"$tenant@$region"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "account" -> tenant, "accountName" -> tenant)
 }
+case class JsonOrigin(vendor:String, account:String, url:String) extends Origin {
+  private val classpathHandler = new URLStreamHandler {
+    override def openConnection(u: URL): URLConnection = {
+      Option(getClass.getResource(u.getPath)).map(_.openConnection()).getOrElse{
+        throw new FileNotFoundException("%s not found on classpath" format u.getPath)
+      }
+    }
+  }
+
+  def data(resource:Resource):JsValue = {
+    val actualUrl = url.replace("%resource%", resource.name) match {
+      case classPathLocation if classPathLocation.startsWith("classpath:") => new URL(null, classPathLocation, classpathHandler)
+      case otherURL => new URL(otherURL)
+    }
+    val jsonText = Source.fromURL(actualUrl, "utf-8").getLines().mkString
+    Json.parse(jsonText)
+  }
+}
 
 trait Collector[T] {
   def crawl:Iterable[T]
   def origin:Origin
-  def product:Resource
+  def resource:Resource
 }
 
 object Datum {
@@ -41,8 +66,8 @@ object Datum {
 case class Datum[T](label:Label, data:Seq[T])
 
 object Label {
-  def apply[T](c: Collector[T]): Label = Label(c.product, c.origin)
-  def apply[T](c: Collector[T], error: Throwable): Label = Label(c.product, c.origin, error = Some(error))
+  def apply[T](c: Collector[T]): Label = Label(c.resource, c.origin)
+  def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, error = Some(error))
 }
 case class Label(resource:Resource, origin:Origin, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
   lazy val isError = error.isDefined
@@ -56,4 +81,24 @@ case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
   val bestBefore:DateTime = created plus shelfLife
   def isStale:Boolean = error || (new DateTime() compareTo bestBefore) >= 0
   def age:Duration = new Duration(created, new DateTime)
+}
+
+trait JsonCollector[T] extends Logging {
+  def origin:JsonOrigin
+  def resource:Resource
+  def json:JsValue = origin.data(resource)
+  def crawlJson(implicit writes:Reads[T]):Iterable[T] = {
+    try {
+      Json.fromJson[Seq[T]](json) match {
+        case JsError(errors) =>
+          log.warn(s"Encountered failure to parse json source: $errors")
+          Nil
+        case JsSuccess(result, _) => result
+      }
+    } catch {
+      case NonFatal(t) =>
+        println(s"Failed ${t.getMessage}")
+        Nil
+    }
+  }
 }

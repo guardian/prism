@@ -14,7 +14,7 @@ import collectors._
 import scala.util.Try
 import scala.language.postfixOps
 import utils.{ResourceFilter, Matchable, Logging}
-import json.writes.joda._
+import jsonimplicits.joda._
 
 // use this when the API call has illegal parameters
 case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
@@ -44,7 +44,7 @@ object ApiResult extends Logging {
   }
 
   object mr {
-    import json.writes.model.labelWriter
+    import jsonimplicits.model.labelWriter
 
     def apply[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
       async[D](mapSources)(sources => Future.successful(reduce(sources)))
@@ -123,7 +123,7 @@ object ApiResult extends Logging {
 
 object Api extends Controller with Logging {
 
-  import json.writes.model._
+  import jsonimplicits.model._
 
   def sortString(jsv: JsValue):String =
     jsv match {

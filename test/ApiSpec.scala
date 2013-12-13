@@ -67,40 +67,30 @@ class ApiSpec extends Specification {
     }
 
     "return a list of instances" in new WithApplication{
-      pending
-//      val home = route(FakeRequest(GET, "/instances")).get
-//      status(home) must equalTo(OK)
-//      contentType(home) must beSome("application/json")
-//      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
-//      jsonInstances must beLike { case JsArray(_) => ok }
+      val home = route(FakeRequest(GET, "/instances")).get
+      status(home) must equalTo(OK)
+      contentType(home) must beSome("application/json")
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 15
     }
 
     "filter a list of instances" in new WithApplication {
-      pending
-//      val home = route(FakeRequest(GET, "/instances?stage=PROD")).get
-//      val jsonInstances = contentAsJson(home) \ "data" \ "instances" \\ "stage"
-//      jsonInstances.forall(_.as[JsString].value == "PROD")
+      val home = route(FakeRequest(GET, "/instances?vendor=aws")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual 8
     }
 
     "invert filter a list of instances" in new WithApplication {
-      pending
-//      val home = route(FakeRequest(GET, "/instances?stage!=CODE")).get
-//      val jsonInstances = contentAsJson(home) \ "data" \ "instances" \\ "stage"
-//      jsonInstances.forall(_.as[JsString].value != "CODE")
+      val home = route(FakeRequest(GET, "/instances?vendor!=aws")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual 7
     }
 
     "filter a list of instances using a regex" in new WithApplication {
-      pending
-//      val home = route(FakeRequest(GET, "/instances?mainclasses~=.*r2football")).get
-//      val jsonInstances = contentAsJson(home) \ "data" \ "instances" \\ "mainclasses"
-//      jsonInstances.forall{
-//        case JsArray(jsv) =>
-//          jsv.exists{
-//            case JsString(mainclass) => mainclass.endsWith("r2football")
-//            case _ => false
-//          }
-//        case _ => false
-//      }
+      val home = route(FakeRequest(GET, "/instances?mainclasses~=.*db.*")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual 6
     }
   }
 }
