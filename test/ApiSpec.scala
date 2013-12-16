@@ -59,27 +59,11 @@ class ApiSpec extends Specification {
       })
       contentAsJson(success) \ "data" \ "test.length" mustEqual JsNumber(3)
     }
-
-    "add data source name, age and data stale fields based on sources of data" in {
-      case class FakeDataContainer(lastUpdated: DateTime) extends DataContainer {
-        val name: String = "fake"
-        val data = Json.obj("test" -> "the data source")
-        val isStale = false
-      }
-      val fakeSource = FakeDataContainer(new DateTime())
-      implicit val request = FakeRequest(GET, "/test")
-      val success = Future.successful(ApiResult(fakeSource) { source =>
-        source.data
-      })
-      contentAsJson(success) \ "sources" mustEqual JsArray(Seq(JsString("fake")))
-      contentAsJson(success) \ "stale" mustEqual JsBoolean(false)
-      contentAsJson(success) \ "lastUpdated" mustEqual JsString(ISODateTimeFormat.dateTime().print(fakeSource.lastUpdated))
-    }
   }
 
   "Application" should {
     "send 404 on a bad request" in new WithApplication{
-      route(FakeRequest(GET, "/boum")) must beNone
+      route(FakeRequest(GET, "/boom")) must beNone
     }
 
     "return a list of instances" in new WithApplication{
@@ -88,25 +72,25 @@ class ApiSpec extends Specification {
       contentType(home) must beSome("application/json")
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
       jsonInstances must beLike { case JsArray(_) => ok }
-      jsonInstances.as[JsArray].value.length mustEqual(4)
+      jsonInstances.as[JsArray].value.length mustEqual 15
     }
 
     "filter a list of instances" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?stage=PROD")).get
+      val home = route(FakeRequest(GET, "/instances?vendor=aws")).get
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
-      jsonInstances.as[JsArray].value.length mustEqual(2)
+      jsonInstances.as[JsArray].value.length mustEqual 8
     }
 
     "invert filter a list of instances" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?stage!=CODE")).get
+      val home = route(FakeRequest(GET, "/instances?vendor!=aws")).get
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
-      jsonInstances.as[JsArray].value.length mustEqual(2)
+      jsonInstances.as[JsArray].value.length mustEqual 7
     }
 
     "filter a list of instances using a regex" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?mainclasses~=.*r2football")).get
+      val home = route(FakeRequest(GET, "/instances?mainclasses~=.*db.*")).get
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
-      jsonInstances.as[JsArray].value.length mustEqual(1)
+      jsonInstances.as[JsArray].value.length mustEqual 6
     }
   }
 }

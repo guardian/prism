@@ -29,7 +29,7 @@ object DeployInfoManager extends LifecycleWithoutApp with Logging {
 
   private def getDeployInfo = {
     import sys.process._
-    log.info("Populating deployinfo hosts...")
+    log.info("Populating deployinfo ...")
     val deployInfoJsonOption: Option[String] = Configuration.deployinfo.mode match {
       case DeployInfoMode.Execute =>
         if (new File(Configuration.deployinfo.location).exists) {
@@ -70,8 +70,7 @@ object DeployInfoManager extends LifecycleWithoutApp with Logging {
       }
 
 
-      log.info("Successfully retrieved deployinfo (%d hosts and %d data found)" format (
-        deployInfo.hosts.size, deployInfo.data.values.map(_.size).fold(0)(_+_)))
+      log.info("Successfully retrieved deployinfo (%d data found)" format deployInfo.data.values.map(_.size).fold(0)(_+_))
 
       deployInfo
     }
@@ -99,8 +98,6 @@ object DeployInfoManager extends LifecycleWithoutApp with Logging {
   def deployInfo = agent.map(_()).getOrElse(DeployInfo())
   def isStale = deployInfo.isStale
 
-  def stageList = deployInfo.knownHostStages.sorted(conf.Configuration.stages.ordering)
-  def hostList = deployInfo.hosts
   def dataList = deployInfo.data
 
   def shutdown() {
