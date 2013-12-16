@@ -5,20 +5,20 @@ import akka.agent.Agent
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.joda.time.{DateTime, Interval, LocalDate, LocalTime}
-import play.api.libs.concurrent.Execution.Implicits._
+import scala.concurrent.ExecutionContext
 
 object ScheduledAgent extends LifecycleWithoutApp {
   var scheduleSystem:Option[ActorSystem] = None
 
-  def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration)(block: => T): ScheduledAgent[T] = {
+  def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration)(block: => T)(implicit ec:ExecutionContext): ScheduledAgent[T] = {
     ScheduledAgent(initialDelay, frequency, block)(_ => block)
   }
 
-  def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration, initialValue: T)(block: T => T): ScheduledAgent[T] = {
+  def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration, initialValue: T)(block: T => T)(implicit ec:ExecutionContext): ScheduledAgent[T] = {
     ScheduledAgent(initialValue, PeriodicScheduledAgentUpdate(block, initialDelay, frequency))
   }
 
-  def apply[T](initialValue: T, updates: ScheduledAgentUpdate[T]*): ScheduledAgent[T] = {
+  def apply[T](initialValue: T, updates: ScheduledAgentUpdate[T]*)(implicit ec:ExecutionContext): ScheduledAgent[T] = {
     new ScheduledAgent(scheduleSystem.get, initialValue, updates:_*)
   }
 
@@ -71,7 +71,7 @@ object DailyScheduledAgentUpdate {
   def apply[T](timeOfDay: LocalTime)(block: T => T): DailyScheduledAgentUpdate[T] = DailyScheduledAgentUpdate(block, timeOfDay)
 }
 
-class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: ScheduledAgentUpdate[T]*) extends Logging {
+class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: ScheduledAgentUpdate[T]*)(implicit ec:ExecutionContext) extends Logging {
 
   val agent = Agent[T](initialValue)(system)
 

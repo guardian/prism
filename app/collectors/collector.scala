@@ -1,13 +1,18 @@
 package collectors
 
+import play.api.libs.concurrent.Akka
 import utils.{LifecycleWithoutApp, Logging, ScheduledAgent}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import akka.agent.Agent
 import org.joda.time.DateTime
 import akka.actor.ActorSystem
+import play.api.Play.current
+import scala.concurrent.ExecutionContext
 
 class CollectorAgent[T](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
+
+  implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
 
   private var datumAgents:Map[Collector[T], ScheduledAgent[Datum[T]]] = Map.empty
 
