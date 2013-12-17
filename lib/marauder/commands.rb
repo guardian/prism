@@ -9,7 +9,13 @@ require 'commander/import'
 program :version, Marauder::VERSION
 program :description, 'command-line tool to locate infrastructure'
 
-API = 'http://prism.gutools.co.uk/instances'
+PRISM_URL = 'http://prism.gutools.co.uk/instances'
+
+class Api 
+  include HTTParty
+  #debug_output $stderr
+  disable_rails_query_string_format
+end
 
 # If you're sshing into too many hosts, you might be doing something wrong
 MAX_SSH_HOSTS = 4
@@ -35,12 +41,17 @@ end
 
 def find_hosts(filter)
   prism_filters = filter.select{ |f| f =~ /=/ }
+
   api_query = Hash[prism_filters.map { |f|
     param = f.split('=')
     [param[0], param[1]]
+  }.group_by { |pair| 
+    pair[0] 
+  }.map { |key, kvs| 
+    [key, kvs.map{|v| v[1]}]
   }]
 
-  data = HTTParty.get(API, :query => {:_expand => true}.merge(api_query))
+  data = Api.get(PRISM_URL, :query => {:_expand => true}.merge(api_query))
 
   if data["stale"]
     update_time = data["lastUpdated"]
