@@ -66,7 +66,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
       Instance.fromApiData(
         id = s"arn:aws:ec2:${origin.region}:${reservation.getOwnerId}:instance/${instance.getId}",
         name = instance.getDnsName,
-        vendorState = instance.getInstanceState.value,
+        vendorState = Some(instance.getInstanceState.value),
         group = instance.getAvailabilityZone,
         dnsName = instance.getDnsName,
         createdAt = new DateTime(instance.getLaunchTime),
@@ -114,7 +114,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
       Instance.fromApiData(
         id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
         name = dnsName,
-        vendorState = s.getStatus.value,
+        vendorState = Some(s.getStatus.value),
         group = origin.region,
         dnsName = dnsName,
         createdAt = new DateTime(s.getCreated),
@@ -133,7 +133,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector
 object Instance {
   def fromApiData( id: String,
              name: String,
-             vendorState: String,
+             vendorState: Option[String],
              group: String,
              dnsName: String,
              createdAt: DateTime,
@@ -173,7 +173,7 @@ object Instance {
 case class Instance(
                  id: String,
                  name: String,
-                 vendorState: String,
+                 vendorState: Option[String],
                  group: String,
                  dnsName: String,
                  createdAt: DateTime,
