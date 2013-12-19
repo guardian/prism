@@ -13,29 +13,21 @@ import java.net.InetAddress
 import conf.Configuration.accounts
 import play.api.libs.json.Json
 
-object InstanceCollector {
-  def apply(origin:Origin): InstanceCollector = {
-    origin match {
-      case json:JsonOrigin => JsonInstanceCollector(json)
-      case amazon:AmazonOrigin => AWSInstanceCollector(amazon)
-      case openstack:OpenstackOrigin => OSInstanceCollector(openstack)
-    }
+object InstanceCollectorSet extends CollectorSet[Instance](Resource("instance", Duration.standardMinutes(15L))) {
+  val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
+    case json:JsonOrigin => JsonInstanceCollector(json, resource)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
+    case openstack:OpenstackOrigin => OSInstanceCollector(openstack, resource)
   }
-
-  val collectors = accounts.all.map(InstanceCollector(_))
 }
 
-trait InstanceCollector extends Collector[Instance] {
-  def resource: Resource = Resource("instance", Duration.standardMinutes(15L))
-}
-
-case class JsonInstanceCollector(origin:JsonOrigin) extends InstanceCollector with JsonCollector[Instance] {
+case class JsonInstanceCollector(origin:JsonOrigin, resource:Resource) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
   implicit val instanceReads = Json.reads[Instance]
   def crawl: Iterable[Instance] = crawlJson
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource:Resource) extends Collector[Instance] with Logging {
 
   lazy val context = ContextBuilder.newBuilder("aws-ec2")
     .credentials(origin.accessKey, origin.secretKey)
@@ -82,7 +74,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
   }
 }
 
-case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector {
+case class OSInstanceCollector(origin:OpenstackOrigin, resource:Resource) extends Collector[Instance] {
 
   lazy val context = ContextBuilder.newBuilder("openstack-nova")
     .endpoint(origin.endpoint)

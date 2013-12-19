@@ -108,8 +108,9 @@ object ApiResult extends Logging {
       val sourceLabel:Label = Label(
         Resource(source.name, org.joda.time.Duration.standardMinutes(15)),
         new Origin {
-          def account: String = "unknown"
-          def vendor: String = "unknown"
+          val account = "unknown"
+          val vendor = "unknown"
+          val resources = Set.empty[String]
         },
         source.lastUpdated
       )
@@ -189,6 +190,17 @@ object Api extends Controller with Logging {
       }.toMap
     } { sources =>
       instanceJson(sources.values.flatten.head, true).get
+    }
+  }
+
+  def hardwareList = Action.async { implicit request =>
+    ApiResult.mr {
+      val requestFilter = ResourceFilter.fromRequest
+      Prism.hardwareAgent.get().map { agent =>
+        agent.label -> agent.data.map(hardware => Json.toJson(hardware)).filter(json => requestFilter.isMatch(json))
+      }.toMap
+    } { sources =>
+      Json.obj("hardware" -> toJson(sources.values.flatten))
     }
   }
 

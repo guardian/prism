@@ -8,26 +8,27 @@ import play.api.libs.json._
 import scala.io.Source
 import java.net.{URLConnection, URL, URLStreamHandler}
 import java.io.FileNotFoundException
-import play.api.libs.json.JsArray
 import scala.Some
 import utils.Logging
+import conf.Configuration.accounts
 
 trait Origin {
   def vendor: String
   def account: String
   def filterMap: Map[String,String] = Map.empty
+  def resources: Set[String]
 }
 
-case class AmazonOrigin(account:String, region:String, accessKey:String)(val secretKey:String) extends Origin {
+case class AmazonOrigin(account:String, region:String, accessKey:String, resources:Set[String])(val secretKey:String) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
 }
-case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String)(val secret:String) extends Origin {
+case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String, resources:Set[String])(val secret:String) extends Origin {
   lazy val vendor = "openstack"
   lazy val account = s"$tenant@$region"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "account" -> tenant, "accountName" -> tenant)
 }
-case class JsonOrigin(vendor:String, account:String, url:String) extends Origin {
+case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin {
   private val classpathHandler = new URLStreamHandler {
     override def openConnection(u: URL): URLConnection = {
       Option(getClass.getResource(u.getPath)).map(_.openConnection()).getOrElse{
@@ -44,6 +45,14 @@ case class JsonOrigin(vendor:String, account:String, url:String) extends Origin 
     val jsonText = Source.fromURL(actualUrl, "utf-8").getLines().mkString
     Json.parse(jsonText)
   }
+}
+
+abstract class CollectorSet[T](val resource:Resource) extends Logging {
+  def lookupCollector:PartialFunction[Origin, Collector[T]]
+  def collectorFor(origin:Origin): Option[Collector[T]] = {
+    if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
+  }
+  lazy val collectors = accounts.forResource(resource.name).flatMap(collectorFor(_))
 }
 
 trait Collector[T] {
@@ -83,17 +92,20 @@ case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
   def age:Duration = new Duration(created, new DateTime)
 }
 
-trait JsonCollector[T] extends Logging {
+trait JsonCollector[T] extends JsonCollectorTranslator[T,T] with Logging {
+  def translate(input: T) = input
+}
+
+trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
   def origin:JsonOrigin
-  def resource:Resource
   def json:JsValue = origin.data(resource)
-  def crawlJson(implicit writes:Reads[T]):Iterable[T] = {
+  def crawlJson(implicit writes:Reads[F]):Iterable[T] = {
     try {
-      Json.fromJson[Seq[T]](json) match {
+      Json.fromJson[Seq[F]](json) match {
         case JsError(errors) =>
           log.warn(s"Encountered failure to parse json source: $errors")
           Nil
-        case JsSuccess(result, _) => result
+        case JsSuccess(result, _) => result.map(translate)
       }
     } catch {
       case NonFatal(t) =>
@@ -101,4 +113,5 @@ trait JsonCollector[T] extends Logging {
         Nil
     }
   }
+  def translate(input: F): T
 }

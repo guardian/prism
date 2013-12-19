@@ -36,6 +36,8 @@ class Configuration(val application: String, val webappConfDirectory: String = "
     def getStringProperty(name:String, property:String): String = getStringPropertyOption(name, property).getOrElse {
       throw new IllegalStateException(s"No $property property specified for $name (expected $prefix.$name.$property)")
     }
+    def getStringPropertiesSplitByComma(name:String, property:String) =
+      configuration.getStringPropertiesSplitByComma(s"$prefix.$name.$property")
   }
 
   object deployinfo {
@@ -52,13 +54,15 @@ class Configuration(val application: String, val webappConfDirectory: String = "
   object accounts {
     lazy val lazyStartup = configuration.getStringProperty("accounts.lazyStartup", "true") == "true"
     lazy val all = aws.list ++ openstack.list ++ json.list
+    def forResource(resource:String) = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
     object aws extends NamedProperties(configuration, "accounts.aws") {
       lazy val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
       val list = names.toSeq.sorted.map { name =>
           val region = getStringProperty(name, "region", defaultRegion)
           val accessKey = getStringProperty(name, "accessKey")
           val secretKey = getStringProperty(name, "secretKey")
-          AmazonOrigin(name, region, accessKey)(secretKey)
+          val resources = getStringPropertiesSplitByComma(name, "resources")
+          AmazonOrigin(name, region, accessKey, resources.toSet)(secretKey)
         }
     }
     object openstack extends NamedProperties(configuration, "accounts.openstack") {
@@ -68,15 +72,17 @@ class Configuration(val application: String, val webappConfDirectory: String = "
         val endpoint = getStringProperty(name, "endpoint")
         val accessKey = getStringProperty(name, "user")
         val secretKey = getStringProperty(name, "secret")
-        OpenstackOrigin(endpoint, region, tenant, accessKey)(secretKey)
+        val resources = getStringPropertiesSplitByComma(name, "resources")
+        OpenstackOrigin(endpoint, region, tenant, accessKey, resources.toSet)(secretKey)
       }
     }
     object json extends NamedProperties(configuration, "accounts.json") {
       lazy val list = names.toSeq.sorted.map { name =>
         val vendor = getStringProperty(name, "vendor", "file")
         val account = getStringProperty(name, "account")
+        val resources = getStringPropertiesSplitByComma(name, "resources")
         val url = getStringProperty(name, "url")
-        JsonOrigin(vendor, account, url)
+        JsonOrigin(vendor, account, url, resources.toSet)
       }
     }
   }

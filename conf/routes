@@ -8,9 +8,9 @@ GET        /                              controllers.Application.index
 GET        /empty                         controllers.Api.empty
 GET        /sources                       controllers.Api.sources
 
-GET        /apps                controllers.Api.appList
-GET        /stacks              controllers.Api.stackList
-GET        /stages              controllers.Api.stageList
+GET        /apps                          controllers.Api.appList
+GET        /stacks                        controllers.Api.stackList
+GET        /stages                        controllers.Api.stageList
 
 GET        /instances                     controllers.Api.instanceList
 GET        /instances/regions             controllers.Api.regionList
@@ -19,6 +19,8 @@ GET        /instances/vendors             controllers.Api.vendorList
 GET        /instances/roles               controllers.Api.roleList
 GET        /instances/mainclasses         controllers.Api.mainclassList
 GET        /instances/:id                 controllers.Api.instance(id)
+
+GET        /hardware                      controllers.Api.hardwareList
 
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/list                     controllers.Api.dataList

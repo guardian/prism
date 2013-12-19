@@ -1,9 +1,10 @@
 package controllers
 
-import collectors.{Instance, InstanceCollector, CollectorAgent}
+import collectors._
 
 object Prism {
   val lazyStartup = conf.Configuration.accounts.lazyStartup
-  val instanceAgent = new CollectorAgent[Instance](InstanceCollector.collectors, lazyStartup)
-  val allAgents = Seq(instanceAgent)
+  val instanceAgent = new CollectorAgent[Instance](InstanceCollectorSet.collectors, lazyStartup)
+  val hardwareAgent = new CollectorAgent[Hardware](HardwareCollectorSet.collectors, lazyStartup)
+  val allAgents = Seq(instanceAgent, hardwareAgent)
 }
