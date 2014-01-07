@@ -4,7 +4,7 @@ import org.joda.time.{Duration, DateTime}
 import org.jclouds.ContextBuilder
 import org.jclouds.compute.ComputeServiceContext
 import scala.collection.JavaConversions._
-import org.jclouds.aws.ec2.AWSEC2Client
+import org.jclouds.aws.ec2.AWSEC2Api
 import org.jclouds.ec2.domain.{Reservation, RunningInstance}
 import utils.Logging
 import org.jclouds.openstack.nova.v2_0.NovaApi
@@ -34,7 +34,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:Resource) extends 
     .build(classOf[ComputeServiceContext])
   lazy val compute = context.getComputeService
 
-  lazy val awsClient = ContextBuilder.newBuilder("aws-ec2").credentials(origin.accessKey, origin.secretKey).buildApi(classOf[AWSEC2Client])
+  lazy val awsClient = ContextBuilder.newBuilder("aws-ec2").credentials(origin.accessKey, origin.secretKey).buildApi(classOf[AWSEC2Api])
   lazy val instanceApi = awsClient.getInstanceApi.get()
 
   var instances: Seq[Instance] = Seq()
