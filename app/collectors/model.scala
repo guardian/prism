@@ -11,6 +11,7 @@ import java.io.FileNotFoundException
 import scala.Some
 import utils.Logging
 import conf.Configuration.accounts
+import play.api.mvc.Call
 
 trait Origin {
   def vendor: String
@@ -37,7 +38,7 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     }
   }
 
-  def data(resource:Resource):JsValue = {
+  def data(resource:ResourceType):JsValue = {
     val actualUrl = url.replace("%resource%", resource.name) match {
       case classPathLocation if classPathLocation.startsWith("classpath:") => new URL(null, classPathLocation, classpathHandler)
       case otherURL => new URL(otherURL)
@@ -47,7 +48,14 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
   }
 }
 
-abstract class CollectorSet[T](val resource:Resource) extends Logging {
+trait IndexedItem {
+  def id: String
+  def callFromId: String => Call
+  def call: Call = callFromId(id)
+  def fieldIndex: Map[String, String] = Map("id" -> id)
+}
+
+abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
@@ -58,7 +66,7 @@ abstract class CollectorSet[T](val resource:Resource) extends Logging {
 trait Collector[T] {
   def crawl:Iterable[T]
   def origin:Origin
-  def resource:Resource
+  def resource:ResourceType
 }
 
 object Datum {
@@ -78,13 +86,13 @@ object Label {
   def apply[T](c: Collector[T]): Label = Label(c.resource, c.origin)
   def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, error = Some(error))
 }
-case class Label(resource:Resource, origin:Origin, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
+case class Label(resource:ResourceType, origin:Origin, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
   lazy val isError = error.isDefined
   lazy val status = if (isError) "error" else "success"
   lazy val bestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)
 }
 
-case class Resource( name: String, shelfLife: Duration )
+case class ResourceType( name: String, shelfLife: Duration )
 
 case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
   val bestBefore:DateTime = created plus shelfLife

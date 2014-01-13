@@ -3,14 +3,17 @@ package collectors
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import org.joda.time.{Duration, DateTime}
+import play.api.mvc.Call
+import controllers.routes
+import scala.language.postfixOps
 
-object HardwareCollectorSet extends CollectorSet[Hardware](Resource("hardware", Duration.standardMinutes(15L))) {
+object HardwareCollectorSet extends CollectorSet[Hardware](ResourceType("hardware", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[Hardware]] = {
     case json:JsonOrigin => JsonHardwareCollector(json, resource)
   }
 }
 
-case class JsonHardwareCollector(origin:JsonOrigin, resource: Resource) extends JsonCollectorTranslator[HardwareJson, Hardware] {
+case class JsonHardwareCollector(origin:JsonOrigin, resource: ResourceType) extends JsonCollectorTranslator[HardwareJson, Hardware] {
   import jsonimplicits.joda.dateTimeReads
   implicit val networkInterfaceReads = Json.reads[NetworkInterface]
   implicit val logicalInterfaceReads = Json.reads[LogicalInterfaceJson]
@@ -81,7 +84,10 @@ case class Hardware(
     apps: List[String],
     interfaces: Seq[LogicalInterface],
     tags: Map[String,String]
-)
+) extends IndexedItem {
+  def callFromId: (String) => Call = id => routes.Api.hardware(id)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
+}
 
 object LogicalInterface {
   def fromJson(hardware: HardwareJson, input:LogicalInterfaceJson): LogicalInterface = {

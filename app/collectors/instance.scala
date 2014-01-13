@@ -12,8 +12,11 @@ import org.jclouds.openstack.nova.v2_0.domain.Server
 import java.net.InetAddress
 import conf.Configuration.accounts
 import play.api.libs.json.Json
+import play.api.mvc.Call
+import controllers.routes
+import scala.language.postfixOps
 
-object InstanceCollectorSet extends CollectorSet[Instance](Resource("instance", Duration.standardMinutes(15L))) {
+object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
     case json:JsonOrigin => JsonInstanceCollector(json, resource)
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
@@ -21,13 +24,13 @@ object InstanceCollectorSet extends CollectorSet[Instance](Resource("instance", 
   }
 }
 
-case class JsonInstanceCollector(origin:JsonOrigin, resource:Resource) extends JsonCollector[Instance] {
+case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
   implicit val instanceReads = Json.reads[Instance]
   def crawl: Iterable[Instance] = crawlJson
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin, resource:Resource) extends Collector[Instance] with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
   lazy val context = ContextBuilder.newBuilder("aws-ec2")
     .credentials(origin.accessKey, origin.secretKey)
@@ -74,7 +77,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:Resource) extends 
   }
 }
 
-case class OSInstanceCollector(origin:OpenstackOrigin, resource:Resource) extends Collector[Instance] {
+case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) extends Collector[Instance] {
 
   lazy val context = ContextBuilder.newBuilder("openstack-nova")
     .endpoint(origin.endpoint)
@@ -181,7 +184,11 @@ case class Instance(
                  apps: List[String],
                  mainclasses: List[String],
                  role: Option[String]
-                ) {
+                ) extends IndexedItem {
+
+  def callFromId: (String) => Call = id => routes.Api.instance(id)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
+
   def +(other:Instance):Instance = {
     this.copy(
       mainclasses = (this.mainclasses ++ other.mainclasses).distinct,

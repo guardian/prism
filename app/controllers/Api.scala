@@ -106,7 +106,7 @@ object ApiResult extends Logging {
   object async {
     def apply[T <: DataContainer](source: T)(block: T => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
       val sourceLabel:Label = Label(
-        Resource(source.name, org.joda.time.Duration.standardMinutes(15)),
+        ResourceType(source.name, org.joda.time.Duration.standardMinutes(15)),
         new Origin {
           val account = "unknown"
           val vendor = "unknown"
@@ -135,7 +135,7 @@ object Api extends Controller with Logging {
     }
 
 
-  def summary[T](sourceAgent: CollectorAgent[T], transform: T => Iterable[JsValue], key: String, enableFilter: Boolean = false)(implicit ordering:Ordering[String]) =
+  def summary[T<:IndexedItem](sourceAgent: CollectorAgent[T], transform: T => Iterable[JsValue], key: String, enableFilter: Boolean = false)(implicit ordering:Ordering[String]) =
     Action.async { implicit request =>
       ApiResult.mr[JsValue] {
         sourceAgent.get().map { datum => datum.label -> datum.data.flatMap(transform)}.toMap
@@ -158,15 +158,37 @@ object Api extends Controller with Logging {
     }
   }
 
-  def instanceJson(instance: Instance, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader): Option[JsValue] = {
-    val json = Json.toJson(instance).as[JsObject]
+  def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
+    val json = Json.toJson(item).as[JsObject]
     if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
       Some(filtered ++ Json.obj("meta"-> Json.obj(
-        "href" -> routes.Api.instance(instance.id).absoluteURL()
+        "href" -> item.call.absoluteURL()
       )))
     } else {
       None
+    }
+  }
+
+  def find = Action.async { implicit request =>
+    val filter = ResourceFilter.fromRequest
+    ApiResult.mr {
+      val sources = Prism.allAgents.map(_.get())
+      sources.flatMap{ agent =>
+        agent.map{ datum =>
+          datum.label -> datum.data.filter(d => filter.isMatch(d.fieldIndex))
+        }
+      }.toMap
+    } { sources =>
+      val results = sources.flatMap { case (label, dataItems) =>
+        dataItems.map { data =>
+          Json.obj(
+            "type" -> label.resource.name,
+            "href" -> data.call.absoluteURL()
+          )
+        }
+      }
+      Json.toJson(results)
     }
   }
 
@@ -174,7 +196,7 @@ object Api extends Controller with Logging {
     ApiResult.mr {
       val expand = request.getQueryString("_expand").isDefined
       val filter = ResourceFilter.fromRequestWithDefaults("vendorState" -> "running", "vendorState" -> "ACTIVE")
-      Prism.instanceAgent.get().map { agent => agent.label -> agent.data.flatMap(host => instanceJson(host, expand, filter)) }.toMap
+      Prism.instanceAgent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, filter)) }.toMap
     } { collection =>
       Json.obj(
         "instances" -> toJson(collection.values.flatten)
@@ -189,18 +211,28 @@ object Api extends Controller with Logging {
         datum.data.find(_.id == id).map(datum.label -> Seq(_))
       }.toMap
     } { sources =>
-      instanceJson(sources.values.flatten.head, true).get
+      itemJson(sources.values.flatten.head, expand = true).get
     }
   }
 
   def hardwareList = Action.async { implicit request =>
     ApiResult.mr {
-      val requestFilter = ResourceFilter.fromRequest
-      Prism.hardwareAgent.get().map { agent =>
-        agent.label -> agent.data.map(hardware => Json.toJson(hardware)).filter(json => requestFilter.isMatch(json))
-      }.toMap
+      val expand = request.getQueryString("_expand").isDefined
+      val filter = ResourceFilter.fromRequest
+      Prism.hardwareAgent.get().map { agent => agent.label -> agent.data.flatMap(hardware => itemJson(hardware, expand, filter)) }.toMap
     } { sources =>
       Json.obj("hardware" -> toJson(sources.values.flatten))
+    }
+  }
+  
+  def hardware(id:String) = Action.async { implicit request =>
+    ApiResult.mr {
+      val sources = Prism.hardwareAgent.get()
+      sources.flatMap{ datum =>
+        datum.data.find(_.id == id).map(datum.label -> Seq(_))
+      }.toMap
+    } { sources =>
+      itemJson(sources.values.flatten.head, expand = true).get
     }
   }
 
