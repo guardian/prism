@@ -4,7 +4,7 @@ import org.joda.time.{Duration, DateTime}
 import org.jclouds.ContextBuilder
 import org.jclouds.compute.ComputeServiceContext
 import scala.collection.JavaConversions._
-import org.jclouds.aws.ec2.AWSEC2Client
+import org.jclouds.aws.ec2.AWSEC2Api
 import org.jclouds.ec2.domain.{Reservation, RunningInstance}
 import utils.Logging
 import org.jclouds.openstack.nova.v2_0.NovaApi
@@ -12,37 +12,32 @@ import org.jclouds.openstack.nova.v2_0.domain.Server
 import java.net.InetAddress
 import conf.Configuration.accounts
 import play.api.libs.json.Json
+import play.api.mvc.Call
+import controllers.routes
+import scala.language.postfixOps
 
-object InstanceCollector {
-  def apply(origin:Origin): InstanceCollector = {
-    origin match {
-      case json:JsonOrigin => JsonInstanceCollector(json)
-      case amazon:AmazonOrigin => AWSInstanceCollector(amazon)
-      case openstack:OpenstackOrigin => OSInstanceCollector(openstack)
-    }
+object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
+  val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
+    case json:JsonOrigin => JsonInstanceCollector(json, resource)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
+    case openstack:OpenstackOrigin => OSInstanceCollector(openstack, resource)
   }
-
-  val collectors = accounts.all.map(InstanceCollector(_))
 }
 
-trait InstanceCollector extends Collector[Instance] {
-  def resource: Resource = Resource("instance", Duration.standardMinutes(15L))
-}
-
-case class JsonInstanceCollector(origin:JsonOrigin) extends InstanceCollector with JsonCollector[Instance] {
+case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
   implicit val instanceReads = Json.reads[Instance]
   def crawl: Iterable[Instance] = crawlJson
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
   lazy val context = ContextBuilder.newBuilder("aws-ec2")
     .credentials(origin.accessKey, origin.secretKey)
     .build(classOf[ComputeServiceContext])
   lazy val compute = context.getComputeService
 
-  lazy val awsClient = ContextBuilder.newBuilder("aws-ec2").credentials(origin.accessKey, origin.secretKey).buildApi(classOf[AWSEC2Client])
+  lazy val awsClient = ContextBuilder.newBuilder("aws-ec2").credentials(origin.accessKey, origin.secretKey).buildApi(classOf[AWSEC2Api])
   lazy val instanceApi = awsClient.getInstanceApi.get()
 
   var instances: Seq[Instance] = Seq()
@@ -82,7 +77,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin) extends InstanceCollector w
   }
 }
 
-case class OSInstanceCollector(origin:OpenstackOrigin) extends InstanceCollector {
+case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) extends Collector[Instance] {
 
   lazy val context = ContextBuilder.newBuilder("openstack-nova")
     .endpoint(origin.endpoint)
@@ -189,7 +184,11 @@ case class Instance(
                  apps: List[String],
                  mainclasses: List[String],
                  role: Option[String]
-                ) {
+                ) extends IndexedItem {
+
+  def callFromId: (String) => Call = id => routes.Api.instance(id)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
+
   def +(other:Instance):Instance = {
     this.copy(
       mainclasses = (this.mainclasses ++ other.mainclasses).distinct,

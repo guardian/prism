@@ -2,10 +2,9 @@ package jsonimplicits
 
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
-import deployinfo.{Data}
-import collectors.{SourceStatus, Label, Origin, Instance}
+import deployinfo.Data
+import collectors._
 import play.api.libs.json.JsString
-import org.joda.time.DateTime
 
 object joda {
   implicit object dateTimeWrites extends Writes[org.joda.time.DateTime] {
@@ -19,6 +18,9 @@ object model {
 
   implicit val instanceWriter = Json.writes[Instance]
   implicit val dataWriter = Json.writes[Data]
+  implicit val networkInterfaceWriter = Json.writes[NetworkInterface]
+  implicit val logicalInterfaceWriter = Json.writes[LogicalInterface]
+  implicit val hardwareWriter = Json.writes[Hardware]
 
   implicit val originWriter = new Writes[Origin] {
     def writes(o: Origin): JsValue = Json.obj("vendor" -> o.vendor, "account" -> o.account)

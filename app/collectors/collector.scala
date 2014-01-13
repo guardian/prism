@@ -10,7 +10,7 @@ import akka.actor.ActorSystem
 import play.api.Play.current
 import scala.concurrent.ExecutionContext
 
-class CollectorAgent[T](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 
   implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
 
@@ -43,6 +43,8 @@ class CollectorAgent[T](val collectors:Seq[Collector[T]], lazyStartup:Boolean = 
   }
 
   def init() {
+    log.info(s"Starting agent for collectors: $collectors")
+
     datumAgents = collectors.map { collector =>
       val initial = if (lazyStartup) {
         val startupData = Datum.empty[T](collector)
@@ -73,7 +75,7 @@ case class SourceStatus(state: Label, error: Option[Label] = None) {
 
 object CollectorAgent {
   implicit val actorSystem = ActorSystem("collector-agent")
-  val labelAgent = Agent[Map[(Resource, Origin),SourceStatus]](Map.empty)
+  val labelAgent = Agent[Map[(ResourceType, Origin),SourceStatus]](Map.empty)
 
   def update(label:Label) {
     labelAgent.send { previousMap =>
@@ -92,10 +94,11 @@ object CollectorAgent {
     val statusDates = statusList.map(_.latest.createdAt)
     val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
     val label = Label(
-      Resource("sources", org.joda.time.Duration.standardMinutes(5L)),
+      ResourceType("sources", org.joda.time.Duration.standardMinutes(5L)),
       new Origin {
-        def vendor: String = "prism"
-        def account: String = "prism"
+        val vendor = "prism"
+        val account = "prism"
+        val resources = Set("sources")
       },
       oldestDate
     )
