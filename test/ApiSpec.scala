@@ -92,5 +92,11 @@ class ApiSpec extends Specification {
       val jsonInstances = contentAsJson(home) \ "data" \ "instances"
       jsonInstances.as[JsArray].value.length mustEqual 6
     }
+
+    "filter a list of instances by nested field" in new WithApplication {
+      val home = route(FakeRequest(GET, "/instances?tags.App=db")).get
+      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      jsonInstances.as[JsArray].value.length mustEqual 3
+    }
   }
 }

@@ -19,7 +19,7 @@ case class InverseMatchable[T](matcher: Matchable[T]) extends Matchable[T] {
 case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] {
   def isMatch(json: JsValue): Boolean = {
     filter.map { case (field, values) =>
-      val value = json \ field
+      val value = field.split('.').foldLeft(json)(_\_)
       value match {
         case JsString(str) => values exists (_.isMatch(str))
         case JsNumber(int) => values exists (_.isMatch(int.toString))
@@ -45,10 +45,10 @@ case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Mat
   }
 }
 object ResourceFilter {
-  val InverseRegexMatch = """^([a-zA-Z0-9]*)(?:!~|~!)$""".r
-  val InverseMatch = """^([a-zA-Z0-9]*)!$""".r
-  val RegexMatch = """^([a-zA-Z0-9]*)~$""".r
-  val SimpleMatch = """^([a-zA-Z0-9]*)$""".r
+  val InverseRegexMatch = """^([a-zA-Z0-9.]*)(?:!~|~!)$""".r
+  val InverseMatch = """^([a-zA-Z0-9.]*)!$""".r
+  val RegexMatch = """^([a-zA-Z0-9.]*)~$""".r
+  val SimpleMatch = """^([a-zA-Z0-9.]*)$""".r
 
   def matcher(key:String, value:String): Option[(String, Matchable[String])] = {
     key match {
