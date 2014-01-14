@@ -4,7 +4,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import org.joda.time.{Duration, DateTime}
 import play.api.mvc.Call
-import controllers.routes
+import  controllers.routes
 import scala.language.postfixOps
 
 object HardwareCollectorSet extends CollectorSet[Hardware](ResourceType("hardware", Duration.standardMinutes(15L))) {

@@ -192,49 +192,40 @@ object Api extends Controller with Logging {
     }
   }
 
-  def instanceList = Action.async { implicit request =>
-    ApiResult.mr {
-      val expand = request.getQueryString("_expand").isDefined
-      val filter = ResourceFilter.fromRequestWithDefaults("vendorState" -> "running", "vendorState" -> "ACTIVE")
-      Prism.instanceAgent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, filter)) }.toMap
-    } { collection =>
-      Json.obj(
-        "instances" -> toJson(collection.values.flatten)
-      )
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)(implicit writes: Writes[T]) =
+    Action.async { implicit request =>
+      ApiResult.mr {
+        val sources = agent.get()
+        sources.flatMap{ datum =>
+          datum.data.find(_.id == id).map(datum.label -> Seq(_))
+        }.toMap
+      } { sources =>
+        itemJson(sources.values.flatten.head, expand = true).get
+      }
     }
-  }
 
-  def instance(id:String) = Action.async { implicit request =>
-    ApiResult.mr {
-      val sources = Prism.instanceAgent.get()
-      sources.flatMap{ datum =>
-        datum.data.find(_.id == id).map(datum.label -> Seq(_))
-      }.toMap
-    } { sources =>
-      itemJson(sources.values.flatten.head, expand = true).get
+  def itemList[T<:IndexedItem](agent:CollectorAgent[T], objectKey:String, defaultFilter: (String,String)*)
+                              (implicit writes: Writes[T]) =
+    Action.async { implicit request =>
+      ApiResult.mr {
+        val expand = request.getQueryString("_expand").isDefined
+        val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
+        agent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, filter)) }.toMap
+      } { collection =>
+        Json.obj(
+          objectKey -> toJson(collection.values.flatten)
+        )
+      }
     }
-  }
 
-  def hardwareList = Action.async { implicit request =>
-    ApiResult.mr {
-      val expand = request.getQueryString("_expand").isDefined
-      val filter = ResourceFilter.fromRequest
-      Prism.hardwareAgent.get().map { agent => agent.label -> agent.data.flatMap(hardware => itemJson(hardware, expand, filter)) }.toMap
-    } { sources =>
-      Json.obj("hardware" -> toJson(sources.values.flatten))
-    }
-  }
-  
-  def hardware(id:String) = Action.async { implicit request =>
-    ApiResult.mr {
-      val sources = Prism.hardwareAgent.get()
-      sources.flatMap{ datum =>
-        datum.data.find(_.id == id).map(datum.label -> Seq(_))
-      }.toMap
-    } { sources =>
-      itemJson(sources.values.flatten.head, expand = true).get
-    }
-  }
+  def instanceList = itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
+  def instance(id:String) = singleItem(Prism.instanceAgent, id)
+
+  def hardwareList = itemList(Prism.hardwareAgent, "hardware")
+  def hardware(id:String) = singleItem(Prism.hardwareAgent, id)
+
+  def securityGroupList = itemList(Prism.securityGroupAgent, "security-groups")
+  def securityGroup(id:String) = singleItem(Prism.securityGroupAgent, id)
 
   // an empty endpoint simply for getting metadata from
   def empty = Action { implicit request => DeployApiResult { di => Json.obj() }}

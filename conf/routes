@@ -25,6 +25,9 @@ GET        /instances/:id                 controllers.Api.instance(id)
 GET        /hardware                      controllers.Api.hardwareList
 GET        /hardware/:id                  controllers.Api.hardware(id)
 
+GET        /security-group                controllers.Api.securityGroupList
+GET        /security-group/:id            controllers.Api.securityGroup(id)
+
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/list                     controllers.Api.dataList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
