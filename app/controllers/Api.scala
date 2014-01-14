@@ -150,9 +150,10 @@ object Api extends Controller with Logging {
     }
 
   def sources = Action.async { implicit request =>
-    ApiResult.mr[SourceStatus] {
+    ApiResult.mr {
+      val filter = ResourceFilter.fromRequest
       val sources = CollectorAgent.sources
-      Map(sources.label -> sources.data)
+      Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
     } { collection =>
       toJson(collection.map(_._2).flatten)
     }
