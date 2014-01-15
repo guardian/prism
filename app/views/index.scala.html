@@ -39,6 +39,7 @@
             <tr><td><tt>stage=TEST&role~=id.*</tt></td><td>multiple fields - an exact match of stage and a regex match of role; this returns objects whose stage field has value of TEST <strong>AND</strong> whose role field matches the regular expression</strong></td></tr>
             <tr><td><tt>stage=TEST&stage=CODE&nbsp;&nbsp;</tt></td><td>fields can be specified twice - here we return objects whose stage field has the value of TEST <strong>OR</strong> CODE</td></tr>
             <tr><td><tt>stage!=TEST&stage!=CODE&nbsp;&nbsp;</tt></td><td><strong>this makes no sense</strong> - here we return objects whose stage field has a value that is not TEST <strong>OR</strong> not CODE (i.e. all objects)</td></tr>
+            <tr><td><tt>tag.MongoReplSet=prodprv1</tt></td><td>Nested fields can be filtered using periods to separate the fields</td></tr>
         </tbody>
     </table>
 

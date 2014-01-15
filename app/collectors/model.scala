@@ -12,6 +12,7 @@ import scala.Some
 import utils.Logging
 import conf.Configuration.accounts
 import play.api.mvc.Call
+import org.jclouds.domain.{LocationScope, LocationBuilder}
 
 trait Origin {
   def vendor: String
@@ -23,6 +24,7 @@ trait Origin {
 case class AmazonOrigin(account:String, region:String, accessKey:String, resources:Set[String])(val secretKey:String) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
+  lazy val jCloudLocation = new LocationBuilder().scope(LocationScope.REGION).id(region).description("region").build()
 }
 case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String, resources:Set[String])(val secret:String) extends Origin {
   lazy val vendor = "openstack"
