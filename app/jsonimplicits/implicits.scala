@@ -21,6 +21,7 @@ object model {
   implicit val networkInterfaceWriter = Json.writes[NetworkInterface]
   implicit val logicalInterfaceWriter = Json.writes[LogicalInterface]
   implicit val hardwareWriter = Json.writes[Hardware]
+  implicit val securityGroupRefWriter = Json.writes[SecurityGroupRef]
   implicit val securityGroupRuleWriter = Json.writes[Rule]
   implicit val securityGroupWriter = Json.writes[SecurityGroup]
 
