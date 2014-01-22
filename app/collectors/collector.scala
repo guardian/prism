@@ -19,6 +19,8 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
   def get(collector: Collector[T]): Datum[T] = datumAgents(collector)()
 
   def get(): Iterable[Datum[T]] = datumAgents.values.map(_())
+
+  def getTuples: Iterable[(Label, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
   
   def getLabels: Seq[Label] = get().map(_.label).toSeq
 

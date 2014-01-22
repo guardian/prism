@@ -2,7 +2,6 @@ package jsonimplicits
 
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
-import deployinfo.Data
 import collectors._
 import play.api.libs.json.JsString
 
@@ -17,6 +16,7 @@ object model {
   import joda.dateTimeWrites
 
   implicit val instanceWriter = Json.writes[Instance]
+  implicit val valueWriter = Json.writes[Value]
   implicit val dataWriter = Json.writes[Data]
   implicit val networkInterfaceWriter = Json.writes[NetworkInterface]
   implicit val logicalInterfaceWriter = Json.writes[LogicalInterface]

@@ -5,7 +5,6 @@
 GET        /                              controllers.Application.index
 
 # API V1
-GET        /empty                         controllers.Api.empty
 GET        /sources                       controllers.Api.sources
 
 GET        /apps                          controllers.Api.appList
@@ -28,9 +27,10 @@ GET        /hardware/:id                  controllers.Api.hardware(id)
 GET        /security-group                controllers.Api.securityGroupList
 GET        /security-group/:id            controllers.Api.securityGroup(id)
 
+GET        /data                          controllers.Api.dataList
 GET        /data/keys                     controllers.Api.dataKeysList
-GET        /data/list                     controllers.Api.dataList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
+GET        /data/:id                      controllers.Api.data(id)
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                  controllers.Assets.at(path="/public", file)
