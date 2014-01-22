@@ -2,7 +2,6 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
-import deployinfo.{DeployInfo, DeployInfoManager}
 import play.api.http.Status
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
@@ -228,9 +227,6 @@ object Api extends Controller with Logging {
   def securityGroupList = itemList(Prism.securityGroupAgent, "security-groups")
   def securityGroup(id:String) = singleItem(Prism.securityGroupAgent, id)
 
-  // an empty endpoint simply for getting metadata from
-  def empty = Action { implicit request => DeployApiResult { di => Json.obj() }}
-
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
   def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
@@ -246,33 +242,31 @@ object Api extends Controller with Logging {
     enableFilter = true
   )
 
-  def DeployApiResult(block: DeployInfo => JsValue)(implicit request:RequestHeader) = ApiResult(DeployInfoManager.deployInfo)(block)
+  def dataList = itemList(Prism.dataAgent, "data")
+  def data(id:String) = singleItem(Prism.dataAgent, id)
+  def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
-  def dataList = Action { implicit request =>
-    DeployApiResult { implicit di =>
-      Json.obj("data" -> DeployInfoManager.deployInfo.data)
-    }
-  }
-
-  def dataKeysList = Action { implicit request =>
-    DeployApiResult { implicit di =>
-      Json.obj("keys" -> DeployInfoManager.deployInfo.data.keys)
-    }
-  }
-
-  def dataLookup(key:String) = Action { implicit request =>
-    DeployApiResult { di =>
+  def dataLookup(key:String) = Action.async { implicit request =>
+    ApiResult.mr {
       val app = request.getQueryString("app")
       val stage = request.getQueryString("stage")
-      val validKey = DeployInfoManager.deployInfo.knownKeys.contains(key)
+      val validKey = Prism.dataAgent.getTuples.filter(_._2.key == key).toSeq
 
       val errors:Map[String,String] = Map.empty ++
-        (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++
-        (if (stage.isEmpty) Some("stage" -> "Must specify stage") else None) ++
-        (if (validKey) None else Some("key" -> s"The key name $key was not found"))
+          (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++
+          (if (stage.isEmpty) Some("stage" -> "Must specify stage") else None) ++
+          (if (validKey.size == 0) Some("key" -> s"The key name $key was not found") else None) ++
+          (if (validKey.size > 1) Some("key" -> s"The key name $key was matched multiple times") else None)
+
       if (!errors.isEmpty) throw IllegalApiCallException(Json.toJson(errors).as[JsObject])
 
-      Json.toJson(di.firstMatchingData(key, app.get, stage.get))
+      val (label, data) = validKey.head
+      data.firstMatchingData(app.get, stage.get).map(data => Map(label -> Seq(data))).getOrElse{
+        throw IllegalApiCallException(Json.obj("value" -> s"Key $key has no matching value for app=$app and stage=$stage"))
+      }
+    } { result =>
+      Json.toJson(result.head._2.head)
     }
   }
+
 }

@@ -40,17 +40,6 @@ class Configuration(val application: String, val webappConfDirectory: String = "
       configuration.getStringPropertiesSplitByComma(s"$prefix.$name.$property")
   }
 
-  object deployinfo {
-    lazy val location: String = configuration.getStringProperty("deployinfo.location").getOrException("Deploy Info location not specified")
-    lazy val mode: DeployInfoMode.Value = configuration.getStringProperty("deployinfo.mode").flatMap{ name =>
-      DeployInfoMode.values.find(_.toString.equalsIgnoreCase(name))
-    }.getOrElse(DeployInfoMode.URL)
-    lazy val staleMinutes: Int = configuration.getIntegerProperty("deployinfo.staleMinutes", 15)
-    lazy val refreshSeconds: Int = configuration.getIntegerProperty("deployinfo.refreshSeconds", 60)
-    lazy val timeoutSeconds: Int = configuration.getIntegerProperty("deployinfo.timeoutSeconds", 180)
-    lazy val lazyStartup: Boolean = configuration.getStringProperty("deployinfo.lazyStartup", "false") == "true"
-  }
-
   object accounts {
     lazy val lazyStartup = configuration.getStringProperty("accounts.lazyStartup", "true") == "true"
     lazy val all = aws.list ++ openstack.list ++ json.list
@@ -104,11 +93,6 @@ class Configuration(val application: String, val webappConfDirectory: String = "
 }
 
 object Configuration extends Configuration(App.name, webappConfDirectory = "env")
-
-object DeployInfoMode extends Enumeration {
-  val URL = Value("URL")
-  val Execute = Value("Execute")
-}
 
 object PlayRequestMetrics extends RequestMetrics.Standard
 
