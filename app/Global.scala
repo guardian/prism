@@ -5,8 +5,9 @@ import play.api.mvc.WithFilters
 import utils.{JsonpFilter, Logging, Lifecycle, ScheduledAgent}
 import play.api.Application
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.filters.gzip.GzipFilter
 
-object Global extends WithFilters(new JsonpFilter() :: PlayRequestMetrics.asFilters : _*) with Logging {
+object Global extends WithFilters(new GzipFilter() :: new JsonpFilter() :: PlayRequestMetrics.asFilters : _*) with Logging {
 
   val lifecycleSingletons = mutable.Buffer[Lifecycle]()
 
