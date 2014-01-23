@@ -45,6 +45,9 @@ case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Mat
   }
 }
 object ResourceFilter {
+  // blacklist of request keys that should be ignored
+  val Blacklist = Set("callback")
+
   val InverseRegexMatch = """^([a-zA-Z0-9.]*)(?:!~|~!)$""".r
   val InverseMatch = """^([a-zA-Z0-9.]*)!$""".r
   val RegexMatch = """^([a-zA-Z0-9.]*)~$""".r
@@ -64,7 +67,7 @@ object ResourceFilter {
 
   def fromRequestWithDefaults(defaults: (String,String)*)(implicit request: RequestHeader): ResourceFilter = {
     val defaultKeys = defaults.flatMap{ d => matcher(d._1,d._2) }.groupBy(_._1).mapValues(_.map(_._2))
-    val filterKeys = request.queryString.toSeq.flatMap { case (key, values) =>
+    val filterKeys = request.queryString.filterKeys(key => !Blacklist.contains(key)).toSeq.flatMap { case (key, values) =>
       values.flatMap(matcher(key,_))
     }.groupBy(_._1).mapValues(_.map(_._2))
     ResourceFilter(defaultKeys ++ filterKeys)
