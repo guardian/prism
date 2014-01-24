@@ -121,7 +121,7 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
         vendor = "openstack",
         tags = s.getMetadata.toMap
       )
-    }
+    }.map(origin.transformInstance)
   }
 }
 
@@ -195,5 +195,9 @@ case class Instance(
       apps = (this.apps ++ other.apps).distinct,
       tags = this.tags ++ other.tags
     )
+  }
+
+  def prefixStage(prefix:String):Instance = {
+    this.copy(stage = stage.map(s => s"$prefix$s"))
   }
 }

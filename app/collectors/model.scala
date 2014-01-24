@@ -19,6 +19,7 @@ trait Origin {
   def account: String
   def filterMap: Map[String,String] = Map.empty
   def resources: Set[String]
+  def transformInstance(input: Instance): Instance = input
 }
 
 case class AmazonOrigin(account:String, region:String, accessKey:String, resources:Set[String])(val secretKey:String) extends Origin {
@@ -26,10 +27,11 @@ case class AmazonOrigin(account:String, region:String, accessKey:String, resourc
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   lazy val jCloudLocation = new LocationBuilder().scope(LocationScope.REGION).id(region).description("region").build()
 }
-case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String, resources:Set[String])(val secret:String) extends Origin {
+case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String, resources:Set[String], stagePrefix: Option[String])(val secret:String) extends Origin {
   lazy val vendor = "openstack"
   lazy val account = s"$tenant@$region"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "account" -> tenant, "accountName" -> tenant)
+  override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin {
   private val classpathHandler = new URLStreamHandler {

@@ -62,7 +62,8 @@ class Configuration(val application: String, val webappConfDirectory: String = "
         val accessKey = getStringProperty(name, "user")
         val secretKey = getStringProperty(name, "secret")
         val resources = getStringPropertiesSplitByComma(name, "resources")
-        OpenstackOrigin(endpoint, region, tenant, accessKey, resources.toSet)(secretKey)
+        val stagePrefix = getStringPropertyOption(name, "stagePrefix")
+        OpenstackOrigin(endpoint, region, tenant, accessKey, resources.toSet, stagePrefix)(secretKey)
       }
     }
     object json extends NamedProperties(configuration, "accounts.json") {
