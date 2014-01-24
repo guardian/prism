@@ -250,6 +250,7 @@ object Api extends Controller with Logging {
     ApiResult.mr {
       val app = request.getQueryString("app")
       val stage = request.getQueryString("stage")
+      val stack = request.getQueryString("stack")
       val validKey = Prism.dataAgent.getTuples.filter(_._2.key == key).toSeq
 
       val errors:Map[String,String] = Map.empty ++
@@ -261,8 +262,10 @@ object Api extends Controller with Logging {
       if (!errors.isEmpty) throw IllegalApiCallException(Json.toJson(errors).as[JsObject])
 
       val (label, data) = validKey.head
-      data.firstMatchingData(app.get, stage.get).map(data => Map(label -> Seq(data))).getOrElse{
-        throw IllegalApiCallException(Json.obj("value" -> s"Key $key has no matching value for app=$app and stage=$stage"))
+      data.firstMatchingData(stack, app.get, stage.get).map(data => Map(label -> Seq(data))).getOrElse{
+        throw IllegalApiCallException(
+          Json.obj("value" -> s"Key $key has no matching value for stack=${stack.getOrElse("")}, app=$app and stage=$stage")
+        )
       }
     } { result =>
       Json.toJson(result.head._2.head)

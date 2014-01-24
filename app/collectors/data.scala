@@ -20,15 +20,31 @@ case class JsonDataCollector(origin:JsonOrigin, resource: ResourceType) extends 
 case class Data( key:String, values:Seq[Value]) extends IndexedItem {
   def id: String = s"arn:gu:data:key/$key"
   def callFromId: (String) => Call = id => routes.Api.data(id)
-  def firstMatchingData(app:String, stage:String): Option[Value] = {
-    values.find(data => data.appRegex.findFirstMatchIn(app).isDefined && data.stageRegex.findFirstMatchIn(stage).isDefined)
+  def firstMatchingData(stack:Option[String], app:String, stage:String): Option[Value] = {
+    stack.map { s =>
+      values.filter {
+        _.stack.isDefined
+      } find { data =>
+        data.appRegex.findFirstMatchIn(app).isDefined &&
+          data.stageRegex.findFirstMatchIn(stage).isDefined &&
+          data.stackRegex.get.findFirstMatchIn(s).isDefined
+      }
+    } getOrElse {
+      values.filter {
+        _.stack.isEmpty
+      } find {data =>
+        data.appRegex.findFirstMatchIn(app).isDefined && data.stageRegex.findFirstMatchIn(stage).isDefined
+      }
+    }
   }
 }
 
-case class Value( app: String,
+case class Value( stack: Option[String],
+                  app: String,
                  stage: String,
                  value: String,
                  comment: Option[String] ) {
+  lazy val stackRegex = stack.map(s => s"^$s$$".r)
   lazy val appRegex = ("^%s$" format app).r
   lazy val stageRegex = ("^%s$" format stage).r
 }
