@@ -33,7 +33,7 @@ case class HardwareJson(
                          group: Option[String],
                          stage: Option[String],
                          stack: Option[String],
-                         apps: Option[List[String]],
+                         app: Option[List[String]],
                          interfaces: Seq[LogicalInterfaceJson],
                          tags: Map[String,String])
 
@@ -62,7 +62,7 @@ object Hardware {
       i.group.getOrElse(i.region),
       i.stage,
       i.stack,
-      i.apps.getOrElse(Nil),
+      i.app.getOrElse(Nil),
       i.interfaces.map(LogicalInterface.fromJson(i, _)),
       i.tags
     )
@@ -81,7 +81,7 @@ case class Hardware(
     group: String,
     stage: Option[String],
     stack: Option[String],
-    apps: List[String],
+    app: List[String],
     interfaces: Seq[LogicalInterface],
     tags: Map[String,String]
 ) extends IndexedItem {

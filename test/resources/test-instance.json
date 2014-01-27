@@ -22,7 +22,7 @@
         },
         "stage": "TEST",
         "stack": "discussion",
-        "apps": ["db"],
+        "app": ["db"],
         "mainclasses": ["discussion::db"],
         "role": "discussion-db",
         "meta": {
@@ -52,7 +52,7 @@
         },
         "stage": "TEST",
         "stack": "discussion",
-        "apps": ["db"],
+        "app": ["db"],
         "mainclasses": ["discussion::db"],
         "role": "discussion-db",
         "meta": {
@@ -79,7 +79,7 @@
             "Stage": "TEST"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["mongodb_replica_set::backup_member"],
         "role": "mngdb",
         "meta": {
@@ -106,7 +106,7 @@
             "Stage": "TEST"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["mongodb_replica_set::member"],
         "role": "mngdb",
         "meta": {
@@ -133,7 +133,7 @@
             "Stage": "TEST"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["mongodb_replica_set::member"],
         "role": "mngdb",
         "meta": {
@@ -160,7 +160,7 @@
             "Stage": "TEST"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["oracle::gc2_server"],
         "role": "oradb",
         "meta": {
@@ -187,7 +187,7 @@
             "Stage": "TEST"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["oracle::gc2_server"],
         "role": "oradb",
         "meta": {
@@ -214,7 +214,7 @@
             "Stage": "TEST"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["arts_music"],
         "role": "arts_music",
         "meta": {
@@ -241,7 +241,7 @@
             "Role": "arts-books"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["arts-books", "arts-solr"],
         "role": "arts-books",
         "meta": {
@@ -269,7 +269,7 @@
             "Mainclass": "soulmates-api,soulmates-solr"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["soulmates-api", "soulmates-solr"],
         "role": "soulmates-api",
         "meta": {
@@ -297,7 +297,7 @@
             "Mainclass": "soulmates-scheduler"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["soulmates-scheduler"],
         "role": "soulmates-scheduler",
         "meta": {
@@ -325,7 +325,7 @@
             "Mainclass": "geolocation-api,geolocation-solr"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["geolocation-api", "geolocation-solr"],
         "role": "geolocation-api",
         "meta": {
@@ -353,7 +353,7 @@
             "Mainclass": "soulmatesfrontend"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["soulmatesfrontend"],
         "role": "soulmates-frontend",
         "meta": {
@@ -381,7 +381,7 @@
             "Mainclass": "soulmatesadmin"
         },
         "stage": "TEST",
-        "apps": [],
+        "app": [],
         "mainclasses": ["soulmatesadmin"],
         "role": "soulmates-admin",
         "meta": {
@@ -413,7 +413,7 @@
         },
         "stage": "TEST",
         "stack": "soulmates",
-        "apps": ["db"],
+        "app": ["db"],
         "mainclasses": ["soulmates::db"],
         "role": "soulmates-db",
         "meta": {
