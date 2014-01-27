@@ -237,8 +237,8 @@ object Api extends Controller with Logging {
   def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "regions")
   def appList = summary[Instance](
     Prism.instanceAgent,
-    i => i.apps.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
-    "apps",
+    i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
+    "app",
     enableFilter = true
   )
 

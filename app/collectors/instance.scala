@@ -140,7 +140,7 @@ object Instance {
              vendor: String,
              tags: Map[String, String] ): Instance = {
     val stack = tags.get("Stack")
-    val apps = tags.get("App").map(_.split(",").toList).getOrElse(Nil)
+    val app = tags.get("App").map(_.split(",").toList).getOrElse(Nil)
 
     apply(
       id = id,
@@ -158,8 +158,8 @@ object Instance {
       tags = tags,
       stage = tags.get("Stage"),
       stack = stack,
-      apps = apps,
-      mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => apps.map(a => s"$stack::$a"))).getOrElse(Nil),
+      app = app,
+      mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => app.map(a => s"$stack::$a"))).getOrElse(Nil),
       role = tags.get("Role")
     )
   }
@@ -181,7 +181,7 @@ case class Instance(
                  tags: Map[String, String] = Map.empty,
                  stage: Option[String],
                  stack: Option[String],
-                 apps: List[String],
+                 app: List[String],
                  mainclasses: List[String],
                  role: Option[String]
                 ) extends IndexedItem {
@@ -192,7 +192,7 @@ case class Instance(
   def +(other:Instance):Instance = {
     this.copy(
       mainclasses = (this.mainclasses ++ other.mainclasses).distinct,
-      apps = (this.apps ++ other.apps).distinct,
+      app = (this.app ++ other.app).distinct,
       tags = this.tags ++ other.tags
     )
   }
