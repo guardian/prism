@@ -16,7 +16,7 @@ import utils.{ResourceFilter, Matchable, Logging}
 import jsonimplicits.joda._
 
 // use this when the API call has illegal parameters
-case class IllegalApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
+case class ApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
   extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
 
 object ApiResult extends Logging {
@@ -83,7 +83,7 @@ object ApiResult extends Logging {
               ))
         }
       } recover {
-        case IllegalApiCallException(failure, status) =>
+        case ApiCallException(failure, status) =>
           Future.successful(Results.Status(status)(Json.obj(
             "status" -> "fail",
             "data" -> failure
@@ -200,7 +200,12 @@ object Api extends Controller with Logging {
           datum.data.find(_.id == id).map(datum.label -> Seq(_))
         }.toMap
       } { sources =>
-        itemJson(sources.values.flatten.head, expand = true).get
+        val item = sources.values.flatten.headOption
+        item.map { i =>
+          itemJson(i, expand = true).get
+        } getOrElse {
+          throw ApiCallException(Json.obj("id" -> s"Item with id $id doesn't exist"), NOT_FOUND)
+        } 
       }
     }
 
@@ -226,6 +231,9 @@ object Api extends Controller with Logging {
 
   def securityGroupList = itemList(Prism.securityGroupAgent, "security-groups")
   def securityGroup(id:String) = singleItem(Prism.securityGroupAgent, id)
+
+  def ownerList = itemList(Prism.ownerAgent, "owners")
+  def owner(id:String) = singleItem(Prism.ownerAgent, id)
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
@@ -259,11 +267,11 @@ object Api extends Controller with Logging {
           (if (validKey.size == 0) Some("key" -> s"The key name $key was not found") else None) ++
           (if (validKey.size > 1) Some("key" -> s"The key name $key was matched multiple times") else None)
 
-      if (!errors.isEmpty) throw IllegalApiCallException(Json.toJson(errors).as[JsObject])
+      if (!errors.isEmpty) throw ApiCallException(Json.toJson(errors).as[JsObject])
 
       val (label, data) = validKey.head
       data.firstMatchingData(stack, app.get, stage.get).map(data => Map(label -> Seq(data))).getOrElse{
-        throw IllegalApiCallException(
+        throw ApiCallException(
           Json.obj("value" -> s"Key $key has no matching value for stack=${stack.getOrElse("")}, app=$app and stage=$stage")
         )
       }

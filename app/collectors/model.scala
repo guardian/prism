@@ -9,10 +9,12 @@ import scala.io.Source
 import java.net.{URLConnection, URL, URLStreamHandler}
 import java.io.FileNotFoundException
 import scala.Some
-import utils.Logging
+import utils.{GoogleDoc, Logging}
 import conf.Configuration.accounts
 import play.api.mvc.Call
 import org.jclouds.domain.{LocationScope, LocationBuilder}
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 trait Origin {
   def vendor: String
@@ -50,6 +52,10 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     val jsonText = Source.fromURL(actualUrl, "utf-8").getLines().mkString
     Json.parse(jsonText)
   }
+}
+case class GoogleDocOrigin(name: String, docUrl:URL, resources:Set[String]) extends Origin {
+  lazy val vendor = "google-doc"
+  lazy val account = name
 }
 
 trait IndexedItem {
@@ -126,4 +132,9 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
     }
   }
   def translate(input: F): T
+}
+
+trait GoogleDocCollector[T] extends Collector[T] {
+  def origin:GoogleDocOrigin
+  def csvData:List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl), 1 minute)
 }

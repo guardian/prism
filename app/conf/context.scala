@@ -7,7 +7,8 @@ import play.api.{Mode, Play}
 import com.gu.management._
 import com.gu.management.play.{RequestMetrics, Management => GuManagement}
 import com.gu.management.logback.LogbackLevelPage
-import collectors.{JsonOrigin, OpenstackOrigin, AmazonOrigin}
+import collectors.{GoogleDocOrigin, JsonOrigin, OpenstackOrigin, AmazonOrigin}
+import java.net.URL
 
 object App {
   val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
@@ -42,7 +43,7 @@ class Configuration(val application: String, val webappConfDirectory: String = "
 
   object accounts {
     lazy val lazyStartup = configuration.getStringProperty("accounts.lazyStartup", "true") == "true"
-    lazy val all = aws.list ++ openstack.list ++ json.list
+    lazy val all = aws.list ++ openstack.list ++ json.list ++ googleDoc.list
     def forResource(resource:String) = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
     object aws extends NamedProperties(configuration, "accounts.aws") {
       lazy val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
@@ -73,6 +74,13 @@ class Configuration(val application: String, val webappConfDirectory: String = "
         val resources = getStringPropertiesSplitByComma(name, "resources")
         val url = getStringProperty(name, "url")
         JsonOrigin(vendor, account, url, resources.toSet)
+      }
+    }
+    object googleDoc extends NamedProperties(configuration, "accounts.googleDoc") {
+      lazy val list = names.toSeq.sorted.map { name =>
+        val url = getStringProperty(name, "url")
+        val resources = getStringPropertiesSplitByComma(name, "resources")
+        GoogleDocOrigin(name, new URL(url), resources.toSet)
       }
     }
   }

@@ -24,6 +24,7 @@ object model {
   implicit val securityGroupRefWriter = Json.writes[SecurityGroupRef]
   implicit val securityGroupRuleWriter = Json.writes[Rule]
   implicit val securityGroupWriter = Json.writes[SecurityGroup]
+  implicit val ownerWriter = Json.writes[Owner]
 
   implicit val originWriter = new Writes[Origin] {
     def writes(o: Origin): JsValue = Json.obj("vendor" -> o.vendor, "account" -> o.account)
