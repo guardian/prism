@@ -13,7 +13,7 @@ Build the gem and install it:
 ```
 $ bundle install
 $ rake build
-$ gem install pkg/marauder-0.5.0.gem
+$ gem install pkg/marauder-0.6.0.gem
 ```
 
 **Note**: If you are installing on a host that only has Ruby 1.8.7 then you should install httparty version 
