@@ -1,10 +1,5 @@
-import controllers.{IllegalApiCallException, ApiResult}
-import model.DataContainer
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
+import controllers.{ApiCallException, ApiResult}
 import org.specs2.mutable._
-import org.specs2.runner._
-import org.junit.runner._
 
 import play.api.libs.json._
 import play.api.libs.json.JsArray
@@ -32,7 +27,7 @@ class ApiSpec extends Specification {
     "wrap data with fail when an Api exception is thrown" in {
       implicit val request = FakeRequest(GET, "/test")
       val fail = Future.successful(ApiResult.noSource {
-        if (true) throw IllegalApiCallException(Json.obj("test" -> "just testing the fail state"))
+        if (true) throw ApiCallException(Json.obj("test" -> "just testing the fail state"))
         Json.obj("never" -> "reached")
       })
       contentType(fail) must beSome("application/json")
