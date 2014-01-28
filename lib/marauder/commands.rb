@@ -65,7 +65,8 @@ def find_hosts(filter)
 
   hosts.select do |host|
     query.all? do |name|
-      tokens = host["mainclasses"].map{|mc| tokenize(mc)}.flatten + host["mainclasses"] + [host["stage"]]
+      tokens = host["mainclasses"].map{|mc| tokenize(mc)}.flatten + 
+        host["mainclasses"] + [host["stage"], host["stack"]] + host["app"]
       tokens.compact.any? {|token| name.match(token.downcase)}
     end
   end
@@ -89,7 +90,11 @@ command :hosts do |c|
       if options.short 
         matching.each { |host| puts host['dnsName'] }
       else
-        puts table(matching.map { |host| [host['stage'], host['mainclasses'].join(','), host['dnsName'], host['createdAt']] })
+        puts table(matching.map { |host|
+          app = host['app'].join(',')
+          app = host['mainclasses'].join(',') if app.length == 0
+          [host['stage'], host['stack'], app, host['dnsName'], host['createdAt']] 
+        })
       end
     end
   end
