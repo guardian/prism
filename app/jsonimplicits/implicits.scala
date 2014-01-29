@@ -15,6 +15,7 @@ object joda {
 object model {
   import joda.dateTimeWrites
 
+  implicit val managementEndpointWriter = Json.writes[ManagementEndpoint]
   implicit val instanceWriter = Json.writes[Instance]
   implicit val valueWriter = Json.writes[Value]
   implicit val dataWriter = Json.writes[Data]

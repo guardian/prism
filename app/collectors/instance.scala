@@ -26,6 +26,7 @@ object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instanc
 
 case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
+  implicit val managementEndpointReads = Json.reads[ManagementEndpoint]
   implicit val instanceReads = Json.reads[Instance]
   def crawl: Iterable[Instance] = crawlJson
 }
@@ -160,8 +161,35 @@ object Instance {
       stack = stack,
       app = app,
       mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => app.map(a => s"$stack::$a"))).getOrElse(Nil),
-      role = tags.get("Role")
+      role = tags.get("Role"),
+      management = ManagementEndpoint.fromTag(dnsName, tags.get("Management"))
     )
+  }
+}
+
+case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
+object ManagementEndpoint {
+  val KeyValue = """([^=]*)=(.*)""".r
+  def fromTag(dnsName:String, tag:Option[String]): Seq[ManagementEndpoint] = {
+    tag match {
+      case Some(tagContent) =>
+        tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
+          val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
+            case KeyValue(key,value) => Some(key -> value)
+            case _ => None
+          }.toMap
+          fromMap(dnsName, params)
+        }
+      case None => Seq(fromMap(dnsName))
+    }
+  }
+  def fromMap(dnsName:String, map:Map[String,String] = Map.empty):ManagementEndpoint = {
+    val protocol = map.getOrElse("protocol","http")
+    val port = map.get("port").map(_.toInt).getOrElse(18080)
+    val path = map.getOrElse("path","/management")
+    val url = s"$protocol://$dnsName:$port$path"
+    val source: String = if (map.isEmpty) "convention" else "tag"
+    ManagementEndpoint(protocol, port, path, url, map.getOrElse("format", "gu"), source)
   }
 }
 
@@ -183,7 +211,8 @@ case class Instance(
                  stack: Option[String],
                  app: List[String],
                  mainclasses: List[String],
-                 role: Option[String]
+                 role: Option[String],
+                 management:Seq[ManagementEndpoint]
                 ) extends IndexedItem {
 
   def callFromId: (String) => Call = id => routes.Api.instance(id)
