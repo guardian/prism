@@ -170,17 +170,18 @@ object Instance {
 case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
 object ManagementEndpoint {
   val KeyValue = """([^=]*)=(.*)""".r
-  def fromTag(dnsName:String, tag:Option[String]): Seq[ManagementEndpoint] = {
+  def fromTag(dnsName:String, tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
     tag match {
+      case Some("none") => None
       case Some(tagContent) =>
-        tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
+        Some(tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
           val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
             case KeyValue(key,value) => Some(key -> value)
             case _ => None
           }.toMap
           fromMap(dnsName, params)
-        }
-      case None => Seq(fromMap(dnsName))
+        })
+      case None => Some(Seq(fromMap(dnsName)))
     }
   }
   def fromMap(dnsName:String, map:Map[String,String] = Map.empty):ManagementEndpoint = {
@@ -212,7 +213,7 @@ case class Instance(
                  app: List[String],
                  mainclasses: List[String],
                  role: Option[String],
-                 management:Seq[ManagementEndpoint]
+                 management:Option[Seq[ManagementEndpoint]]
                 ) extends IndexedItem {
 
   def callFromId: (String) => Call = id => routes.Api.instance(id)

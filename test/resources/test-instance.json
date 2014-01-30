@@ -27,8 +27,7 @@
         "role": "discussion-db",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000d44"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:openstack:ec2:dev1:websys:instance/i-00000d43",
@@ -58,8 +57,7 @@
         "role": "discussion-db",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000d43"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cfe",
@@ -86,8 +84,7 @@
         "role": "mngdb",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000cfe"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cfd",
@@ -114,8 +111,7 @@
         "role": "mngdb",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000cfd"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cfc",
@@ -142,8 +138,7 @@
         "role": "mngdb",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000cfc"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cdf",
@@ -170,8 +165,7 @@
         "role": "oradb",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000cdf"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cde",
@@ -198,8 +192,7 @@
         "role": "oradb",
         "meta": {
             "href": "http://localhost:9000/instances/arn:openstack:ec2:dev1:websys:instance%2Fi-00000cde"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:362307275615:instance/i-6cd9b11a",
@@ -226,8 +219,7 @@
         "role": "arts_music",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:362307275615:instance%2Fi-6cd9b11a"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:362307275615:instance/i-29f73c5f",
@@ -254,8 +246,7 @@
         "role": "arts-books",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:362307275615:instance%2Fi-29f73c5f"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-129d0559",
@@ -283,8 +274,7 @@
         "role": "soulmates-api",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:649430877268:instance%2Fi-129d0559"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-c482158f",
@@ -312,8 +302,7 @@
         "role": "soulmates-scheduler",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:649430877268:instance%2Fi-c482158f"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-dc821597",
@@ -341,8 +330,7 @@
         "role": "geolocation-api",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:649430877268:instance%2Fi-dc821597"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-485fc803",
@@ -370,8 +358,7 @@
         "role": "soulmates-frontend",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:649430877268:instance%2Fi-485fc803"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-da821591",
@@ -399,8 +386,7 @@
         "role": "soulmates-admin",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:649430877268:instance%2Fi-da821591"
-        },
-        "management": []
+        }
     },
     {
         "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-d2821599",
@@ -432,7 +418,6 @@
         "role": "soulmates-db",
         "meta": {
             "href": "http://localhost:9000/instances/arn:aws:ec2:eu-west-1:649430877268:instance%2Fi-d2821599"
-        },
-        "management": []
+        }
     }
 ]
