@@ -95,8 +95,9 @@ object CollectorAgent {
     val statusList = labelAgent().values
     val statusDates = statusList.map(_.latest.createdAt)
     val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
+    val smallestDuration = statusList.map(_.latest.resource.shelfLife).minBy(_.getStandardSeconds)
     val label = Label(
-      ResourceType("sources", org.joda.time.Duration.standardMinutes(5L)),
+      ResourceType("sources", smallestDuration),
       new Origin {
         val vendor = "prism"
         val account = "prism"
