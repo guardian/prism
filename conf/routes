@@ -6,6 +6,7 @@ GET        /                              controllers.Application.index
 
 # API V1
 GET        /sources                       controllers.Api.sources
+GET        /management/healthcheck        controllers.Api.healthCheck
 
 GET        /apps                          controllers.Api.appList
 GET        /stacks                        controllers.Api.stackList

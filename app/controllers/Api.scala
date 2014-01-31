@@ -158,6 +158,19 @@ object Api extends Controller with Logging {
     }
   }
 
+  def healthCheck = Action.async { implicit request =>
+    ApiResult.mr {
+      val sources = CollectorAgent.sources
+      val notInitialisedSources = sources.data.filter(_.state.status != "success")
+      if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
+    } { notInitialisedSources =>
+      if (notInitialisedSources.isEmpty)
+        Json.obj("sources" -> "initialised")
+      else
+        throw new ApiCallException(Json.obj("sources" -> "not yet initialised"))
+    }
+  }
+
   def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
     val json = Json.toJson(item).as[JsObject]
     if (filter.isMatch(json)) {
