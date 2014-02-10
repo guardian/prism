@@ -26,6 +26,7 @@ object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instanc
 
 case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
+  implicit val instanceSpecificationReads = Json.reads[InstanceSpecification]
   implicit val managementEndpointReads = Json.reads[ManagementEndpoint]
   implicit val instanceReads = Json.reads[Instance]
   def crawl: Iterable[Instance] = crawlJson
@@ -72,7 +73,8 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         vendor = "aws",
         account = reservation.getOwnerId,
         accountName = origin.account,
-        tags = instance.getTags.toMap
+        tags = instance.getTags.toMap,
+        specs = InstanceSpecification(instance.getImageId, instance.getInstanceType)
       )
     }
   }
@@ -120,7 +122,8 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
         account = origin.tenant,
         accountName = origin.tenant,
         vendor = "openstack",
-        tags = s.getMetadata.toMap
+        tags = s.getMetadata.toMap,
+        InstanceSpecification(s.getImage.getName ,s.getFlavor.getName)
       )
     }.map(origin.transformInstance)
   }
@@ -139,7 +142,8 @@ object Instance {
              account: String,
              accountName: String,
              vendor: String,
-             tags: Map[String, String] ): Instance = {
+             tags: Map[String, String],
+             specs: InstanceSpecification): Instance = {
     val stack = tags.get("Stack")
     val app = tags.get("App").map(_.split(",").toList).getOrElse(Nil)
 
@@ -162,7 +166,8 @@ object Instance {
       app = app,
       mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => app.map(a => s"$stack::$a"))).getOrElse(Nil),
       role = tags.get("Role"),
-      management = ManagementEndpoint.fromTag(dnsName, tags.get("Management"))
+      management = ManagementEndpoint.fromTag(dnsName, tags.get("Management")),
+      Some(specs)
     )
   }
 }
@@ -194,6 +199,8 @@ object ManagementEndpoint {
   }
 }
 
+case class InstanceSpecification(image:String, instanceType:String)
+
 case class Instance(
                  id: String,
                  name: String,
@@ -213,7 +220,8 @@ case class Instance(
                  app: List[String],
                  mainclasses: List[String],
                  role: Option[String],
-                 management:Option[Seq[ManagementEndpoint]]
+                 management:Option[Seq[ManagementEndpoint]],
+                 specification:Option[InstanceSpecification]
                 ) extends IndexedItem {
 
   def callFromId: (String) => Call = id => routes.Api.instance(id)
