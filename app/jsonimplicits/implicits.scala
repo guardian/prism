@@ -15,6 +15,10 @@ object joda {
 object model {
   import joda.dateTimeWrites
 
+  implicit val originWriter = new Writes[Origin] {
+    def writes(o: Origin): JsValue = o.toJson
+  }
+
   implicit val instanceSpecificationWriter = Json.writes[InstanceSpecification]
   implicit val managementEndpointWriter = Json.writes[ManagementEndpoint]
   implicit val instanceWriter = Json.writes[Instance]
@@ -27,10 +31,6 @@ object model {
   implicit val securityGroupRuleWriter = Json.writes[Rule]
   implicit val securityGroupWriter = Json.writes[SecurityGroup]
   implicit val ownerWriter = Json.writes[Owner]
-
-  implicit val originWriter = new Writes[Origin] {
-    def writes(o: Origin): JsValue = Json.obj("vendor" -> o.vendor, "account" -> o.account)
-  }
 
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
     def writes(l: Label): JsValue = {

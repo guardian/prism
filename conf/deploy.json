@@ -4,7 +4,7 @@
             "type":"executable-jar-webapp",
             "apps":["prism::app"],
             "data":{
-                "healthcheck_paths":[ "/" ]
+                "healthcheck_paths":[ "/", "/management/healthcheck" ]
             }
         }
     }

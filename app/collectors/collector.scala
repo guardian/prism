@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import akka.actor.ActorSystem
 import play.api.Play.current
 import scala.concurrent.ExecutionContext
+import play.api.libs.json.Json.JsValueWrapper
 
 class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 
@@ -102,6 +103,7 @@ object CollectorAgent {
         val vendor = "prism"
         val account = "prism"
         val resources = Set("sources")
+        val jsonFields = Map.empty[String, JsValueWrapper]
       },
       oldestDate
     )
