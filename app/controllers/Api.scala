@@ -110,6 +110,7 @@ object ApiResult extends Logging {
           val account = "unknown"
           val vendor = "unknown"
           val resources = Set.empty[String]
+          val jsonFields = Map.empty[String, JsValueWrapper]
         },
         source.lastUpdated
       )
@@ -165,19 +166,17 @@ object Api extends Controller with Logging {
       if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
     } { notInitialisedSources =>
       if (notInitialisedSources.isEmpty)
-        Json.obj("sources" -> "initialised")
+        Json.obj("healthcheck" -> "initialised")
       else
-        throw new ApiCallException(Json.obj("sources" -> "not yet initialised"))
+        throw new ApiCallException(Json.obj("healthcheck" -> "not yet initialised", "sources" -> notInitialisedSources.values.headOption), SERVICE_UNAVAILABLE)
     }
   }
 
-  def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
+  def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, label: Option[Label] = None, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
     val json = Json.toJson(item).as[JsObject]
     if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
-      Some(filtered ++ Json.obj("meta"-> Json.obj(
-        "href" -> item.call.absoluteURL()
-      )))
+      Some(filtered ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin))))
     } else {
       None
     }
@@ -213,9 +212,9 @@ object Api extends Controller with Logging {
           datum.data.find(_.id == id).map(datum.label -> Seq(_))
         }.toMap
       } { sources =>
-        val item = sources.values.flatten.headOption
-        item.map { i =>
-          itemJson(i, expand = true).get
+        sources.headOption.map {
+          case (label, items) =>
+            itemJson(items.head, expand = true, label=Some(label)).get
         } getOrElse {
           throw ApiCallException(Json.obj("id" -> s"Item with id $id doesn't exist"), NOT_FOUND)
         } 
@@ -228,7 +227,7 @@ object Api extends Controller with Logging {
       ApiResult.mr {
         val expand = request.getQueryString("_expand").isDefined
         val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
-        agent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, filter)) }.toMap
+        agent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, Some(agent.label), filter=filter)) }.toMap
       } { collection =>
         Json.obj(
           objectKey -> toJson(collection.values.flatten)
