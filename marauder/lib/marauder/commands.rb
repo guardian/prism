@@ -5,11 +5,29 @@ require 'marauder/marauder'
 require 'httparty'
 require 'net/ssh'
 require 'commander/import'
+require 'yaml'
 
 program :version, Marauder::VERSION
 program :description, 'command-line tool to locate infrastructure'
 
-PRISM_URL = 'http://prism.gutools.co.uk'
+# Load config file
+CONFIG_FILE = "#{ENV['HOME']}/.config/marauder/defaults.yaml"
+
+if File.exists? (CONFIG_FILE)
+  config = YAML.load_file(CONFIG_FILE)
+else
+  STDERR.puts "Well that doesn't look right..."
+  STDERR.puts "  ... prism-marauder now requires a configuration file which tells it how to connect to Prism"
+  STDERR.puts
+  STDERR.puts "You need a file at #{CONFIG_FILE} that at a very minimum contains:"
+  STDERR.puts "    ---"
+  STDERR.puts "    prism-url: http://<prism-host>"
+  STDERR.puts
+  STDERR.puts "Good luck on your quest"
+  raise ArgumentError, "Missing configuration file"
+end
+
+PRISM_URL = config['prism-url']
 
 class Api 
   include HTTParty
