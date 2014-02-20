@@ -4,13 +4,13 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'marauder/marauder'
 
 Gem::Specification.new do |s|
-  s.name          = 'marauder'
+  s.name          = 'prism-marauder'
   s.version       = Marauder::VERSION
   s.summary       = "service locator based on prism"
-  s.description   = "Small tool to find services based on simple queries"
-  s.authors       = ["Sébastien Cevey"]
+  s.description   = "Command line tool to find services in Prism based on simple queries"
+  s.authors       = ["Sébastien Cevey", "Simon Hildrew"]
   s.email         = 'seb@cine7.net'
-  s.homepage      = 'https://github.com/guardian/tools/tree/master/marauder#readme'
+  s.homepage      = 'https://github.com/guardian/prism/tree/master/marauder#readme'
   s.license       = 'GPL'
 
   s.files         = `git ls-files`.split($/).grep(%r{(bin|lib)/})

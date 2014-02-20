@@ -12,3 +12,5 @@ dist
 /.project
 /RUNNING_PID
 /.settings
+*.gem
+Gemfile.lock

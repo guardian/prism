@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+# ruby 1.9.2 removed '.' from LOAD_PATH
+$LOAD_PATH << '.'
+
+require 'marauder/commands'
