@@ -6,14 +6,9 @@ Uses the [Prism](http://prism.gutools.co.uk/) API to locate any service across t
 
 ## Install
 
-You need Ruby, bundler and rake.
-
-Build the gem and install it:
-
+Install the gem from rubygems:
 ```
-$ bundle install
-$ rake build
-$ gem install pkg/marauder-0.6.1.gem
+$ gem install prism-marauder
 ```
 
 **Note**: If you are installing on a host that only has Ruby 1.8.7 then you should install httparty version 
