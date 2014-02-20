@@ -1,9 +1,6 @@
-* allow querying with frontend::front and matching that includes separators
 * show created_at as 'ago' time
 * show instance id if present
-* better columns
 
 * show build number, sha
 
 * option for showing IP only
-* forcing of exact match "frontend front"?

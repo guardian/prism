@@ -9,7 +9,7 @@ require 'commander/import'
 program :version, Marauder::VERSION
 program :description, 'command-line tool to locate infrastructure'
 
-PRISM_URL = 'http://prism.gutools.co.uk/instances'
+PRISM_URL = 'http://prism.gutools.co.uk'
 
 class Api 
   include HTTParty
@@ -39,7 +39,7 @@ def tokenize(s)
   end
 end
 
-def find_hosts(filter)
+def prism_query(path, filter)
   prism_filters = filter.select{ |f| f =~ /=/ }
 
   api_query = Hash[prism_filters.map { |f|
@@ -51,43 +51,55 @@ def find_hosts(filter)
     [key, kvs.map{|v| v[1]}]
   }]
 
-  data = Api.get(PRISM_URL, :query => {:_expand => true}.merge(api_query))
+  data = Api.get("#{PRISM_URL}#{path}", :query => {:_expand => true}.merge(api_query))
 
   if data["stale"]
     update_time = data["lastUpdated"]
-    STDERR.puts "WARNING: Prism reports that this deployinfo is stale, it was last updated at #{update_time}"
+    STDERR.puts "WARNING: Prism reports that the data returned from #{path} is stale, it was last updated at #{update_time}"
   end
 
-  hosts = data["data"]["instances"]
+  data
+end
 
+def token_filter(things_to_filter, filter)
   dumb_filters = filter.reject{ |f| f =~ /=/ }
   query = dumb_filters.map(&:downcase).map{|s| Regexp.new("^#{s}.*")}
 
-  hosts.select do |host|
-    query.all? do |name|
-      tokens = host["mainclasses"].map{|mc| tokenize(mc)}.flatten + 
-        host["mainclasses"] + [host["stage"], host["stack"]] + host["app"]
-      tokens.compact.any? {|token| name.match(token.downcase)}
+  things_to_filter.select do |thing|
+    query.all? do |phrase|
+      tokens = yield thing
+      tokens.compact.any? {|token| phrase.match(token.downcase)}
     end
   end
+end
+
+def find_hosts(filter)
+  find_instances(filter) + find_hardware(filter)
+end
+
+def find_instances(filter)
+  data = prism_query('/instances', filter)
+  hosts = data["data"]["instances"]
+  token_filter(hosts, filter){ |host|
+    host["mainclasses"].map{|mc| tokenize(mc)}.flatten + host["mainclasses"] + [host["stage"], host["stack"]] + host["app"]
+  }
+end
+
+def find_hardware(filter)
+  data = prism_query('/hardware', filter)
+  hardware = data["data"]["hardware"]
+  token_filter(hardware, filter){ |h| [h["dnsName"], h["stage"], h["stack"]] + h["app"] }
 end
 
 def user_for_host(hostname)
   Net::SSH.configuration_for(hostname)[:user]
 end
 
-###### COMMANDS ######
-
-command :hosts do |c|
-  c.description = 'List hosts that match the search filter' 
-  c.syntax = 'marauder hosts <filter>'
-  c.option '-s', '--short', 'Only return hostnames'
-  c.action do |args, options|
-    matching = find_hosts(args)
-    if matching.empty?
-      STDERR.puts "No hosts found"
+def display_results(matching, short, noun)
+  if matching.empty?
+      STDERR.puts "No #{noun} found"
     else
-      if options.short 
+      if short 
         matching.each { |host| puts host['dnsName'] }
       else
         puts table(matching.map { |host|
@@ -97,8 +109,36 @@ command :hosts do |c|
         })
       end
     end
+end
+
+###### COMMANDS ######
+
+command :hosts do |c|
+  c.description = 'List all hosts (hardware or instances) that match the search filter' 
+  c.syntax = 'marauder hosts <filter>'
+  c.option '-s', '--short', 'Only return hostnames'
+  c.action do |args, options|
+    display_results(find_hosts(args), options.short, 'hosts')
   end
 end
+
+command :instances do |c|
+  c.description = 'List instances that match the search filter' 
+  c.syntax = 'marauder instances <filter>'
+  c.option '-s', '--short', 'Only return hostnames'
+  c.action do |args, options|
+    display_results(find_instances(args), options.short, 'instances')
+  end
+end  
+
+command :hardware do |c|
+  c.description = 'List hardware that matches the search filter' 
+  c.syntax = 'marauder hardware <filter>'
+  c.option '-s', '--short', 'Only return hostnames'
+  c.action do |args, options|
+    display_results(find_hardware(args), options.short, 'hardware')
+  end
+end   
 
 command :ssh do |c|
   c.syntax = 'marauder ssh <filter>'
