@@ -13,7 +13,7 @@ program :description, 'command-line tool to locate infrastructure'
 # Load config file
 CONFIG_FILE = "#{ENV['HOME']}/.config/marauder/defaults.yaml"
 
-if File.exists? (CONFIG_FILE)
+if File.exists?(CONFIG_FILE)
   config = YAML.load_file(CONFIG_FILE)
 else
   STDERR.puts "Well that doesn't look right..."
