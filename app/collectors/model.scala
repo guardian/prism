@@ -129,14 +129,10 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
     try {
       Json.fromJson[Seq[F]](json) match {
         case JsError(errors) =>
-          log.warn(s"Encountered failure to parse json source: $errors")
+          log.error(s"Encountered failure to parse json source: $errors")
           Nil
         case JsSuccess(result, _) => result.map(translate)
       }
-    } catch {
-      case NonFatal(t) =>
-        println(s"Failed ${t.getMessage}")
-        Nil
     }
   }
   def translate(input: F): T
