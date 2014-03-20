@@ -16,6 +16,8 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
 
   implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
 
+  val resourceName = collectors.headOption.map(_.resource.name)
+
   private var datumAgents:Map[Collector[T], ScheduledAgent[Datum[T]]] = Map.empty
 
   def get(collector: Collector[T]): Datum[T] = datumAgents(collector)()
@@ -25,6 +27,8 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
   def getTuples: Iterable[(Label, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
   
   def getLabels: Seq[Label] = get().map(_.label).toSeq
+
+  def size = get().map(_.data.size).fold(0)(_+_)
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
       val datum = SourceMetrics.CrawlTimer.measure { Datum[T](collector) }

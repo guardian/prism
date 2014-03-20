@@ -14,6 +14,7 @@ import scala.Some
 import collectors.OpenstackOrigin
 import collectors.JsonOrigin
 import collectors.AmazonOrigin
+import controllers.Prism
 
 object App {
   val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
@@ -122,6 +123,17 @@ object SourceMetrics {
   val all = Seq(TotalGauge, SuccessGauge, ErrorGauge, CrawlTimer, CrawlSuccessCounter, CrawlFailureCounter)
 }
 
+object DataMetrics extends Logging {
+  val resourceNames = Prism.allAgents.flatMap(_.resourceName).distinct
+  def countResources(resource:String) = {
+    val filteredAgents = Prism.allAgents.filter{ _.resourceName == Some(resource) }
+    filteredAgents.map(_.size).fold(0)(_+_)
+  }
+  val resourceGauges = resourceNames.map { resource =>
+    new GaugeMetric("prism", s"$resource", s"$resource entities", s"Number of $resource entities", () => countResources(resource))
+  }
+}
+
 object Management extends GuManagement {
   val applicationName = App.name
 
@@ -129,7 +141,7 @@ object Management extends GuManagement {
     new ManifestPage(),
     new Switchboard(applicationName, Seq()),
     new HealthcheckManagementPage,
-    StatusPage(applicationName, PlayRequestMetrics.asMetrics ++ SourceMetrics.all),
+    StatusPage(applicationName, PlayRequestMetrics.asMetrics ++ SourceMetrics.all ++ DataMetrics.resourceGauges),
     new PropertiesPage(Configuration.toString),
     new LogbackLevelPage(applicationName)
   )
