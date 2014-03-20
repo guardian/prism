@@ -10,6 +10,7 @@ import akka.actor.ActorSystem
 import play.api.Play.current
 import scala.concurrent.ExecutionContext
 import play.api.libs.json.Json.JsValueWrapper
+import conf.SourceMetrics
 
 class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 
@@ -26,11 +27,12 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
   def getLabels: Seq[Label] = get().map(_.label).toSeq
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
-      val datum = Datum[T](collector)
+      val datum = SourceMetrics.CrawlTimer.measure { Datum[T](collector) }
       CollectorAgent.update(datum.label)
       datum.label match {
         case l@Label(product, origin, _, None) =>
           log.info(s"Crawl of ${product.name} from $origin successful: ${datum.data.size} records, ${l.bestBefore}")
+          SourceMetrics.CrawlSuccessCounter.increment()
           datum
         case Label(product, origin, _, Some(error)) =>
           previous.label match {
@@ -41,6 +43,7 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
             case notYetStale if !notYetStale.bestBefore.isStale =>
               log.warn(s"Crawl of ${product.name} from $origin failed: leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
           }
+          SourceMetrics.CrawlFailureCounter.increment()
           previous
       }
   }

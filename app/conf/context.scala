@@ -7,8 +7,13 @@ import play.api.{Mode, Play}
 import com.gu.management._
 import com.gu.management.play.{RequestMetrics, Management => GuManagement}
 import com.gu.management.logback.LogbackLevelPage
-import collectors.{GoogleDocOrigin, JsonOrigin, OpenstackOrigin, AmazonOrigin}
+import collectors._
 import java.net.URL
+import collectors.GoogleDocOrigin
+import scala.Some
+import collectors.OpenstackOrigin
+import collectors.JsonOrigin
+import collectors.AmazonOrigin
 
 object App {
   val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
@@ -105,6 +110,18 @@ object Configuration extends Configuration(App.name, webappConfDirectory = "env"
 
 object PlayRequestMetrics extends RequestMetrics.Standard
 
+object SourceMetrics {
+  def sources = CollectorAgent.sources.data
+  object TotalGauge extends GaugeMetric("prism", "sources", "Sources", "Number of sources in Prism", () => sources.size)
+  object SuccessGauge extends GaugeMetric("prism", "success_sources", "Successful Sources", "Number of sources in Prism that last ran successfully", () => sources.count(_.error.isEmpty), Some(TotalGauge))
+  object ErrorGauge extends GaugeMetric("prism", "error_sources", "Erroring Sources", "Number of sources in Prism that are failing to run", () => sources.count(_.error.isDefined), Some(TotalGauge))
+
+  object CrawlTimer extends TimingMetric("prism", "crawl", "Crawls", "Attempted crawls of sources")
+  object CrawlSuccessCounter extends CountMetric("prism", "crawl_success", "Successful crawls", "Number of crawls that succeeded")
+  object CrawlFailureCounter extends CountMetric("prism", "crawl_error", "Failed crawls", "Number of crawls that failed")
+  val all = Seq(TotalGauge, SuccessGauge, ErrorGauge, CrawlTimer, CrawlSuccessCounter, CrawlFailureCounter)
+}
+
 object Management extends GuManagement {
   val applicationName = App.name
 
@@ -112,7 +129,7 @@ object Management extends GuManagement {
     new ManifestPage(),
     new Switchboard(applicationName, Seq()),
     new HealthcheckManagementPage,
-    StatusPage(applicationName, PlayRequestMetrics.asMetrics),
+    StatusPage(applicationName, PlayRequestMetrics.asMetrics ++ SourceMetrics.all),
     new PropertiesPage(Configuration.toString),
     new LogbackLevelPage(applicationName)
   )
