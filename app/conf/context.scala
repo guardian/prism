@@ -130,7 +130,7 @@ object DataMetrics extends Logging {
     filteredAgents.map(_.size).fold(0)(_+_)
   }
   val resourceGauges = resourceNames.map { resource =>
-    new GaugeMetric("prism", s"$resource", s"$resource entities", s"Number of $resource entities", () => countResources(resource))
+    new GaugeMetric("prism", s"${resource}_entities", s"$resource entities", s"Number of $resource entities", () => countResources(resource))
   }
 }
 
