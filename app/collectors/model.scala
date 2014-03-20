@@ -129,8 +129,9 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
     try {
       Json.fromJson[Seq[F]](json) match {
         case JsError(errors) =>
-          log.error(s"Encountered failure to parse json source: $errors")
-          Nil
+          val failure = s"Encountered failure to parse json source: $errors"
+          log.error(failure)
+          throw new IllegalArgumentException(failure)
         case JsSuccess(result, _) => result.map(translate)
       }
     }
