@@ -2,7 +2,7 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
-import play.api.http.Status
+import play.api.http.{ContentTypes, Status}
 import scala.concurrent.{Await, Future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration.Duration
@@ -73,14 +73,18 @@ object ApiResult extends Logging {
 
         reduce(sources).map { data =>
           val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
-          Results.Ok(Json.obj(
-                "status" -> "success",
-                "lastUpdated" -> lastUpdated,
-                "stale" -> stale,
-                "staleSources" -> staleLabels,
-                "data" -> dataWithMods,
-                "sources" -> usedLabels
-              ))
+          val json = Json.obj(
+              "status" -> "success",
+              "lastUpdated" -> lastUpdated,
+              "stale" -> stale,
+              "staleSources" -> staleLabels,
+              "data" -> dataWithMods,
+              "sources" -> usedLabels
+            )
+          request.getQueryString("_pretty") match {
+            case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
+            case None => Results.Ok(json)
+          }
         }
       } recover {
         case ApiCallException(failure, status) =>
