@@ -13,9 +13,12 @@ program :description, 'command-line tool to locate infrastructure'
 # Load config file
 CONFIG_FILE = "#{ENV['HOME']}/.config/marauder/defaults.yaml"
 
-if File.exists?(CONFIG_FILE)
+begin
+  raise ArgumentError, "Missing configuration file" unless File.exists?(CONFIG_FILE)
   config = YAML.load_file(CONFIG_FILE)
-else
+  PRISM_URL = config['prism-url'].gsub(/\/$/,'')
+  raise StandardError, "Missing configuration parameter 'prism-url'" unless PRISM_URL && !PRISM_URL.empty?
+rescue StandardError, ArgumentError => error
   STDERR.puts "Well that doesn't look right..."
   STDERR.puts "  ... prism-marauder now requires a configuration file which tells it how to connect to Prism"
   STDERR.puts
@@ -24,12 +27,10 @@ else
   STDERR.puts "    prism-url: http://<prism-host>"
   STDERR.puts
   STDERR.puts "Good luck on your quest"
-  raise ArgumentError, "Missing configuration file"
+  raise error
 end
 
-PRISM_URL = config['prism-url']
-
-class Api 
+class Api
   include HTTParty
   #debug_output $stderr
   disable_rails_query_string_format
@@ -70,6 +71,10 @@ def prism_query(path, filter)
   }]
 
   data = Api.get("#{PRISM_URL}#{path}", :query => {:_expand => true}.merge(api_query))
+
+  if data.code != 200
+    raise StandardError, "Prism API returned status code #{data.code} in response to #{data.request.last_uri} - check that your configuration file is correct"
+  end
 
   if data["stale"]
     update_time = data["lastUpdated"]
