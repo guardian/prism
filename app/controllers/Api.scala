@@ -194,10 +194,10 @@ object Api extends Controller with Logging {
   }
 
   def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, label: Option[Label] = None, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
-    val json = Json.toJson(item).as[JsObject]
+    val json = Json.toJson(item).as[JsObject] ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin)))
     if (filter.isMatch(json)) {
       val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
-      Some(filtered ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin))))
+      Some(filtered)
     } else {
       None
     }
