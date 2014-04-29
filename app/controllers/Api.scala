@@ -149,6 +149,27 @@ object Api extends Controller with Logging {
       }
     }
 
+  def summaryFromTwo[T<:IndexedItem, U<:IndexedItem](sourceTAgent: CollectorAgent[T],
+                                                     transformT: T => Iterable[JsValue],
+                                                     sourceUAgent: CollectorAgent[U],
+                                                     transformU: U => Iterable[JsValue],
+                                                     key: String,
+                                                     enableFilter: Boolean = false
+                                                      )(implicit ordering:Ordering[String]) =
+    Action.async { implicit request =>
+      ApiResult.mr[JsValue] {
+        sourceTAgent.get().map { datum => datum.label -> datum.data.flatMap(transformT)}.toMap ++
+        sourceUAgent.get().map { datum => datum.label -> datum.data.flatMap(transformU)}.toMap
+      } { transformed =>
+        val objects = transformed.values.toSeq.flatten.distinct.sortBy(sortString)(ordering)
+        val filteredObjects = if (enableFilter) {
+          val filter = ResourceFilter.fromRequest
+          objects.filter(filter.isMatch)
+        } else objects
+        Json.obj(key -> Json.toJson(filteredObjects))
+      }
+    }
+
   def sources = Action.async { implicit request =>
     ApiResult.mr {
       val filter = ResourceFilter.fromRequest
@@ -249,15 +270,22 @@ object Api extends Controller with Logging {
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-  def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
-  def stageList =
-    summary[Instance](Prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(conf.Configuration.stages.ordering)
+  def stackList = summaryFromTwo[Instance, Hardware](
+    Prism.instanceAgent, i => i.stack.map(Json.toJson(_)),
+    Prism.hardwareAgent, h => h.stack.map(Json.toJson(_)),
+    "stacks")
+  def stageList = summaryFromTwo[Instance, Hardware](
+    Prism.instanceAgent, i => i.stage.map(Json.toJson(_)),
+    Prism.hardwareAgent, h => h.stage.map(Json.toJson(_)),
+    "stages")(conf.Configuration.stages.ordering)
   def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
   def accountNameList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.accountName)), "accountNames")
-  def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "regions")
-  def appList = summary[Instance](
+  def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
+  def appList = summaryFromTwo[Instance, Hardware](
     Prism.instanceAgent,
     i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
+    Prism.hardwareAgent,
+    h => h.app.flatMap{ app => h.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
     "app",
     enableFilter = true
   )
