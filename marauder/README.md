@@ -20,6 +20,8 @@ prism-url: http://<prism-host>
 **Note**: If you are installing on a host that only has Ruby 1.8.7 then you should install httparty version 
 0.11.0 using `gem install httparty -v 0.11.0` as later versions of httparty will not install successfully.
 
+**Note**: The URL must not contain a trailing slash.
+
 ## Usage
 
 For inline usage help, run `marauder help` or `marauder help <command>` for help on a specific sub command.
