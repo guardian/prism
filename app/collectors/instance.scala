@@ -100,14 +100,10 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
     }
   }
 
-  def getDnsFQDN(server:Server): String = {
-    val ip = server.getAddresses.asMap.head._2.filter(_.getVersion == 4).head.getAddr
-    InetAddress.getByName(ip).getCanonicalHostName
-  }
-
   def crawl: Iterable[Instance] = {
     getServers.map{ s =>
-      val dnsName = getDnsFQDN(s)
+      val ip = s.getAddresses.asMap.head._2.filter(_.getVersion == 4).head.getAddr
+      val dnsName = InetAddress.getByName(ip).getCanonicalHostName
       val instanceId = s.getExtendedAttributes.asSet.headOption.map(_.getInstanceName).getOrElse("UNKNOWN").replace("instance", "i")
       Instance.fromApiData(
         id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",

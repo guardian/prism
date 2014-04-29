@@ -49,8 +49,6 @@ class Configuration(val application: String, val webappConfDirectory: String = "
 
   object accounts {
     lazy val lazyStartup = configuration.getStringProperty("accounts.lazyStartup", "true") == "true"
-    lazy val all = aws.list ++ openstack.list ++ json.list ++ googleDoc.list
-    def forResource(resource:String) = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
     object aws extends NamedProperties(configuration, "accounts.aws") {
       lazy val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
       val list = names.toSeq.sorted.map { name =>
