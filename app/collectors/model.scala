@@ -41,7 +41,8 @@ trait Collector[T] {
 object Datum {
   def apply[T](collector: Collector[T]): Datum[T] = {
     Try {
-      Datum(Label(collector), collector.crawl.toSeq)
+      val items = collector.crawl.toSeq
+      Datum(Label(collector, items.size), items)
     } recover {
       case NonFatal(t) =>
         Datum[T](Label(collector, t), Nil)
@@ -52,10 +53,10 @@ object Datum {
 case class Datum[T](label:Label, data:Seq[T])
 
 object Label {
-  def apply[T](c: Collector[T]): Label = Label(c.resource, c.origin)
-  def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, error = Some(error))
+  def apply[T](c: Collector[T], itemCount: Int): Label = Label(c.resource, c.origin, itemCount)
+  def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, 0, error = Some(error))
 }
-case class Label(resource:ResourceType, origin:Origin, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
+case class Label(resource:ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
   lazy val isError = error.isDefined
   lazy val status = if (isError) "error" else "success"
   lazy val bestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)

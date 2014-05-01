@@ -4,8 +4,6 @@ import org.joda.time.{Duration, DateTime}
 import org.jclouds.ContextBuilder
 import org.jclouds.compute.ComputeServiceContext
 import scala.collection.JavaConversions._
-import org.jclouds.aws.ec2.AWSEC2Api
-import org.jclouds.ec2.domain.{Reservation, RunningInstance}
 import utils.Logging
 import org.jclouds.openstack.nova.v2_0.NovaApi
 import org.jclouds.openstack.nova.v2_0.domain.Server
@@ -15,6 +13,8 @@ import play.api.libs.json.Json
 import play.api.mvc.Call
 import controllers.routes
 import scala.language.postfixOps
+import com.amazonaws.services.ec2.AmazonEC2Client
+import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation}
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
@@ -26,6 +26,7 @@ object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instanc
 
 case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
+  implicit val addressReads = Json.reads[Address]
   implicit val instanceSpecificationReads = Json.reads[InstanceSpecification]
   implicit val managementEndpointReads = Json.reads[ManagementEndpoint]
   implicit val instanceReads = Json.reads[Instance]
@@ -34,46 +35,29 @@ case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) exten
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
-  lazy val context = ContextBuilder.newBuilder("aws-ec2")
-    .credentials(origin.accessKey, origin.secretKey)
-    .build(classOf[ComputeServiceContext])
-  lazy val compute = context.getComputeService
+  val client = new AmazonEC2Client(origin.creds)
+  client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
 
-  lazy val awsClient = ContextBuilder.newBuilder("aws-ec2").credentials(origin.accessKey, origin.secretKey).buildApi(classOf[AWSEC2Api])
-  lazy val instanceApi = awsClient.getInstanceApi.get()
-
-  var instances: Seq[Instance] = Seq()
-
-  def poll() {
-  }
-
-  def getReservationInstances:Iterable[(Reservation[RunningInstance],RunningInstance)] = {
-    val nodes = instanceApi.describeInstancesInRegion(origin.region)
-    nodes.flatMap {
-      case r:Reservation[RunningInstance] =>
-        r.map {
-          case i:RunningInstance =>
-            (r, i)
-        }
-    }
+  def getInstances:Iterable[(Reservation, AWSInstance)] = {
+    client.describeInstances().getReservations.flatMap(r => r.getInstances.map(r -> _))
   }
 
   def crawl:Iterable[Instance] = {
-    getReservationInstances.map { case (reservation, instance) =>
+    getInstances.map { case (reservation, instance) =>
       Instance.fromApiData(
-        id = s"arn:aws:ec2:${origin.region}:${reservation.getOwnerId}:instance/${instance.getId}",
-        name = instance.getDnsName,
-        vendorState = Some(instance.getInstanceState.value),
-        group = instance.getAvailabilityZone,
-        dnsName = instance.getDnsName,
+        id = s"arn:aws:ec2:${origin.region}:${origin.accountNumber.getOrElse(reservation.getOwnerId)}:instance/${instance.getInstanceId}",
+        vendorState = Some(instance.getState.getName),
+        group = instance.getPlacement.getAvailabilityZone,
+        addresses = AddressList(
+          "public" -> Address(instance.getPublicDnsName, instance.getPublicIpAddress),
+          "private" -> Address(instance.getPrivateDnsName, instance.getPrivateIpAddress)
+        ),
         createdAt = new DateTime(instance.getLaunchTime),
-        instanceName = instance.getId,
+        instanceName = instance.getInstanceId,
         internalName = instance.getPrivateDnsName,
         region = origin.region,
         vendor = "aws",
-        account = reservation.getOwnerId,
-        accountName = origin.account,
-        tags = instance.getTags.toMap,
+        tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
         specs = InstanceSpecification(instance.getImageId, instance.getInstanceType)
       )
     }
@@ -103,20 +87,17 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
   def crawl: Iterable[Instance] = {
     getServers.map{ s =>
       val ip = s.getAddresses.asMap.head._2.filter(_.getVersion == 4).head.getAddr
-      val dnsName = InetAddress.getByName(ip).getCanonicalHostName
+      val address = Address.fromIp(ip)
       val instanceId = s.getExtendedAttributes.asSet.headOption.map(_.getInstanceName).getOrElse("UNKNOWN").replace("instance", "i")
       Instance.fromApiData(
         id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
-        name = dnsName,
         vendorState = Some(s.getStatus.value),
         group = origin.region,
-        dnsName = dnsName,
+        addresses = AddressList("private" -> address),
         createdAt = new DateTime(s.getCreated),
         instanceName = instanceId,
         internalName = s.getName, // use dnsname
         region = origin.region,
-        account = origin.tenant,
-        accountName = origin.tenant,
         vendor = "openstack",
         tags = s.getMetadata.toMap,
         InstanceSpecification(s.getImage.getName ,s.getFlavor.getName)
@@ -127,16 +108,13 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
 
 object Instance {
   def fromApiData( id: String,
-             name: String,
              vendorState: Option[String],
              group: String,
-             dnsName: String,
+             addresses: AddressList,
              createdAt: DateTime,
              instanceName: String,
              internalName: String,
              region: String,
-             account: String,
-             accountName: String,
              vendor: String,
              tags: Map[String, String],
              specs: InstanceSpecification): Instance = {
@@ -145,16 +123,16 @@ object Instance {
 
     apply(
       id = id,
-      name = name,
+      name = addresses.primary.dnsName,
       vendorState = vendorState,
       group = group,
-      dnsName = dnsName,
+      dnsName = addresses.primary.dnsName,
+      ip = addresses.primary.ip,
+      addresses = addresses.mapOfAddresses,
       createdAt = createdAt,
       instanceName = instanceName,
       internalName = internalName,
       region = region,
-      account = account,
-      accountName = accountName,
       vendor = vendor,
       tags = tags,
       stage = tags.get("Stage"),
@@ -162,7 +140,7 @@ object Instance {
       app = app,
       mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => app.map(a => s"$stack::$a"))).getOrElse(Nil),
       role = tags.get("Role"),
-      management = ManagementEndpoint.fromTag(dnsName, tags.get("Management")),
+      management = ManagementEndpoint.fromTag(addresses.primary.dnsName, tags.get("Management")),
       Some(specs)
     )
   }
@@ -195,6 +173,17 @@ object ManagementEndpoint {
   }
 }
 
+case class AddressList(primary: Address, mapOfAddresses:Map[String,Address])
+object AddressList {
+  def apply(addresses:(String, Address)*): AddressList = AddressList(addresses.head._2, addresses.toMap)
+}
+
+case class Address(dnsName: String, ip: String)
+object Address {
+  def fromIp(ip:String): Address = Address(InetAddress.getByName(ip).getCanonicalHostName, ip)
+  def fromFQDN(dnsName:String): Address = Address(dnsName, InetAddress.getByName(dnsName).getHostAddress)
+}
+
 case class InstanceSpecification(image:String, instanceType:String)
 
 case class Instance(
@@ -203,12 +192,12 @@ case class Instance(
                  vendorState: Option[String],
                  group: String,
                  dnsName: String,
+                 ip: String,
+                 addresses: Map[String,Address],
                  createdAt: DateTime,
                  instanceName: String,
                  internalName: String,
                  region: String,
-                 account: String,
-                 accountName: String,
                  vendor: String,
                  tags: Map[String, String] = Map.empty,
                  stage: Option[String],

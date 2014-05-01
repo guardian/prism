@@ -116,6 +116,7 @@ object ApiResult extends Logging {
           val resources = Set.empty[String]
           val jsonFields = Map.empty[String, String]
         },
+        1,
         source.lastUpdated
       )
       mr.async(Map(sourceLabel -> Seq("dummy"))){ emptyMap =>
@@ -283,7 +284,6 @@ object Api extends Controller with Logging {
     Prism.hardwareAgent, h => h.stage.map(Json.toJson(_)),
     "stages")(conf.Configuration.stages.ordering)
   def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
-  def accountNameList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.accountName)), "accountNames")
   def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
   def appList = summaryFromTwo[Instance, Hardware](
     Prism.instanceAgent,

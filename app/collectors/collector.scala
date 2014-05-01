@@ -34,11 +34,11 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
       val datum = SourceMetrics.CrawlTimer.measure { Datum[T](collector) }
       CollectorAgent.update(datum.label)
       datum.label match {
-        case l@Label(product, origin, _, None) =>
-          log.info(s"Crawl of ${product.name} from $origin successful: ${datum.data.size} records, ${l.bestBefore}")
+        case l@Label(product, origin, size, _, None) =>
+          log.info(s"Crawl of ${product.name} from $origin successful: $size records, ${l.bestBefore}")
           SourceMetrics.CrawlSuccessCounter.increment()
           datum
-        case Label(product, origin, _, Some(error)) =>
+        case Label(product, origin, _, _, Some(error)) =>
           previous.label match {
             case bad if bad.isError =>
               log.error(s"Crawl of ${product.name} from $origin failed: NO data available as this has not been crawled successfuly since Prism started", error)
@@ -112,6 +112,7 @@ object CollectorAgent {
         val resources = Set("sources")
         val jsonFields = Map.empty[String, String]
       },
+      statusList.size,
       oldestDate
     )
     Datum(label, statusList.toSeq)

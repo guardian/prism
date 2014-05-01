@@ -5,12 +5,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-129.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.129",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-129.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.129"
+            }
+        },
         "createdAt": "2013-12-10T15:54:35.000Z",
         "instanceName": "i-00000d44",
         "internalName": "TEST:disdb:02",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "discussion-db",
@@ -35,12 +40,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-128.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.128",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-128.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.128"
+            }
+        },
         "createdAt": "2013-12-10T15:54:22.000Z",
         "instanceName": "i-00000d43",
         "internalName": "TEST:disdb:01",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "discussion-db",
@@ -65,12 +75,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-102.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.102",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-102.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.102"
+            }
+        },
         "createdAt": "2013-10-24T15:56:54.000+01:00",
         "instanceName": "i-00000cfe",
         "internalName": "TEST:mngdb_backup",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "mngdb",
@@ -92,12 +107,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-101.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.101",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-101.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.101"
+            }
+        },
         "createdAt": "2013-10-24T15:56:40.000+01:00",
         "instanceName": "i-00000cfd",
         "internalName": "TEST:mngdb",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "mngdb",
@@ -119,12 +139,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-100.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.100",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-100.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.100"
+            }
+        },
         "createdAt": "2013-10-24T15:56:26.000+01:00",
         "instanceName": "i-00000cfc",
         "internalName": "TEST:mngdb",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "mngdb",
@@ -146,12 +171,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-119.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.119",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-119.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.119"
+            }
+        },
         "createdAt": "2013-10-03T12:33:22.000+01:00",
         "instanceName": "i-00000cdf",
         "internalName": "TEST:oradb",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "oradb",
@@ -173,12 +203,17 @@
         "vendorState": "ACTIVE",
         "group": "dev1",
         "dnsName": "10-252-193-118.gc2.dev.dc1.gnm",
+        "ip": "10.252.193.118",
+        "addresses": {
+            "private": {
+                "dnsName": "10-252-193-118.gc2.dev.dc1.gnm",
+                "ip": "10.252.193.118"
+            }
+        },
         "createdAt": "2013-10-03T12:33:10.000+01:00",
         "instanceName": "i-00000cde",
         "internalName": "TEST:oradb",
         "region": "dev1",
-        "account": "websys",
-        "accountName": "websys",
         "vendor": "openstack",
         "tags": {
             "Role": "oradb",
@@ -200,12 +235,21 @@
         "vendorState": "running",
         "group": "eu-west-1c",
         "dnsName": "ec2-46-137-42-15.eu-west-1.compute.amazonaws.com",
+        "ip": "46.137.42.15",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-46-137-42-15.eu-west-1.compute.amazonaws.com",
+                "ip": "46.137.42.15"
+            },
+            "private": {
+                "dnsName": "ip-10-58-255-158.eu-west-1.compute.internal",
+                "ip": "10.58.255.158"
+            }
+        },
         "createdAt": "2011-06-09T17:19:54.000+01:00",
         "instanceName": "i-6cd9b11a",
         "internalName": "ip-10-58-255-158.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "362307275615",
-        "accountName": "websys",
         "vendor": "aws",
         "tags": {
             "Name": "TEST:arts_music",
@@ -227,12 +271,21 @@
         "vendorState": "running",
         "group": "eu-west-1c",
         "dnsName": "ec2-46-137-99-242.eu-west-1.compute.amazonaws.com",
+        "ip": "46.137.99.242",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-46-137-99-242.eu-west-1.compute.amazonaws.com",
+                "ip": "46.137.99.242"
+            },
+            "private": {
+                "dnsName": "ip-10-58-54-203.eu-west-1.compute.internal",
+                "ip": "10.58.54.203"
+            }
+        },
         "createdAt": "2011-03-17T18:44:40.000Z",
         "instanceName": "i-29f73c5f",
         "internalName": "ip-10-58-54-203.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "362307275615",
-        "accountName": "websys",
         "vendor": "aws",
         "tags": {
             "Name": "TEST:arts-books",
@@ -254,12 +307,21 @@
         "vendorState": "running",
         "group": "eu-west-1a",
         "dnsName": "ec2-54-247-17-171.eu-west-1.compute.amazonaws.com",
+        "ip": "54.247.17.171",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-54-247-17-171.eu-west-1.compute.amazonaws.com",
+                "ip": "54.247.17.171"
+            },
+            "private": {
+                "dnsName": "ip-10-246-89-221.eu-west-1.compute.internal",
+                "ip": "10.246.89.221"
+            }
+        },
         "createdAt": "2012-11-14T07:47:26.000Z",
         "instanceName": "i-129d0559",
         "internalName": "ip-10-246-89-221.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "649430877268",
-        "accountName": "aws-soulmates-dev",
         "vendor": "aws",
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-api",
@@ -282,12 +344,21 @@
         "vendorState": "running",
         "group": "eu-west-1c",
         "dnsName": "ec2-46-51-157-62.eu-west-1.compute.amazonaws.com",
+        "ip": "46.51.157.62",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-46-51-157-62.eu-west-1.compute.amazonaws.com",
+                "ip": "46.51.157.62"
+            },
+            "private": {
+                "dnsName": "ip-10-65-57-149.eu-west-1.compute.internal",
+                "ip": "10.65.57.149"
+            }
+        },
         "createdAt": "2012-11-14T07:50:50.000Z",
         "instanceName": "i-c482158f",
         "internalName": "ip-10-65-57-149.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "649430877268",
-        "accountName": "aws-soulmates-dev",
         "vendor": "aws",
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-scheduler",
@@ -310,12 +381,21 @@
         "vendorState": "running",
         "group": "eu-west-1a",
         "dnsName": "ec2-46-137-39-49.eu-west-1.compute.amazonaws.com",
+        "ip": "46.137.39.49",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-46-137-39-49.eu-west-1.compute.amazonaws.com",
+                "ip": "46.137.39.49"
+            },
+            "private": {
+                "dnsName": "ip-10-246-123-222.eu-west-1.compute.internal",
+                "ip": "10.246.123.222"
+            }
+        },
         "createdAt": "2012-11-14T07:46:31.000Z",
         "instanceName": "i-dc821597",
         "internalName": "ip-10-246-123-222.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "649430877268",
-        "accountName": "aws-soulmates-dev",
         "vendor": "aws",
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-geolocation",
@@ -338,12 +418,21 @@
         "vendorState": "running",
         "group": "eu-west-1c",
         "dnsName": "ec2-46-137-11-19.eu-west-1.compute.amazonaws.com",
+        "ip": "46.137.11.19",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-46-137-11-19.eu-west-1.compute.amazonaws.com",
+                "ip": "46.137.11.19"
+            },
+            "private": {
+                "dnsName": "ip-10-208-43-142.eu-west-1.compute.internal",
+                "ip": "10.208.43.142"
+            }
+        },
         "createdAt": "2012-11-26T15:53:10.000Z",
         "instanceName": "i-485fc803",
         "internalName": "ip-10-208-43-142.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "649430877268",
-        "accountName": "aws-soulmates-dev",
         "vendor": "aws",
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-frontend",
@@ -366,12 +455,21 @@
         "vendorState": "running",
         "group": "eu-west-1c",
         "dnsName": "ec2-46-137-72-83.eu-west-1.compute.amazonaws.com",
+        "ip": "46.137.72.83",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-46-137-72-83.eu-west-1.compute.amazonaws.com",
+                "ip": "46.137.72.83"
+            },
+            "private": {
+                "dnsName": "ip-10-64-135-205.eu-west-1.compute.internal",
+                "ip": "10.64.135.205"
+            }
+        },
         "createdAt": "2012-11-14T07:49:08.000Z",
         "instanceName": "i-da821591",
         "internalName": "ip-10-64-135-205.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "649430877268",
-        "accountName": "aws-soulmates-dev",
         "vendor": "aws",
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-admin",
@@ -394,12 +492,21 @@
         "vendorState": "running",
         "group": "eu-west-1b",
         "dnsName": "ec2-176-34-168-84.eu-west-1.compute.amazonaws.com",
+        "ip": "176.34.168.84",
+        "addresses": {
+            "public": {
+                "dnsName": "ec2-176-34-168-84.eu-west-1.compute.amazonaws.com",
+                "ip": "176.34.168.84"
+            },
+            "private": {
+                "dnsName": "ip-10-234-49-80.eu-west-1.compute.internal",
+                "ip": "10.234.49.80"
+            }
+        },
         "createdAt": "2012-11-26T14:08:37.000Z",
         "instanceName": "i-d2821599",
         "internalName": "ip-10-234-49-80.eu-west-1.compute.internal",
         "region": "eu-west-1",
-        "account": "649430877268",
-        "accountName": "aws-soulmates-dev",
         "vendor": "aws",
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-db",

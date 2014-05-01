@@ -19,6 +19,7 @@ object model {
     def writes(o: Origin): JsValue = o.toJson
   }
 
+  implicit val addressWriter = Json.writes[Address]
   implicit val instanceSpecificationWriter = Json.writes[InstanceSpecification]
   implicit val managementEndpointWriter = Json.writes[ManagementEndpoint]
   implicit val instanceWriter = Json.writes[Instance]
@@ -46,6 +47,7 @@ object model {
       Json.obj(
         "status" -> l.status,
         "createdAt" -> l.createdAt,
+        "itemCount" -> l.itemCount,
         "age" -> l.bestBefore.age.getStandardSeconds,
         "stale" -> l.bestBefore.isStale
       ) ++
