@@ -48,10 +48,10 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         id = s"arn:aws:ec2:${origin.region}:${origin.accountNumber.getOrElse(reservation.getOwnerId)}:instance/${instance.getInstanceId}",
         vendorState = Some(instance.getState.getName),
         group = instance.getPlacement.getAvailabilityZone,
-        addresses = AddressList(
+        addresses = Some(AddressList(
           "public" -> Address(instance.getPublicDnsName, instance.getPublicIpAddress),
           "private" -> Address(instance.getPrivateDnsName, instance.getPrivateIpAddress)
-        ),
+        )),
         createdAt = new DateTime(instance.getLaunchTime),
         instanceName = instance.getInstanceId,
         internalName = instance.getPrivateDnsName,
@@ -86,14 +86,14 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
 
   def crawl: Iterable[Instance] = {
     getServers.map{ s =>
-      val ip = s.getAddresses.asMap.head._2.filter(_.getVersion == 4).head.getAddr
-      val address = Address.fromIp(ip)
+      val ip = s.getAddresses.asMap.headOption.flatMap(_._2.find(_.getVersion == 4).map(_.getAddr))
+      val address = ip.map(Address.fromIp)
       val instanceId = s.getExtendedAttributes.asSet.headOption.map(_.getInstanceName).getOrElse("UNKNOWN").replace("instance", "i")
       Instance.fromApiData(
         id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
         vendorState = Some(s.getStatus.value),
         group = origin.region,
-        addresses = AddressList("private" -> address),
+        addresses = address.map(a => AddressList("private" -> a)),
         createdAt = new DateTime(s.getCreated),
         instanceName = instanceId,
         internalName = s.getName, // use dnsname
@@ -110,7 +110,7 @@ object Instance {
   def fromApiData( id: String,
              vendorState: Option[String],
              group: String,
-             addresses: AddressList,
+             addresses: Option[AddressList],
              createdAt: DateTime,
              instanceName: String,
              internalName: String,
@@ -123,12 +123,12 @@ object Instance {
 
     apply(
       id = id,
-      name = addresses.primary.dnsName,
+      name = addresses.map(_.primary.dnsName),
       vendorState = vendorState,
       group = group,
-      dnsName = addresses.primary.dnsName,
-      ip = addresses.primary.ip,
-      addresses = addresses.mapOfAddresses,
+      dnsName = addresses.map(_.primary.dnsName),
+      ip = addresses.map(_.primary.ip),
+      addresses = addresses.map(_.mapOfAddresses).getOrElse(Map.empty),
       createdAt = createdAt,
       instanceName = instanceName,
       internalName = internalName,
@@ -140,7 +140,7 @@ object Instance {
       app = app,
       mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => app.map(a => s"$stack::$a"))).getOrElse(Nil),
       role = tags.get("Role"),
-      management = ManagementEndpoint.fromTag(addresses.primary.dnsName, tags.get("Management")),
+      management = ManagementEndpoint.fromTag(addresses, tags.get("Management")),
       Some(specs)
     )
   }
@@ -149,18 +149,19 @@ object Instance {
 case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
 object ManagementEndpoint {
   val KeyValue = """([^=]*)=(.*)""".r
-  def fromTag(dnsName:String, tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
-    tag match {
-      case Some("none") => None
-      case Some(tagContent) =>
+  def fromTag(addresses:Option[AddressList], tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
+    (addresses, tag) match {
+      case (_,Some("none")) => None
+      case (Some(AddressList(address, _)),Some(tagContent)) =>
         Some(tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
           val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
             case KeyValue(key,value) => Some(key -> value)
             case _ => None
           }.toMap
-          fromMap(dnsName, params)
+          fromMap(address.dnsName, params)
         })
-      case None => Some(Seq(fromMap(dnsName)))
+      case (Some(AddressList(address, _)), None) => Some(Seq(fromMap(address.dnsName)))
+      case _ => None
     }
   }
   def fromMap(dnsName:String, map:Map[String,String] = Map.empty):ManagementEndpoint = {
@@ -188,11 +189,11 @@ case class InstanceSpecification(image:String, instanceType:String)
 
 case class Instance(
                  id: String,
-                 name: String,
+                 name: Option[String],
                  vendorState: Option[String],
                  group: String,
-                 dnsName: String,
-                 ip: String,
+                 dnsName: Option[String],
+                 ip: Option[String],
                  addresses: Map[String,Address],
                  createdAt: DateTime,
                  instanceName: String,
@@ -210,7 +211,7 @@ case class Instance(
                 ) extends IndexedItem {
 
   def callFromId: (String) => Call = id => routes.Api.instance(id)
-  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ dnsName.map("dnsName" ->) ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {
     this.copy(
