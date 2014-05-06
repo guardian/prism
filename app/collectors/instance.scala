@@ -64,7 +64,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
   }
 }
 
-case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) extends Collector[Instance] {
+case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
   lazy val context = ContextBuilder.newBuilder("openstack-nova")
     .endpoint(origin.endpoint)
@@ -85,23 +85,26 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
   }
 
   def crawl: Iterable[Instance] = {
-    getServers.map{ s =>
-      val ip = s.getAddresses.asMap.head._2.filter(_.getVersion == 4).head.getAddr
-      val address = Address.fromIp(ip)
+    getServers.flatMap{ s =>
+      val ip = s.getAddresses.asMap.headOption.flatMap(_._2.find(_.getVersion == 4).map(_.getAddr))
+      val addressOption = ip.map(Address.fromIp)
       val instanceId = s.getExtendedAttributes.asSet.headOption.map(_.getInstanceName).getOrElse("UNKNOWN").replace("instance", "i")
-      Instance.fromApiData(
-        id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
-        vendorState = Some(s.getStatus.value),
-        group = origin.region,
-        addresses = AddressList("private" -> address),
-        createdAt = new DateTime(s.getCreated),
-        instanceName = instanceId,
-        internalName = s.getName, // use dnsname
-        region = origin.region,
-        vendor = "openstack",
-        tags = s.getMetadata.toMap,
-        InstanceSpecification(s.getImage.getName ,s.getFlavor.getName)
-      )
+      if (addressOption.isEmpty) log.warn(s"Ignoring instance $instanceId from $origin as it doesn't have an IP address")
+      addressOption.map { address =>
+        Instance.fromApiData(
+          id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
+          vendorState = Some(s.getStatus.value),
+          group = origin.region,
+          addresses = AddressList("private" -> address),
+          createdAt = new DateTime(s.getCreated),
+          instanceName = instanceId,
+          internalName = s.getName, // use dnsname
+          region = origin.region,
+          vendor = "openstack",
+          tags = s.getMetadata.toMap,
+          InstanceSpecification(s.getImage.getName, s.getFlavor.getName)
+        )
+      }
     }.map(origin.transformInstance)
   }
 }
