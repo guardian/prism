@@ -52,7 +52,7 @@ object model {
         "stale" -> l.bestBefore.isStale
       ) ++
         l.error.map{ error => Json.obj(
-          "message" -> s"${error.getClass.getName}: ${error.getMessage}"
+          "message" -> error.getMessage
         )
         }.getOrElse(Json.obj())
     }
