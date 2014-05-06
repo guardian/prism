@@ -52,7 +52,7 @@ object ApiResult extends Logging {
       Try {
         val filter = ResourceFilter.fromRequest
         val filteredSources = mapSources.groupBy{ case (label, data) => filter.isMatch(label.origin.filterMap) }
-        filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn("The origin filter contract map has been violated: data exists in a discarded source"))
+        filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
 
         val sources:Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
 
