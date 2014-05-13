@@ -1,4 +1,4 @@
-import collectors.BestBefore
+import agent.BestBefore
 import org.joda.time.{Duration, DateTime}
 import org.specs2.mutable._
 

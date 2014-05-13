@@ -10,6 +10,7 @@ import scala.collection.JavaConversions._
 import controllers.{Prism, routes}
 import org.jclouds.net.domain.IpPermission
 import org.jclouds.openstack.nova.v2_0.NovaApi
+import agent._
 
 object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {

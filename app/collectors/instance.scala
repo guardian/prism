@@ -15,6 +15,7 @@ import controllers.routes
 import scala.language.postfixOps
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation}
+import agent._
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {

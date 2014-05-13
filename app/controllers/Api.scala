@@ -8,6 +8,7 @@ import collectors._
 import scala.language.postfixOps
 import utils.{ResourceFilter, Matchable, Logging}
 import jsonimplicits.joda._
+import agent._
 
 object Api extends Controller with Logging {
 

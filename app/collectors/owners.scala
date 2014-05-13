@@ -3,6 +3,7 @@ package collectors
 import org.joda.time.Duration
 import play.api.mvc.Call
 import controllers.routes
+import agent._
 
 object OwnerCollectorSet extends CollectorSet[Owner](ResourceType("owner", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Owner]] = {

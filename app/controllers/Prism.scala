@@ -1,5 +1,6 @@
 package controllers
 
+import agent.CollectorAgent
 import collectors._
 
 object Prism {

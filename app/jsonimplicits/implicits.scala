@@ -4,6 +4,7 @@ import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
 import collectors._
 import play.api.libs.json.JsString
+import agent._
 
 object joda {
   implicit object dateTimeWrites extends Writes[org.joda.time.DateTime] {

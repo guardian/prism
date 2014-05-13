@@ -1,4 +1,4 @@
-package collectors
+package agent
 
 import org.joda.time.{Duration, DateTime}
 import scala.util.Try

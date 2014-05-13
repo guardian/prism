@@ -4,6 +4,7 @@ import org.joda.time.Duration
 import play.api.libs.json.Json
 import play.api.mvc.Call
 import controllers.routes
+import agent._
 
 object DataCollectorSet extends CollectorSet[Data](ResourceType("data", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
