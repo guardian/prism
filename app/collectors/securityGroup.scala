@@ -117,4 +117,12 @@ case class SecurityGroup(id:String,
   def callFromId: (String) => Call = id => routes.Api.securityGroup(id)
 }
 
+object SecurityGroup {
+  implicit val idLookup = new IdLookup[SecurityGroup] {
+    override def call(id: String): Call = routes.Api.securityGroup(id)
+    override def item(id: String): Option[(Label,SecurityGroup)] =
+      Prism.securityGroupAgent.getTuples.find(_._2.id==id).headOption
+  }
+}
+
 case class SecurityGroupRef(groupId:String, account:String, id:Option[String])

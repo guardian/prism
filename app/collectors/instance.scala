@@ -2,11 +2,10 @@ package collectors
 
 import org.joda.time.{Duration, DateTime}
 import org.jclouds.ContextBuilder
-import org.jclouds.compute.ComputeServiceContext
 import scala.collection.JavaConversions._
 import utils.Logging
 import org.jclouds.openstack.nova.v2_0.NovaApi
-import org.jclouds.openstack.nova.v2_0.domain.Server
+import org.jclouds.openstack.nova.v2_0.domain.ServerWithSecurityGroups
 import java.net.InetAddress
 import conf.Configuration.accounts
 import play.api.libs.json.Json
@@ -16,6 +15,8 @@ import scala.language.postfixOps
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation}
 import agent._
+import org.jclouds.openstack.nova.v2_0.features.ServerApi
+import org.jclouds.openstack.nova.v2_0.extensions.ServerWithSecurityGroupsApi
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
@@ -27,6 +28,7 @@ object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instanc
 
 case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
+  import jsonimplicits.model._
   implicit val addressReads = Json.reads[Address]
   implicit val instanceSpecificationReads = Json.reads[InstanceSpecification]
   implicit val managementEndpointReads = Json.reads[ManagementEndpoint]
@@ -58,6 +60,15 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         internalName = instance.getPrivateDnsName,
         region = origin.region,
         vendor = "aws",
+        securityGroups = instance.getSecurityGroups.map{ sg =>
+          Reference[SecurityGroup](
+            s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.getGroupId}",
+            Map(
+              "groupId" -> sg.getGroupId,
+              "groupName" -> sg.getGroupName
+            )
+          )
+        },
         tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
         specs = InstanceSpecification(instance.getImageId, instance.getInstanceType)
       )
@@ -67,22 +78,16 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
 
 case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
-  lazy val context = ContextBuilder.newBuilder("openstack-nova")
-    .endpoint(origin.endpoint)
-    .credentials(s"${origin.tenant}:${origin.user}", origin.secret)
-    .build(classOf[ComputeServiceContext])
-  lazy val compute = context.getComputeService
-
-  lazy val novaApi = ContextBuilder.newBuilder("openstack-nova")
+  val novaApi = ContextBuilder.newBuilder("openstack-nova")
     .endpoint(origin.endpoint)
     .credentials(s"${origin.tenant}:${origin.user}", origin.secret)
     .buildApi(classOf[NovaApi])
+  val serverApi: ServerApi = novaApi.getServerApiForZone(origin.region)
+  val sgServerApi: ServerWithSecurityGroupsApi = novaApi.getServerWithSecurityGroupsExtensionForZone(origin.region).get
 
-  def getServers: Iterable[Server] = {
-    val instances = novaApi.getServerApiForZone(origin.region).listInDetail().flatten
-    instances.map{
-      case i:Server => i
-    }
+  def getServers: Iterable[ServerWithSecurityGroups] = {
+    val instances = serverApi.list.concat.toList
+    instances.map{ resource => sgServerApi.get(resource.getId) }
   }
 
   def crawl: Iterable[Instance] = {
@@ -102,6 +107,12 @@ case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) ex
           internalName = s.getName, // use dnsname
           region = origin.region,
           vendor = "openstack",
+          securityGroups = s.getSecurityGroupNames.toSeq.sorted.map{ sg =>
+            Reference[SecurityGroup](
+              s"arn:openstack:ec2:${origin.region}:${origin.tenant}:security-group/$sg",
+              Map("name" -> sg)
+            )
+          },
           tags = s.getMetadata.toMap,
           InstanceSpecification(s.getImage.getName, s.getFlavor.getName)
         )
@@ -120,6 +131,7 @@ object Instance {
              internalName: String,
              region: String,
              vendor: String,
+             securityGroups: Seq[Reference[SecurityGroup]],
              tags: Map[String, String],
              specs: InstanceSpecification): Instance = {
     val stack = tags.get("Stack")
@@ -138,6 +150,7 @@ object Instance {
       internalName = internalName,
       region = region,
       vendor = vendor,
+      securityGroups = securityGroups,
       tags = tags,
       stage = tags.get("Stage"),
       stack = stack,
@@ -203,6 +216,7 @@ case class Instance(
                  internalName: String,
                  region: String,
                  vendor: String,
+                 securityGroups: Seq[Reference[SecurityGroup]],
                  tags: Map[String, String] = Map.empty,
                  stage: Option[String],
                  stack: Option[String],

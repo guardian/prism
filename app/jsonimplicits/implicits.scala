@@ -70,4 +70,11 @@ object model {
       ) ++ Json.toJson(o).as[JsObject]
     }
   }
+
+  implicit def referenceWrites[T]: Writes[Reference[T]] = new Writes[Reference[T]] {
+    def writes(o: Reference[T]) = Json.toJson(o.id)
+  }
+  implicit def referenceReads[T](implicit idLookup:IdLookup[T]): Reads[Reference[T]] = new Reads[Reference[T]] {
+    override def reads(json: JsValue): JsResult[Reference[T]] = JsSuccess(Reference[T](json.as[String]))
+  }
 }
