@@ -12,6 +12,7 @@ import scala.concurrent.Future
 import scala.Some
 import scala.util.Try
 import utils.{ResourceFilter, Logging}
+import jsonimplicits.joda._
 
 // use this when the API call has illegal parameters
 case class ApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
