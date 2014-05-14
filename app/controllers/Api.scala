@@ -13,6 +13,16 @@ import jsonimplicits.RequestWrites
 
 object Api extends Controller with Logging {
 
+  implicit def referenceWrites[T <: IndexedItem](implicit idLookup:IdLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
+    def writes(o: Reference[T]) = {
+      if (request.getQueryString("_references").isDefined) {
+        idLookup.item(o.id).flatMap { case (label, t) =>
+          itemJson(item = t, label = Some(label), expand = true)
+        }.getOrElse(JsNull)
+      } else
+        Json.toJson(idLookup.call(o.id).absoluteURL()(request))
+    }
+  }
   import jsonimplicits.model._
 
   def sortString(jsv: JsValue):String =
@@ -114,50 +124,63 @@ object Api extends Controller with Logging {
     }
   }
 
-  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)(implicit requestWrites: RequestWrites[T]) =
-    Action.async { implicit request =>
-      implicit val writes = requestWrites.writes(request)
-      ApiResult.filter {
-        val sources = agent.get()
-        sources.flatMap{ datum =>
-          datum.data.find(_.id == id).map(datum.label -> Seq(_))
-        }.toMap
-      } reduce { sources =>
-        sources.headOption.map {
-          case (label, items) =>
-            itemJson(items.head, expand = true, label=Some(label)).get
-        } getOrElse {
-          throw ApiCallException(Json.obj("id" -> s"Item with id $id doesn't exist"), NOT_FOUND)
-        } 
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)
+                                (implicit request: RequestHeader, writes: Writes[T]) =
+    ApiResult.filter {
+      val sources = agent.get()
+      sources.flatMap{ datum =>
+        datum.data.find(_.id == id).map(datum.label -> Seq(_))
+      }.toMap
+    } reduce { sources =>
+      sources.headOption.map {
+        case (label, items) =>
+          itemJson(items.head, expand = true, label=Some(label)).get
+      } getOrElse {
+        throw ApiCallException(Json.obj("id" -> s"Item with id $id doesn't exist"), NOT_FOUND)
       }
     }
 
   def itemList[T<:IndexedItem](agent:CollectorAgent[T], objectKey:String, defaultFilter: (String,String)*)
-                              (implicit requestWrites: RequestWrites[T]) =
-    Action.async { implicit request =>
-      implicit val writes = requestWrites.writes(request)
-      ApiResult.filter {
-        val expand = request.getQueryString("_expand").isDefined
-        val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
-        agent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, Some(agent.label), filter=filter)) }.toMap
-      } reduce { collection =>
-        Json.obj(
-          objectKey -> toJson(collection.values.flatten)
-        )
-      }
+                              (implicit request: RequestHeader, writes: Writes[T]) =
+    ApiResult.filter {
+      val expand = request.getQueryString("_expand").isDefined
+      val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
+      agent.get().map { agent => agent.label -> agent.data.flatMap(host =>
+        itemJson(host, expand, Some(agent.label), filter=filter)) }.toMap
+    } reduce { collection =>
+      Json.obj(
+        objectKey -> toJson(collection.values.flatten)
+      )
     }
 
-  def instanceList = itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
-  def instance(id:String) = singleItem(Prism.instanceAgent, id)
+  def instanceList = Action.async { implicit request =>
+    itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
+  }
+  def instance(id:String) = Action.async { implicit request =>
+    singleItem(Prism.instanceAgent, id)
+  }
 
-  def hardwareList = itemList(Prism.hardwareAgent, "hardware")(RequestWrites.fromWrites)
-  def hardware(id:String) = singleItem(Prism.hardwareAgent, id)(RequestWrites.fromWrites)
+  def hardwareList = Action.async { implicit request =>
+      itemList(Prism.hardwareAgent, "hardware")
+  }
+  def hardware(id:String) = Action.async { implicit request =>
+    singleItem(Prism.hardwareAgent, id)
+  }
 
-  def securityGroupList = itemList(Prism.securityGroupAgent, "security-groups")(RequestWrites.fromWrites)
-  def securityGroup(id:String) = singleItem(Prism.securityGroupAgent, id)(RequestWrites.fromWrites)
+  def securityGroupList = Action.async { implicit request =>
+    itemList(Prism.securityGroupAgent, "security-groups")
+  }
 
-  def ownerList = itemList(Prism.ownerAgent, "owners")(RequestWrites.fromWrites)
-  def owner(id:String) = singleItem(Prism.ownerAgent, id)(RequestWrites.fromWrites)
+  def securityGroup(id:String) = Action.async { implicit request =>
+    singleItem(Prism.securityGroupAgent, id)
+  }
+
+  def ownerList = Action.async { implicit request =>
+    itemList(Prism.ownerAgent, "owners")
+  }
+  def owner(id:String) = Action.async { implicit request =>
+    singleItem(Prism.ownerAgent, id)
+  }
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
@@ -180,8 +203,12 @@ object Api extends Controller with Logging {
     enableFilter = true
   )
 
-  def dataList = itemList(Prism.dataAgent, "data")(RequestWrites.fromWrites)
-  def data(id:String) = singleItem(Prism.dataAgent, id)(RequestWrites.fromWrites)
+  def dataList = Action.async { implicit request =>
+    itemList(Prism.dataAgent, "data")
+  }
+  def data(id:String) = Action.async { implicit request =>
+    singleItem(Prism.dataAgent, id)
+  }
   def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
   def dataLookup(key:String) = Action.async { implicit request =>

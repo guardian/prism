@@ -30,28 +30,22 @@ object model {
     def writes(o: Origin): JsValue = o.toJson
   }
 
-  implicit def instanceRequestWriter = {
+  implicit val securityGroupRefWriter = Json.writes[SecurityGroupRef]
+  implicit val securityGroupRuleWriter = Json.writes[Rule]
+  implicit val securityGroupWriter = Json.writes[SecurityGroup]
+
+  implicit def instanceRequestWriter(implicit refWriter: Writes[Reference[SecurityGroup]]): Writes[Instance] = {
     implicit val addressWriter = Json.writes[Address]
     implicit val instanceSpecificationWriter = Json.writes[InstanceSpecification]
     implicit val managementEndpointWriter = Json.writes[ManagementEndpoint]
 
-    new RequestWrites[Instance] {
-      def writes(request: RequestHeader) = {
-        implicit def referenceWrites[T](implicit idLookup:IdLookup[T]): Writes[Reference[T]] = new Writes[Reference[T]] {
-          def writes(o: Reference[T]) = Json.toJson(idLookup.call(o.id).absoluteURL()(request))
-        }
-        Json.writes[Instance]
-      }
-    }
+    Json.writes[Instance]
   }
   implicit val valueWriter = Json.writes[Value]
   implicit val dataWriter = Json.writes[Data]
   implicit val networkInterfaceWriter = Json.writes[NetworkInterface]
   implicit val logicalInterfaceWriter = Json.writes[LogicalInterface]
   implicit val hardwareWriter = Json.writes[Hardware]
-  implicit val securityGroupRefWriter = Json.writes[SecurityGroupRef]
-  implicit val securityGroupRuleWriter = Json.writes[Rule]
-  implicit val securityGroupWriter = Json.writes[SecurityGroup]
   implicit val ownerWriter = Json.writes[Owner]
 
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
