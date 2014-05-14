@@ -9,6 +9,7 @@ import scala.language.postfixOps
 import utils.{ResourceFilter, Matchable, Logging}
 import jsonimplicits.joda._
 import agent._
+import jsonimplicits.RequestWrites
 
 object Api extends Controller with Logging {
 
@@ -113,8 +114,9 @@ object Api extends Controller with Logging {
     }
   }
 
-  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)(implicit writes: Writes[T]) =
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)(implicit requestWrites: RequestWrites[T]) =
     Action.async { implicit request =>
+      implicit val writes = requestWrites.writes(request)
       ApiResult.filter {
         val sources = agent.get()
         sources.flatMap{ datum =>
@@ -131,8 +133,9 @@ object Api extends Controller with Logging {
     }
 
   def itemList[T<:IndexedItem](agent:CollectorAgent[T], objectKey:String, defaultFilter: (String,String)*)
-                              (implicit writes: Writes[T]) =
+                              (implicit requestWrites: RequestWrites[T]) =
     Action.async { implicit request =>
+      implicit val writes = requestWrites.writes(request)
       ApiResult.filter {
         val expand = request.getQueryString("_expand").isDefined
         val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
@@ -147,14 +150,14 @@ object Api extends Controller with Logging {
   def instanceList = itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
   def instance(id:String) = singleItem(Prism.instanceAgent, id)
 
-  def hardwareList = itemList(Prism.hardwareAgent, "hardware")
-  def hardware(id:String) = singleItem(Prism.hardwareAgent, id)
+  def hardwareList = itemList(Prism.hardwareAgent, "hardware")(RequestWrites.fromWrites)
+  def hardware(id:String) = singleItem(Prism.hardwareAgent, id)(RequestWrites.fromWrites)
 
-  def securityGroupList = itemList(Prism.securityGroupAgent, "security-groups")
-  def securityGroup(id:String) = singleItem(Prism.securityGroupAgent, id)
+  def securityGroupList = itemList(Prism.securityGroupAgent, "security-groups")(RequestWrites.fromWrites)
+  def securityGroup(id:String) = singleItem(Prism.securityGroupAgent, id)(RequestWrites.fromWrites)
 
-  def ownerList = itemList(Prism.ownerAgent, "owners")
-  def owner(id:String) = singleItem(Prism.ownerAgent, id)
+  def ownerList = itemList(Prism.ownerAgent, "owners")(RequestWrites.fromWrites)
+  def owner(id:String) = singleItem(Prism.ownerAgent, id)(RequestWrites.fromWrites)
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
@@ -177,8 +180,8 @@ object Api extends Controller with Logging {
     enableFilter = true
   )
 
-  def dataList = itemList(Prism.dataAgent, "data")
-  def data(id:String) = singleItem(Prism.dataAgent, id)
+  def dataList = itemList(Prism.dataAgent, "data")(RequestWrites.fromWrites)
+  def data(id:String) = singleItem(Prism.dataAgent, id)(RequestWrites.fromWrites)
   def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
   def dataLookup(key:String) = Action.async { implicit request =>

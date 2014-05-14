@@ -5,6 +5,16 @@ import play.api.libs.json._
 import collectors._
 import play.api.libs.json.JsString
 import agent._
+import play.api.mvc.RequestHeader
+
+trait RequestWrites[T] {
+  def writes(request: RequestHeader): Writes[T]
+}
+object RequestWrites {
+  def fromWrites[T](implicit delegate:Writes[T]) = new RequestWrites[T] {
+    def writes(request: RequestHeader): Writes[T] = delegate
+  }
+}
 
 object joda {
   implicit object dateTimeWrites extends Writes[org.joda.time.DateTime] {
@@ -20,10 +30,20 @@ object model {
     def writes(o: Origin): JsValue = o.toJson
   }
 
-  implicit val addressWriter = Json.writes[Address]
-  implicit val instanceSpecificationWriter = Json.writes[InstanceSpecification]
-  implicit val managementEndpointWriter = Json.writes[ManagementEndpoint]
-  implicit val instanceWriter = Json.writes[Instance]
+  implicit def instanceRequestWriter = {
+    implicit val addressWriter = Json.writes[Address]
+    implicit val instanceSpecificationWriter = Json.writes[InstanceSpecification]
+    implicit val managementEndpointWriter = Json.writes[ManagementEndpoint]
+
+    new RequestWrites[Instance] {
+      def writes(request: RequestHeader) = {
+        implicit def referenceWrites[T](implicit idLookup:IdLookup[T]): Writes[Reference[T]] = new Writes[Reference[T]] {
+          def writes(o: Reference[T]) = Json.toJson(idLookup.call(o.id).absoluteURL()(request))
+        }
+        Json.writes[Instance]
+      }
+    }
+  }
   implicit val valueWriter = Json.writes[Value]
   implicit val dataWriter = Json.writes[Data]
   implicit val networkInterfaceWriter = Json.writes[NetworkInterface]
@@ -71,9 +91,6 @@ object model {
     }
   }
 
-  implicit def referenceWrites[T]: Writes[Reference[T]] = new Writes[Reference[T]] {
-    def writes(o: Reference[T]) = Json.toJson(o.id)
-  }
   implicit def referenceReads[T](implicit idLookup:IdLookup[T]): Reads[Reference[T]] = new Reads[Reference[T]] {
     override def reads(json: JsValue): JsResult[Reference[T]] = JsSuccess(Reference[T](json.as[String]))
   }

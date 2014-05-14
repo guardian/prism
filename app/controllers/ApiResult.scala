@@ -2,7 +2,7 @@ package controllers
 
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.language.postfixOps
-import collectors.{Origin, ResourceType, Label}
+import agent.{Origin, ResourceType, Label}
 import model.DataContainer
 import org.joda.time.DateTime
 import play.api.http.{ContentTypes, Status}
