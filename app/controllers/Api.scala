@@ -42,74 +42,86 @@ object ApiResult extends Logging {
     }
   }
 
-  object mr {
+  object filter {
+
     import jsonimplicits.model.labelWriter
 
-    def apply[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
-      async[D](mapSources)(sources => Future.successful(reduce(sources)))
+    case class SourceData[D](data: Try[Map[Label, Seq[D]]]) {
+      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader): Future[SimpleResult] =
+        reduceAsync(input => Future.successful(reduce(input)))(request)
+
+      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader): Future[SimpleResult] = {
+        data.map {
+          mapSources =>
+            val filter = ResourceFilter.fromRequest
+            val filteredSources = mapSources.groupBy {
+              case (label, data) => filter.isMatch(label.origin.filterMap)
+            }
+            filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
+
+            val sources: Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
+
+            val usedLabels = sources.filter {
+              case (_, data) => !data.isEmpty
+            }.keys
+
+            val staleLabels = sources.keys.filter {
+              label => label.bestBefore.isStale
+            }
+
+            val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
+              case dates: Seq[DateTime] if !dates.isEmpty => dates.min(new Ordering[DateTime] {
+                def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
+              })
+              case _ => new DateTime(0)
+            }
+
+            val stale = sources.keys.exists(_.bestBefore.isStale)
+
+            reduce(sources).map {
+              data =>
+                val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
+                val json = Json.obj(
+                  "status" -> "success",
+                  "lastUpdated" -> lastUpdated,
+                  "stale" -> stale,
+                  "staleSources" -> staleLabels,
+                  "data" -> dataWithMods,
+                  "sources" -> usedLabels
+                )
+                request.getQueryString("_pretty") match {
+                  case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
+                  case None => Results.Ok(json)
+                }
+            }
+        } recover {
+          case ApiCallException(failure, status) =>
+            Future.successful(Results.Status(status)(Json.obj(
+              "status" -> "fail",
+              "data" -> failure
+            )))
+          case e: Exception =>
+            Future.successful(Results.InternalServerError(Json.obj(
+              "status" -> "error",
+              "message" -> e.getMessage,
+              "stacktrace" -> e.getStackTrace.map(_.toString)
+            )))
+        } get
+      }
     }
-    def async[D](mapSources: => Map[Label, Seq[D]])(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
-      Try {
-        val filter = ResourceFilter.fromRequest
-        val filteredSources = mapSources.groupBy{ case (label, data) => filter.isMatch(label.origin.filterMap) }
-        filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
 
-        val sources:Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
-
-        val usedLabels = sources.filter {
-          case (_,data) => !data.isEmpty
-        }.keys
-
-        val staleLabels = sources.keys.filter { label => label.bestBefore.isStale }
-
-        val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
-          case dates:Seq[DateTime] if !dates.isEmpty => dates.min(new Ordering[DateTime] {
-            def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
-          })
-          case _ => new DateTime(0)
+    def apply[D](mapSources: => Map[Label, Seq[D]]): SourceData[D] = {
+      new SourceData[D](
+        Try {
+          mapSources
         }
-
-        val stale = sources.keys.exists(_.bestBefore.isStale)
-
-        reduce(sources).map { data =>
-          val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
-          val json = Json.obj(
-              "status" -> "success",
-              "lastUpdated" -> lastUpdated,
-              "stale" -> stale,
-              "staleSources" -> staleLabels,
-              "data" -> dataWithMods,
-              "sources" -> usedLabels
-            )
-          request.getQueryString("_pretty") match {
-            case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
-            case None => Results.Ok(json)
-          }
-        }
-      } recover {
-        case ApiCallException(failure, status) =>
-          Future.successful(Results.Status(status)(Json.obj(
-            "status" -> "fail",
-            "data" -> failure
-          )))
-        case e:Exception =>
-          Future.successful(Results.InternalServerError(Json.obj(
-            "status" -> "error",
-            "message" -> e.getMessage,
-            "stacktrace" -> e.getStackTrace.map(_.toString)
-          )))
-      } get
+      )
     }
   }
 
-  def apply[T <: DataContainer](source: T)(block: T => JsValue)(implicit request:RequestHeader): SimpleResult =
-    Await.result(ApiResult.async(source)(source => Future.successful(block(source))), Duration.Inf)
-  def noSource(block: => JsValue)(implicit request:RequestHeader): SimpleResult = apply(noSourceContainer)(_ => block)
-
-  object async {
-    def apply[T <: DataContainer](source: T)(block: T => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = {
-      val sourceLabel:Label = Label(
-        ResourceType(source.name, org.joda.time.Duration.standardMinutes(15)),
+  def noSource(block: => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
+    val sourceLabel:Label = Label(
+        ResourceType(noSourceContainer.name, org.joda.time.Duration.standardMinutes(15)),
         new Origin {
           val account = "unknown"
           val vendor = "unknown"
@@ -117,13 +129,11 @@ object ApiResult extends Logging {
           val jsonFields = Map.empty[String, String]
         },
         1,
-        source.lastUpdated
+        noSourceContainer.lastUpdated
       )
-      mr.async(Map(sourceLabel -> Seq("dummy"))){ emptyMap =>
-        block(source)
-      }
+    filter(Map(sourceLabel -> Seq("dummy"))) reduceAsync { emptyMap =>
+      Future.successful(block)
     }
-    def noSource(block: => Future[JsValue])(implicit request:RequestHeader): Future[SimpleResult] = async(noSourceContainer)(_ => block)
   }
 }
 
@@ -142,9 +152,9 @@ object Api extends Controller with Logging {
 
   def summary[T<:IndexedItem](sourceAgent: CollectorAgent[T], transform: T => Iterable[JsValue], key: String, enableFilter: Boolean = false)(implicit ordering:Ordering[String]) =
     Action.async { implicit request =>
-      ApiResult.mr[JsValue] {
+      ApiResult.filter[JsValue] {
         sourceAgent.get().map { datum => datum.label -> datum.data.flatMap(transform)}.toMap
-      } { transformed =>
+      } reduce { transformed =>
         val objects = transformed.values.toSeq.flatten.distinct.sortBy(sortString)(ordering)
         val filteredObjects = if (enableFilter) {
           val filter = ResourceFilter.fromRequest
@@ -162,10 +172,10 @@ object Api extends Controller with Logging {
                                                      enableFilter: Boolean = false
                                                       )(implicit ordering:Ordering[String]) =
     Action.async { implicit request =>
-      ApiResult.mr[JsValue] {
+      ApiResult.filter[JsValue] {
         sourceTAgent.get().map { datum => datum.label -> datum.data.flatMap(transformT)}.toMap ++
         sourceUAgent.get().map { datum => datum.label -> datum.data.flatMap(transformU)}.toMap
-      } { transformed =>
+      } reduce { transformed =>
         val objects = transformed.values.toSeq.flatten.distinct.sortBy(sortString)(ordering)
         val filteredObjects = if (enableFilter) {
           val filter = ResourceFilter.fromRequest
@@ -176,21 +186,21 @@ object Api extends Controller with Logging {
     }
 
   def sources = Action.async { implicit request =>
-    ApiResult.mr {
+    ApiResult.filter {
       val filter = ResourceFilter.fromRequest
       val sources = CollectorAgent.sources
       Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
-    } { collection =>
+    } reduce { collection =>
       toJson(collection.map(_._2).flatten)
     }
   }
 
   def healthCheck = Action.async { implicit request =>
-    ApiResult.mr {
+    ApiResult.filter {
       val sources = CollectorAgent.sources
       val notInitialisedSources = sources.data.filter(_.state.status != "success")
       if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
-    } { notInitialisedSources =>
+    } reduce { notInitialisedSources =>
       if (notInitialisedSources.isEmpty)
         Json.obj("healthcheck" -> "initialised")
       else
@@ -210,14 +220,14 @@ object Api extends Controller with Logging {
 
   def find = Action.async { implicit request =>
     val filter = ResourceFilter.fromRequest
-    ApiResult.mr {
+    ApiResult.filter {
       val sources = Prism.allAgents.map(_.get())
       sources.flatMap{ agent =>
         agent.map{ datum =>
           datum.label -> datum.data.filter(d => filter.isMatch(d.fieldIndex))
         }
       }.toMap
-    } { sources =>
+    } reduce { sources =>
       val results = sources.flatMap { case (label, dataItems) =>
         dataItems.map { data =>
           Json.obj(
@@ -232,12 +242,12 @@ object Api extends Controller with Logging {
 
   def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)(implicit writes: Writes[T]) =
     Action.async { implicit request =>
-      ApiResult.mr {
+      ApiResult.filter {
         val sources = agent.get()
         sources.flatMap{ datum =>
           datum.data.find(_.id == id).map(datum.label -> Seq(_))
         }.toMap
-      } { sources =>
+      } reduce { sources =>
         sources.headOption.map {
           case (label, items) =>
             itemJson(items.head, expand = true, label=Some(label)).get
@@ -250,11 +260,11 @@ object Api extends Controller with Logging {
   def itemList[T<:IndexedItem](agent:CollectorAgent[T], objectKey:String, defaultFilter: (String,String)*)
                               (implicit writes: Writes[T]) =
     Action.async { implicit request =>
-      ApiResult.mr {
+      ApiResult.filter {
         val expand = request.getQueryString("_expand").isDefined
         val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
         agent.get().map { agent => agent.label -> agent.data.flatMap(host => itemJson(host, expand, Some(agent.label), filter=filter)) }.toMap
-      } { collection =>
+      } reduce { collection =>
         Json.obj(
           objectKey -> toJson(collection.values.flatten)
         )
@@ -299,7 +309,7 @@ object Api extends Controller with Logging {
   def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
   def dataLookup(key:String) = Action.async { implicit request =>
-    ApiResult.mr {
+    ApiResult.filter{
       val app = request.getQueryString("app")
       val stage = request.getQueryString("stage")
       val stack = request.getQueryString("stack")
@@ -319,7 +329,7 @@ object Api extends Controller with Logging {
           Json.obj("value" -> s"Key $key has no matching value for stack=${stack.getOrElse("")}, app=$app and stage=$stage")
         )
       }
-    } { result =>
+    } reduce { result =>
       Json.toJson(result.head._2.head)
     }
   }

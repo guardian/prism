@@ -16,9 +16,9 @@ class ApiSpec extends Specification {
   "ApiResult" should {
     "wrap data with status on a successful response" in {
       implicit val request = FakeRequest(GET, "/test")
-      val success = Future.successful(ApiResult.noSource {
+      val success = ApiResult.noSource {
         Json.obj("test" -> "value")
-      })
+      }
       contentType(success) must beSome("application/json")
       status(success) must equalTo(OK)
       contentAsJson(success) \ "status" mustEqual JsString("success")
@@ -26,10 +26,10 @@ class ApiSpec extends Specification {
 
     "wrap data with fail when an Api exception is thrown" in {
       implicit val request = FakeRequest(GET, "/test")
-      val fail = Future.successful(ApiResult.noSource {
+      val fail = ApiResult.noSource {
         if (true) throw ApiCallException(Json.obj("test" -> "just testing the fail state"))
         Json.obj("never" -> "reached")
-      })
+      }
       contentType(fail) must beSome("application/json")
       status(fail) must equalTo(BAD_REQUEST)
       contentAsJson(fail) \ "status" mustEqual JsString("fail")
@@ -38,9 +38,9 @@ class ApiSpec extends Specification {
 
     "return an error when something else goes wrong" in {
       implicit val request = FakeRequest(GET, "/test")
-      val error = Future.successful(ApiResult.noSource {
+      val error = ApiResult.noSource {
         Json.obj("infinity" -> (1 / 0))
-      })
+      }
       contentType(error) must beSome("application/json")
       status(error) must equalTo(INTERNAL_SERVER_ERROR)
       contentAsJson(error) \ "status" mustEqual JsString("error")
@@ -49,9 +49,9 @@ class ApiSpec extends Specification {
 
     "add a length companion field to arrays contained in objects when requested" in {
       implicit val request = FakeRequest(GET, "/test?_length=true")
-      val success = Future.successful(ApiResult.noSource {
+      val success = ApiResult.noSource {
         Json.obj("test" -> List("first", "second", "third"))
-      })
+      }
       contentAsJson(success) \ "data" \ "test.length" mustEqual JsNumber(3)
     }
   }
