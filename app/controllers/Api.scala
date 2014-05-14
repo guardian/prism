@@ -15,12 +15,16 @@ object Api extends Controller with Logging {
 
   implicit def referenceWrites[T <: IndexedItem](implicit idLookup:IdLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
-      if (request.getQueryString("_references").isDefined) {
-        idLookup.item(o.id).flatMap { case (label, t) =>
-          itemJson(item = t, label = Some(label), expand = true)
-        }.getOrElse(JsNull)
-      } else
-        Json.toJson(idLookup.call(o.id).absoluteURL()(request))
+      request.getQueryString("_expandRefs") match {
+        case Some("object") =>
+          idLookup.item(o.id).flatMap { case (label, t) =>
+            itemJson(item = t, label = Some(label), expand = true)
+          }.getOrElse(JsString(o.id))
+        case Some("uri") =>
+          Json.toJson(idLookup.call(o.id).absoluteURL()(request))
+        case _ =>
+          Json.toJson(o.id)
+      }
     }
   }
   import jsonimplicits.model._
