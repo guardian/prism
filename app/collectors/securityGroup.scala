@@ -31,8 +31,8 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     val rules = secGroup.getIpPermissions.map { rule =>
       Rule(
         rule.getIpProtocol,
-        rule.getFromPort,
-        rule.getToPort,
+        Option(rule.getFromPort),
+        Option(rule.getToPort),
         rule.getIpRanges.toSeq.sorted.wrap,
         groupRefs(rule).wrap
       )
@@ -77,8 +77,8 @@ case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceTyp
     val rules = Option(secGroup.getRules).map(_.toSeq).getOrElse(Nil).map { rule =>
       Rule(
         rule.getIpProtocol.toString,
-        rule.getFromPort,
-        rule.getToPort,
+        Option(rule.getFromPort),
+        Option(rule.getToPort),
         Option(rule.getIpRange).toSeq.wrap,
         groupRefs(rule).wrap
       )
@@ -103,8 +103,8 @@ case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceTyp
 }
 
 case class Rule( protocol:String,
-                 fromPort:Int,
-                 toPort:Int,
+                 fromPort:Option[Int],
+                 toPort:Option[Int],
                  sourceCidrBlocks:Option[Seq[String]],
                  sourceGroupRefs:Option[Seq[SecurityGroupRef]] )
 
