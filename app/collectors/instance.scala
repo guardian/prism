@@ -192,7 +192,12 @@ object ManagementEndpoint {
 
 case class AddressList(primary: Address, mapOfAddresses:Map[String,Address])
 object AddressList {
-  def apply(addresses:(String, Address)*): AddressList = AddressList(addresses.head._2, addresses.toMap)
+  def apply(addresses:(String, Address)*): AddressList = {
+    val filteredAddresses = addresses.filterNot { case (addressName, address) =>
+      address.dnsName == null || address.ip == null || address.dnsName.isEmpty || address.ip.isEmpty
+    }
+    AddressList(filteredAddresses.head._2, filteredAddresses.toMap)
+  }
 }
 
 case class Address(dnsName: String, ip: String)
