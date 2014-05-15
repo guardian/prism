@@ -2,7 +2,7 @@ package controllers
 
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.language.postfixOps
-import collectors.{Origin, ResourceType, Label}
+import agent.{Origin, ResourceType, Label}
 import model.DataContainer
 import org.joda.time.DateTime
 import play.api.http.{ContentTypes, Status}
@@ -45,54 +45,53 @@ object ApiResult extends Logging {
 
     import jsonimplicits.model.labelWriter
 
-    case class SourceData[D](data: Try[Map[Label, Seq[D]]]) {
+    case class SourceData[D](sourceData: Try[Map[Label, Seq[D]]]) {
       def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader): Future[SimpleResult] =
         reduceAsync(input => Future.successful(reduce(input)))(request)
 
       def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader): Future[SimpleResult] = {
-        data.map {
-          mapSources =>
-            val filter = ResourceFilter.fromRequest
-            val filteredSources = mapSources.groupBy {
-              case (label, data) => filter.isMatch(label.origin.filterMap)
-            }
-            filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
+        sourceData.map { mapSources =>
+          val filter = ResourceFilter.fromRequest
+          val filteredSources = mapSources.groupBy {
+            case (label, data) => filter.isMatch(label.origin.filterMap)
+          }
+          filteredSources.get(false).map(falseMap => if (falseMap.values.exists(_.size == 0)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
 
-            val sources: Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
+          val sources: Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
 
-            val usedLabels = sources.filter {
-              case (_, data) => !data.isEmpty
-            }.keys
+          val usedLabels = sources.filter {
+            case (_, data) => !data.isEmpty
+          }.keys
 
-            val staleLabels = sources.keys.filter {
-              label => label.bestBefore.isStale
-            }
+          val staleLabels = sources.keys.filter {
+            label => label.bestBefore.isStale
+          }
 
-            val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
-              case dates: Seq[DateTime] if !dates.isEmpty => dates.min(new Ordering[DateTime] {
-                def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
-              })
-              case _ => new DateTime(0)
-            }
+          val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
+            case dates: Seq[DateTime] if !dates.isEmpty => dates.min(new Ordering[DateTime] {
+              def compare(x: DateTime, y: DateTime): Int = x.getMillis.compareTo(y.getMillis)
+            })
+            case _ => new DateTime(0)
+          }
 
-            val stale = sources.keys.exists(_.bestBefore.isStale)
+          val stale = sources.keys.exists(_.bestBefore.isStale)
 
-            reduce(sources).map {
-              data =>
-                val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
-                val json = Json.obj(
-                  "status" -> "success",
-                  "lastUpdated" -> lastUpdated,
-                  "stale" -> stale,
-                  "staleSources" -> staleLabels,
-                  "data" -> dataWithMods,
-                  "sources" -> usedLabels
-                )
-                request.getQueryString("_pretty") match {
-                  case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
-                  case None => Results.Ok(json)
-                }
-            }
+          reduce(sources).map {
+            data =>
+              val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
+              val json = Json.obj(
+                "status" -> "success",
+                "lastUpdated" -> lastUpdated,
+                "stale" -> stale,
+                "staleSources" -> staleLabels,
+                "data" -> dataWithMods,
+                "sources" -> usedLabels
+              )
+              request.getQueryString("_pretty") match {
+                case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
+                case None => Results.Ok(json)
+              }
+          }
         } recover {
           case ApiCallException(failure, status) =>
             Future.successful(Results.Status(status)(Json.obj(

@@ -17,6 +17,7 @@
         "internalName": "TEST:disdb:02",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "discussion-db",
             "Name": "TEST:discussion-db",
@@ -52,6 +53,7 @@
         "internalName": "TEST:disdb:01",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "discussion-db",
             "Name": "TEST:discussion-db",
@@ -87,6 +89,7 @@
         "internalName": "TEST:mngdb_backup",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "mngdb",
             "Mainclass": "mongodb_replica_set::backup_member",
@@ -119,6 +122,7 @@
         "internalName": "TEST:mngdb",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "mngdb",
             "Mainclass": "mongodb_replica_set::member",
@@ -151,6 +155,7 @@
         "internalName": "TEST:mngdb",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "mngdb",
             "Mainclass": "mongodb_replica_set::member",
@@ -183,6 +188,7 @@
         "internalName": "TEST:oradb",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "oradb",
             "Mainclass": "oracle::gc2_server",
@@ -215,6 +221,7 @@
         "internalName": "TEST:oradb",
         "region": "dev1",
         "vendor": "openstack",
+        "securityGroups": [],
         "tags": {
             "Role": "oradb",
             "Mainclass": "oracle::gc2_server",
@@ -251,6 +258,7 @@
         "internalName": "ip-10-58-255-158.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "Name": "TEST:arts_music",
             "Role": "arts_music",
@@ -287,6 +295,7 @@
         "internalName": "ip-10-58-54-203.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "Name": "TEST:arts-books",
             "Stage": "TEST",
@@ -323,6 +332,7 @@
         "internalName": "ip-10-246-89-221.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-api",
             "Role": "soulmates-api",
@@ -360,6 +370,7 @@
         "internalName": "ip-10-65-57-149.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-scheduler",
             "Role": "soulmates-scheduler",
@@ -397,6 +408,7 @@
         "internalName": "ip-10-246-123-222.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-geolocation",
             "Role": "geolocation-api",
@@ -434,6 +446,7 @@
         "internalName": "ip-10-208-43-142.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-frontend",
             "Role": "soulmates-frontend",
@@ -471,6 +484,7 @@
         "internalName": "ip-10-64-135-205.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-admin",
             "Role": "soulmates-admin",
@@ -508,6 +522,7 @@
         "internalName": "ip-10-234-49-80.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
+        "securityGroups": [],
         "tags": {
             "aws:autoscaling:groupName": "soulmates-TEST-db",
             "Role": "soulmates-db",

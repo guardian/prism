@@ -1,4 +1,4 @@
-package collectors
+package agent
 
 import play.api.libs.json.{JsValue, Json, JsObject}
 import org.jclouds.domain.{LocationScope, LocationBuilder}
@@ -10,6 +10,7 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
+import collectors.Instance
 
 object Accounts {
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r

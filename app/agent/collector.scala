@@ -1,4 +1,4 @@
-package collectors
+package agent
 
 import play.api.libs.concurrent.Akka
 import utils.{LifecycleWithoutApp, Logging, ScheduledAgent}

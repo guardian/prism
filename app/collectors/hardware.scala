@@ -6,6 +6,7 @@ import org.joda.time.{Duration, DateTime}
 import play.api.mvc.Call
 import  controllers.routes
 import scala.language.postfixOps
+import agent._
 
 object HardwareCollectorSet extends CollectorSet[Hardware](ResourceType("hardware", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[Hardware]] = {

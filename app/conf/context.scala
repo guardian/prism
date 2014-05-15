@@ -7,13 +7,8 @@ import play.api.{Mode, Play}
 import com.gu.management._
 import com.gu.management.play.{RequestMetrics, Management => GuManagement}
 import com.gu.management.logback.LogbackLevelPage
-import collectors._
+import agent._
 import java.net.URL
-import collectors.GoogleDocOrigin
-import scala.Some
-import collectors.OpenstackOrigin
-import collectors.JsonOrigin
-import collectors.AmazonOrigin
 import controllers.Prism
 
 object App {

@@ -3,13 +3,14 @@ package collectors
 import org.joda.time.Duration
 import play.api.mvc.Call
 import org.jclouds.ContextBuilder
-import org.jclouds.compute.ComputeServiceContext
-import org.jclouds.compute.domain.{ SecurityGroup => JCSecurityGroup }
 import org.jclouds.openstack.nova.v2_0.domain.{SecurityGroup => NovaSecurityGroup, SecurityGroupRule}
+import com.amazonaws.services.ec2.model.{SecurityGroup => AWSSecurityGroup, IpPermission}
 import scala.collection.JavaConversions._
 import controllers.{Prism, routes}
-import org.jclouds.net.domain.IpPermission
 import org.jclouds.openstack.nova.v2_0.NovaApi
+import agent._
+import com.amazonaws.services.ec2.AmazonEC2Client
+import utils.Logging
 
 object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
@@ -20,63 +21,47 @@ object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceTyp
 
 case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     extends Collector[SecurityGroup] {
-  val originVendor = origin.vendor
-  def originAccount(group:JCSecurityGroup) = group.getOwnerId
 
-  def fromJCloud(secGroup: JCSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
-
+  def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
-      val tenantIdGroupNamePairs = rule.getTenantIdGroupNamePairs.asMap.toMap.mapValues(_.toSeq)
-      val tenantIdSGRefs = tenantIdGroupNamePairs.flatMap { case (account, groups) =>
-        groups.map { group =>
-          SecurityGroupRef(group, Some(account), lookup.get(group).map(_.id))
-        }
-      }.toSeq
-      val groupIds = rule.getGroupIds.toSeq
-      tenantIdSGRefs ++ groupIds.map { group =>
-        SecurityGroupRef(group, None, lookup.get(group).map(_.id))
+      rule.getUserIdGroupPairs.map { pair =>
+        SecurityGroupRef(pair.getGroupId, pair.getUserId, lookup.get(pair.getGroupId).map(_.id))
       }
     }
 
     val rules = secGroup.getIpPermissions.map { rule =>
       Rule(
-        rule.getIpProtocol.toString,
-        rule.getFromPort,
-        rule.getToPort,
-        rule.getCidrBlocks.toSeq.sorted.wrap,
+        rule.getIpProtocol.replace("-1","all"),
+        Option(rule.getFromPort).map(_.toInt),
+        Option(rule.getToPort).map(_.toInt),
+        rule.getIpRanges.toSeq.sorted.wrap,
         groupRefs(rule).wrap
       )
     }
-    secGroup.getName
     SecurityGroup(
-      s"arn:$originVendor:ec2:${secGroup.getLocation.getId}:${originAccount(secGroup)}:security-group/${secGroup.getProviderId}",
-      secGroup.getProviderId,
-      secGroup.getName,
-      secGroup.getLocation.getId,
+      s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${secGroup.getGroupId}",
+      secGroup.getGroupId,
+      secGroup.getGroupName,
+      origin.region,
       rules.toSeq,
-      secGroup.getTags.toSeq,
-      Option(secGroup.getUri).map(_.toString),
-      secGroup.getUserMetadata.toMap
+      Option(secGroup.getVpcId),
+      secGroup.getTags.map(t => t.getKey -> t.getValue).toMap
     )
   }
 
-  lazy val context = ContextBuilder.newBuilder("aws-ec2")
-    .credentials(origin.accessKey, origin.secretKey)
-    .build(classOf[ComputeServiceContext])
-  lazy val compute = context.getComputeService
-  lazy val securityGroupExtension = compute.getSecurityGroupExtension.get
+  val client = new AmazonEC2Client(origin.creds)
+  client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
 
   def crawl: Iterable[SecurityGroup] = {
     // get all existing groups to allow for cross referencing
     val existingGroups = Prism.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
-    val secGroups = securityGroupExtension.listSecurityGroupsInLocation(origin.jCloudLocation)
-    secGroups.map ( fromJCloud(_, existingGroups) )
+    val secGroups = client.describeSecurityGroups.getSecurityGroups
+    secGroups.map ( fromAWS(_, existingGroups) )
   }
 }
 
 case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceType)
     extends Collector[SecurityGroup] {
-  val originVendor = origin.vendor
   lazy val novaApi = ContextBuilder.newBuilder("openstack-nova")
     .endpoint(origin.endpoint)
     .credentials(s"${origin.tenant}:${origin.user}", origin.secret)
@@ -87,26 +72,25 @@ case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceTyp
     def groupRefs(rule: SecurityGroupRule) = {
       val groupOption = Option(rule.getGroup)
       groupOption.map { group =>
-        SecurityGroupRef(group.getName, Some(group.getTenantId), lookup.get((group.getTenantId,group.getName)).map(_.id))
+        SecurityGroupRef(group.getName, group.getTenantId, lookup.get((group.getTenantId,group.getName)).map(_.id))
       }.toSeq
     }
 
     val rules = Option(secGroup.getRules).map(_.toSeq).getOrElse(Nil).map { rule =>
       Rule(
         rule.getIpProtocol.toString,
-        rule.getFromPort,
-        rule.getToPort,
+        Option(rule.getFromPort),
+        Option(rule.getToPort),
         Option(rule.getIpRange).toSeq.wrap,
         groupRefs(rule).wrap
       )
     }
     SecurityGroup(
-      s"arn:$originVendor:ec2:${origin.region}:${origin.tenant}:security-group/${secGroup.getName}",
+      s"arn:${origin.vendor}:ec2:${origin.region}:${origin.tenant}:security-group/${secGroup.getName}",
       secGroup.getId,
       secGroup.getName,
-      secGroup.getTenantId,
+      origin.region,
       rules.toSeq,
-      Nil,
       None,
       Map.empty
     )
@@ -122,8 +106,8 @@ case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceTyp
 }
 
 case class Rule( protocol:String,
-                 fromPort:Int,
-                 toPort:Int,
+                 fromPort:Option[Int],
+                 toPort:Option[Int],
                  sourceCidrBlocks:Option[Seq[String]],
                  sourceGroupRefs:Option[Seq[SecurityGroupRef]] )
 
@@ -132,10 +116,17 @@ case class SecurityGroup(id:String,
                          name:String,
                          location:String,
                          rules:Seq[Rule],
-                         tags:Seq[String],
-                         uri: Option[String],
-                         userTags:Map[String,String]) extends IndexedItem {
+                         vpcId:Option[String],
+                         tags:Map[String, String]) extends IndexedItem {
   def callFromId: (String) => Call = id => routes.Api.securityGroup(id)
 }
 
-case class SecurityGroupRef(groupId:String, account:Option[String], id:Option[String])
+object SecurityGroup {
+  implicit val idLookup = new IdLookup[SecurityGroup] {
+    override def call(id: String): Call = routes.Api.securityGroup(id)
+    override def item(id: String): Option[(Label,SecurityGroup)] =
+      Prism.securityGroupAgent.getTuples.find(_._2.id==id).headOption
+  }
+}
+
+case class SecurityGroupRef(groupId:String, account:String, id:Option[String])
