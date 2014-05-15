@@ -15,8 +15,8 @@ object Api extends Controller with Logging {
 
   implicit def referenceWrites[T <: IndexedItem](implicit idLookup:IdLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
-      request.getQueryString("_expandRefs") match {
-        case Some("object") =>
+      request.getQueryString("_reference") match {
+        case Some("inline") =>
           idLookup.item(o.id).flatMap { case (label, t) =>
             itemJson(item = t, label = Some(label), expand = true)
           }.getOrElse(JsString(o.id))
