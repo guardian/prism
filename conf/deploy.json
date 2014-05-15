@@ -4,7 +4,8 @@
             "type":"executable-jar-webapp",
             "apps":["prism::app"],
             "data":{
-                "healthcheck_paths":[ "/", "/management/healthcheck" ]
+                "healthcheck_paths":[ "/", "/management/healthcheck" ],
+                "checkseconds":240
             }
         }
     }
