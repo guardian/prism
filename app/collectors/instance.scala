@@ -17,6 +17,8 @@ import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation}
 import agent._
 import org.jclouds.openstack.nova.v2_0.features.ServerApi
 import org.jclouds.openstack.nova.v2_0.extensions.ServerWithSecurityGroupsApi
+import scala.util.control.NonFatal
+import scala.util.{Failure, Try}
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
@@ -196,7 +198,10 @@ object AddressList {
     val filteredAddresses = addresses.filterNot { case (addressName, address) =>
       address.dnsName == null || address.ip == null || address.dnsName.isEmpty || address.ip.isEmpty
     }
-    AddressList(filteredAddresses.head._2, filteredAddresses.toMap)
+    AddressList(
+      filteredAddresses.headOption.map(_._2).getOrElse(Address.empty),
+      filteredAddresses.toMap
+    )
   }
 }
 
@@ -204,6 +209,7 @@ case class Address(dnsName: String, ip: String)
 object Address {
   def fromIp(ip:String): Address = Address(InetAddress.getByName(ip).getCanonicalHostName, ip)
   def fromFQDN(dnsName:String): Address = Address(dnsName, InetAddress.getByName(dnsName).getHostAddress)
+  val empty: Address = Address(null, null)
 }
 
 case class InstanceSpecification(image:String, instanceType:String)
