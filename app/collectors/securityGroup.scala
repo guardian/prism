@@ -20,7 +20,7 @@ object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceTyp
 }
 
 case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
-    extends Collector[SecurityGroup] with Logging {
+    extends Collector[SecurityGroup] {
 
   def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
@@ -30,8 +30,6 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     }
 
     val rules = secGroup.getIpPermissions.map { rule =>
-      log.info(s"${rule.getIpProtocol} ${rule.getFromPort} ${rule.getToPort}")
-
       Rule(
         rule.getIpProtocol.replace("-1","all"),
         Option(rule.getFromPort).map(_.toInt),
