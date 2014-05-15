@@ -10,6 +10,7 @@ import controllers.{Prism, routes}
 import org.jclouds.openstack.nova.v2_0.NovaApi
 import agent._
 import com.amazonaws.services.ec2.AmazonEC2Client
+import utils.Logging
 
 object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
@@ -19,7 +20,7 @@ object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceTyp
 }
 
 case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
-    extends Collector[SecurityGroup] {
+    extends Collector[SecurityGroup] with Logging {
 
   def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
@@ -29,10 +30,12 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     }
 
     val rules = secGroup.getIpPermissions.map { rule =>
+      log.info(s"${rule.getIpProtocol} ${rule.getFromPort} ${rule.getToPort}")
+
       Rule(
-        rule.getIpProtocol,
-        Option(rule.getFromPort),
-        Option(rule.getToPort),
+        rule.getIpProtocol.replace("-1","all"),
+        Option(rule.getFromPort).map(_.toInt),
+        Option(rule.getToPort).map(_.toInt),
         rule.getIpRanges.toSeq.sorted.wrap,
         groupRefs(rule).wrap
       )
@@ -43,6 +46,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
       secGroup.getGroupName,
       origin.region,
       rules.toSeq,
+      Option(secGroup.getVpcId),
       secGroup.getTags.map(t => t.getKey -> t.getValue).toMap
     )
   }
@@ -89,6 +93,7 @@ case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceTyp
       secGroup.getName,
       origin.region,
       rules.toSeq,
+      None,
       Map.empty
     )
   }
@@ -113,6 +118,7 @@ case class SecurityGroup(id:String,
                          name:String,
                          location:String,
                          rules:Seq[Rule],
+                         vpcId:Option[String],
                          tags:Map[String, String]) extends IndexedItem {
   def callFromId: (String) => Call = id => routes.Api.securityGroup(id)
 }

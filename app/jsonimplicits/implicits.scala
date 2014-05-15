@@ -68,7 +68,7 @@ object model {
       ) ++
         l.error.map{ error => Json.obj(
           "message" -> s"${error.getClass.getName}: ${error.getMessage}",
-          "stacktrace" -> error.getStackTrace.map(_.toString)
+          "stacktrace" -> error.getStackTrace.map(_.toString).take(5)
         )
         }.getOrElse(Json.obj())
     }
