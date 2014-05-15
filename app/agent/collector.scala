@@ -11,6 +11,7 @@ import play.api.Play.current
 import scala.concurrent.ExecutionContext
 import play.api.libs.json.Json.JsValueWrapper
 import conf.SourceMetrics
+import com.gu.management.StopWatch
 
 class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 
@@ -31,21 +32,24 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
   def size = get().map(_.data.size).fold(0)(_+_)
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
-      val datum = SourceMetrics.CrawlTimer.measure { Datum[T](collector) }
+      val s = new StopWatch
+      val datum = Datum[T](collector)
+      val timeSpent = s.elapsed
+      SourceMetrics.CrawlTimer.recordTimeSpent(timeSpent)
       CollectorAgent.update(datum.label)
       datum.label match {
         case l@Label(product, origin, size, _, None) =>
-          log.info(s"Crawl of ${product.name} from $origin successful: $size records, ${l.bestBefore}")
+          log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
           SourceMetrics.CrawlSuccessCounter.increment()
           datum
         case Label(product, origin, _, _, Some(error)) =>
           previous.label match {
             case bad if bad.isError =>
-              log.error(s"Crawl of ${product.name} from $origin failed: NO data available as this has not been crawled successfuly since Prism started", error)
+              log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)
             case stale if stale.bestBefore.isStale =>
-              log.error(s"Crawl of ${product.name} from $origin failed: leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
+              log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
             case notYetStale if !notYetStale.bestBefore.isStale =>
-              log.warn(s"Crawl of ${product.name} from $origin failed: leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
+              log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
           }
           SourceMetrics.CrawlFailureCounter.increment()
           previous
