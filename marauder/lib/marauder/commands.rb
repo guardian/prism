@@ -154,7 +154,7 @@ command :hosts do |c|
   c.description = 'List all hosts (hardware or instances) that match the search filter' 
   c.syntax = 'marauder hosts <filter>'
   c.option '-s', '--short', 'Only return hostnames'
-  c.option '-f', '--field STRING', String, 'Only return specified field'
+  c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
     display_results(find_hosts(args), options, 'hosts')
   end
@@ -164,7 +164,7 @@ command :instances do |c|
   c.description = 'List instances that match the search filter' 
   c.syntax = 'marauder instances <filter>'
   c.option '-s', '--short', 'Only return hostnames'
-  c.option '-f', '--field STRING', String, 'Only return specified field'
+  c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
     display_results(find_instances(args), options, 'instances')
   end
@@ -174,7 +174,7 @@ command :hardware do |c|
   c.description = 'List hardware that matches the search filter' 
   c.syntax = 'marauder hardware <filter>'
   c.option '-s', '--short', 'Only return hostnames'
-  c.option '-f', '--field STRING', String, 'Only return specified field'
+  c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
     display_results(find_hardware(args), options, 'hardware')
   end
