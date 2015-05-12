@@ -118,20 +118,34 @@ def user_for_host(hostname)
   Net::SSH.configuration_for(hostname)[:user]
 end
 
-def display_results(matching, short, noun)
+def get_field_rec(object, fieldList)
+  if !object || fieldList.empty?
+    object
+  else
+    get_field_rec(object[fieldList[0]], fieldList.drop(1))
+  end
+end
+
+def get_field(object, field)
+  get_field_rec(object, field.split('.'))
+end
+
+def display_results(matching, options, noun)
   if matching.empty?
       STDERR.puts "No #{noun} found"
+  else
+    STDERR.puts "#{matching.length} results"
+    field_name = options.field || 'dnsName'
+    if options.short
+      matching.map { |host| get_field(host, field_name) }.compact.each{ |value| puts value }
     else
-      if short 
-        matching.each { |host| puts host['dnsName'] }
-      else
-        puts table(matching.map { |host|
-          app = host['app'].join(',')
-          app = host['mainclasses'].join(',') if app.length == 0
-          [host['stage'], host['stack'], app, host['dnsName'], host['createdAt']] 
-        })
-      end
+      puts table(matching.map { |host|
+        app = host['app'].join(',')
+        app = host['mainclasses'].join(',') if app.length == 0
+        [host['stage'], host['stack'], app, get_field(host, field_name), host['createdAt']]
+      })
     end
+  end
 end
 
 ###### COMMANDS ######
@@ -140,8 +154,9 @@ command :hosts do |c|
   c.description = 'List all hosts (hardware or instances) that match the search filter' 
   c.syntax = 'marauder hosts <filter>'
   c.option '-s', '--short', 'Only return hostnames'
+  c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
-    display_results(find_hosts(args), options.short, 'hosts')
+    display_results(find_hosts(args), options, 'hosts')
   end
 end
 
@@ -149,8 +164,9 @@ command :instances do |c|
   c.description = 'List instances that match the search filter' 
   c.syntax = 'marauder instances <filter>'
   c.option '-s', '--short', 'Only return hostnames'
+  c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
-    display_results(find_instances(args), options.short, 'instances')
+    display_results(find_instances(args), options, 'instances')
   end
 end  
 
@@ -158,8 +174,9 @@ command :hardware do |c|
   c.description = 'List hardware that matches the search filter' 
   c.syntax = 'marauder hardware <filter>'
   c.option '-s', '--short', 'Only return hostnames'
+  c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
-    display_results(find_hardware(args), options.short, 'hardware')
+    display_results(find_hardware(args), options, 'hardware')
   end
 end   
 
