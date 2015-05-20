@@ -74,7 +74,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
         specs = InstanceSpecification(instance.getImageId, instance.getInstanceType, Option(instance.getVpcId))
       )
-    }
+    }.map(origin.transformInstance)
   }
 }
 

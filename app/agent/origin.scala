@@ -39,10 +39,11 @@ trait Origin {
   def toJson: JsObject = JsObject((standardFields ++ jsonFields).mapValues(Json.toJson(_)).toSeq)
 }
 
-case class AmazonOrigin(account:String, region:String, accessKey:String, resources:Set[String], accountNumber:Option[String] = None)(val secretKey:String) extends Origin {
+case class AmazonOrigin(account:String, region:String, accessKey:String, resources:Set[String], stagePrefix: Option[String], accountNumber:Option[String] = None)(val secretKey:String) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   lazy val jCloudLocation = new LocationBuilder().scope(LocationScope.REGION).id(region).description("region").build()
+  override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
   val jsonFields = Map("region" -> region) ++ accountNumber.map("accountNumber" -> _)
   val creds = new BasicAWSCredentials(accessKey, secretKey)
 }

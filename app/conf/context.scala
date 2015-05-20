@@ -51,7 +51,8 @@ class Configuration(val application: String, val webappConfDirectory: String = "
           val accessKey = getStringProperty(name, "accessKey")
           val secretKey = getStringProperty(name, "secretKey")
           val resources = getStringPropertiesSplitByComma(name, "resources")
-          AmazonOrigin(name, region, accessKey, resources.toSet)(secretKey)
+          val stagePrefix = getStringPropertyOption(name, "stagePrefix")
+          AmazonOrigin(name, region, accessKey, resources.toSet, stagePrefix)(secretKey)
         }
     }
     object openstack extends NamedProperties(configuration, "accounts.openstack") {
