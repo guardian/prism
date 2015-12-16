@@ -1,8 +1,8 @@
-import controllers.{ApiCallException, ApiResult}
-import org.specs2.mutable._
+import controllers.{Api, ApiCallException, ApiResult}
 
 import play.api.libs.json._
 import play.api.libs.json.JsArray
+import play.api.mvc._
 import play.api.test._
 import play.api.test.Helpers._
 import scala.concurrent.Future
@@ -12,7 +12,7 @@ import scala.concurrent.Future
  * You can mock out a whole application including requests, plugins etc.
  * For more information, consult the wiki.
  */
-class ApiSpec extends Specification {
+object ApiSpec extends PlaySpecification with Results {
   "ApiResult" should {
     "wrap data with status on a successful response" in {
       implicit val request = FakeRequest(GET, "/test")
@@ -21,7 +21,7 @@ class ApiSpec extends Specification {
       }
       contentType(success) must beSome("application/json")
       status(success) must equalTo(OK)
-      contentAsJson(success) \ "status" mustEqual JsString("success")
+      (contentAsJson(success) \ "status").get mustEqual JsString("success")
     }
 
     "wrap data with fail when an Api exception is thrown" in {
@@ -32,8 +32,8 @@ class ApiSpec extends Specification {
       }
       contentType(fail) must beSome("application/json")
       status(fail) must equalTo(BAD_REQUEST)
-      contentAsJson(fail) \ "status" mustEqual JsString("fail")
-      contentAsJson(fail) \ "data" mustEqual Json.obj("test" -> "just testing the fail state")
+      (contentAsJson(fail) \ "status").get mustEqual JsString("fail")
+      (contentAsJson(fail) \ "data").get mustEqual Json.obj("test" -> "just testing the fail state")
     }
 
     "return an error when something else goes wrong" in {
@@ -43,8 +43,8 @@ class ApiSpec extends Specification {
       }
       contentType(error) must beSome("application/json")
       status(error) must equalTo(INTERNAL_SERVER_ERROR)
-      contentAsJson(error) \ "status" mustEqual JsString("error")
-      contentAsJson(error) \ "message" mustEqual JsString("/ by zero")
+      (contentAsJson(error) \ "status").get mustEqual JsString("error")
+      (contentAsJson(error) \ "message").get mustEqual JsString("/ by zero")
     }
 
     "add a length companion field to arrays contained in objects when requested" in {
@@ -52,45 +52,50 @@ class ApiSpec extends Specification {
       val success = ApiResult.noSource {
         Json.obj("test" -> List("first", "second", "third"))
       }
-      contentAsJson(success) \ "data" \ "test.length" mustEqual JsNumber(3)
+      (contentAsJson(success) \ "data" \ "test.length").get mustEqual JsNumber(3)
     }
   }
 
-  "Application" should {
-    "send 404 on a bad request" in new WithApplication{
-      route(FakeRequest(GET, "/boom")) must beNone
-    }
+  class TestApi() extends Controller with Api
 
-    "return a list of instances" in new WithApplication{
-      val home = route(FakeRequest(GET, "/instances")).get
-      status(home) must equalTo(OK)
-      contentType(home) must beSome("application/json")
-      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+  "Application" should {
+    "return a list of instances" in new WithApplication {
+      val api = new TestApi()
+      val result = api.instanceList(FakeRequest())
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances must beLike { case JsArray(_) => ok }
       jsonInstances.as[JsArray].value.length mustEqual 15
+
     }
 
     "filter a list of instances" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?vendor=aws")).get
-      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      val api = new TestApi()
+      val result = api.instanceList(FakeRequest(GET, "/instances?vendor=aws"))
+      val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 8
     }
 
     "invert filter a list of instances" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?vendor!=aws")).get
-      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      val api = new TestApi()
+      val result = api.instanceList(FakeRequest(GET, "/instances?vendor!=aws"))
+      val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 7
     }
 
     "filter a list of instances using a regex" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?mainclasses~=.*db.*")).get
-      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      val api = new TestApi()
+      val result = api.instanceList(FakeRequest(GET, "/instances?mainclasses~=.*db.*"))
+      val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 6
     }
 
     "filter a list of instances by nested field" in new WithApplication {
-      val home = route(FakeRequest(GET, "/instances?tags.App=db")).get
-      val jsonInstances = contentAsJson(home) \ "data" \ "instances"
+      val api = new TestApi()
+      val result = api.instanceList(FakeRequest(GET, "/instances?tags.App=db"))
+      //contentAsString(result) mustEqual("")
+      val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 3
     }
   }

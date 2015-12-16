@@ -55,18 +55,6 @@ class Configuration(val application: String, val webappConfDirectory: String = "
           AmazonOrigin(name, region, accessKey, resources.toSet, stagePrefix)(secretKey)
         }
     }
-    object openstack extends NamedProperties(configuration, "accounts.openstack") {
-      lazy val list = names.toSeq.sorted.map { name =>
-        val tenant = getStringProperty(name, "tenant")
-        val region = getStringProperty(name, "region")
-        val endpoint = getStringProperty(name, "endpoint")
-        val accessKey = getStringProperty(name, "user")
-        val secretKey = getStringProperty(name, "secret")
-        val resources = getStringPropertiesSplitByComma(name, "resources")
-        val stagePrefix = getStringPropertyOption(name, "stagePrefix")
-        OpenstackOrigin(endpoint, region, tenant, accessKey, resources.toSet, stagePrefix)(secretKey)
-      }
-    }
     object json extends NamedProperties(configuration, "accounts.json") {
       lazy val list = names.toSeq.sorted.map { name =>
         val vendor = getStringProperty(name, "vendor", "file")

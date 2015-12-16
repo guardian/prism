@@ -88,7 +88,7 @@ case class SourceStatus(state: Label, error: Option[Label] = None) {
 }
 
 object CollectorAgent {
-  implicit val actorSystem = ActorSystem("collector-agent")
+  implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
   val labelAgent = Agent[Map[(ResourceType, Origin),SourceStatus]](Map.empty)
 
   def update(label:Label) {

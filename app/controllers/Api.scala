@@ -11,7 +11,10 @@ import jsonimplicits.joda._
 import agent._
 import jsonimplicits.RequestWrites
 
-object Api extends Controller with Logging {
+object Api extends Controller with Api
+
+trait Api extends Logging {
+  this: Controller =>
 
   implicit def referenceWrites[T <: IndexedItem](implicit idLookup:IdLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
@@ -148,9 +151,11 @@ object Api extends Controller with Logging {
                               (implicit request: RequestHeader, writes: Writes[T]) =
     ApiResult.filter {
       val expand = request.getQueryString("_expand").isDefined
-      val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
-      agent.get().map { agent => agent.label -> agent.data.flatMap(host =>
-        itemJson(host, expand, Some(agent.label), filter=filter)) }.toMap
+      val filter =  ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
+      agent.get().map { agent =>
+        agent.label ->
+          agent.data.flatMap(host => itemJson(host, expand, Some(agent.label), filter=filter))
+      }.toMap
     } reduce { collection =>
       Json.obj(
         objectKey -> toJson(collection.values.flatten)
@@ -162,13 +167,6 @@ object Api extends Controller with Logging {
   }
   def instance(id:String) = Action.async { implicit request =>
     singleItem(Prism.instanceAgent, id)
-  }
-
-  def hardwareList = Action.async { implicit request =>
-      itemList(Prism.hardwareAgent, "hardware")
-  }
-  def hardware(id:String) = Action.async { implicit request =>
-    singleItem(Prism.hardwareAgent, id)
   }
 
   def securityGroupList = Action.async { implicit request =>
@@ -188,21 +186,13 @@ object Api extends Controller with Logging {
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-  def stackList = summaryFromTwo[Instance, Hardware](
-    Prism.instanceAgent, i => i.stack.map(Json.toJson(_)),
-    Prism.hardwareAgent, h => h.stack.map(Json.toJson(_)),
-    "stacks")
-  def stageList = summaryFromTwo[Instance, Hardware](
-    Prism.instanceAgent, i => i.stage.map(Json.toJson(_)),
-    Prism.hardwareAgent, h => h.stage.map(Json.toJson(_)),
-    "stages")(conf.Configuration.stages.ordering)
+  def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
+  def stageList = summary[Instance](Prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(conf.Configuration.stages.ordering)
   def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
   def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
-  def appList = summaryFromTwo[Instance, Hardware](
+  def appList = summary[Instance](
     Prism.instanceAgent,
     i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
-    Prism.hardwareAgent,
-    h => h.app.flatMap{ app => h.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
     "app",
     enableFilter = true
   )

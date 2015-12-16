@@ -1,11 +1,8 @@
 package collectors
 
 import org.joda.time.{Duration, DateTime}
-import org.jclouds.ContextBuilder
 import scala.collection.JavaConversions._
 import utils.Logging
-import org.jclouds.openstack.nova.v2_0.NovaApi
-import org.jclouds.openstack.nova.v2_0.domain.ServerWithSecurityGroups
 import java.net.InetAddress
 import conf.Configuration.accounts
 import play.api.libs.json.Json
@@ -15,16 +12,11 @@ import scala.language.postfixOps
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation}
 import agent._
-import org.jclouds.openstack.nova.v2_0.features.ServerApi
-import org.jclouds.openstack.nova.v2_0.extensions.ServerWithSecurityGroupsApi
-import scala.util.control.NonFatal
-import scala.util.{Failure, Try}
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
     case json:JsonOrigin => JsonInstanceCollector(json, resource)
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
-    case openstack:OpenstackOrigin => OSInstanceCollector(openstack, resource)
   }
 }
 
@@ -59,7 +51,6 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         ),
         createdAt = new DateTime(instance.getLaunchTime),
         instanceName = instance.getInstanceId,
-        internalName = instance.getPrivateDnsName,
         region = origin.region,
         vendor = "aws",
         securityGroups = instance.getSecurityGroups.map{ sg =>
@@ -78,51 +69,6 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
   }
 }
 
-case class OSInstanceCollector(origin:OpenstackOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
-
-  val novaApi = ContextBuilder.newBuilder("openstack-nova")
-    .endpoint(origin.endpoint)
-    .credentials(s"${origin.tenant}:${origin.user}", origin.secret)
-    .buildApi(classOf[NovaApi])
-  val serverApi: ServerApi = novaApi.getServerApiForZone(origin.region)
-  val sgServerApi: ServerWithSecurityGroupsApi = novaApi.getServerWithSecurityGroupsExtensionForZone(origin.region).get
-
-  def getServers: Iterable[ServerWithSecurityGroups] = {
-    val instances = serverApi.list.concat.toList
-    instances.map{ resource => sgServerApi.get(resource.getId) }
-  }
-
-  def crawl: Iterable[Instance] = {
-    getServers.flatMap{ s =>
-      val ip = s.getAddresses.asMap.headOption.flatMap(_._2.find(_.getVersion == 4).map(_.getAddr))
-      val addressOption = ip.map(Address.fromIp)
-      val instanceId = s.getExtendedAttributes.asSet.headOption.map(_.getInstanceName).getOrElse("UNKNOWN").replace("instance", "i")
-      if (addressOption.isEmpty) log.warn(s"Ignoring instance $instanceId from $origin as it doesn't have an IP address")
-      addressOption.map { address =>
-        Instance.fromApiData(
-          id = s"arn:openstack:ec2:${origin.region}:${origin.tenant}:instance/$instanceId",
-          vendorState = Some(s.getStatus.value),
-          group = origin.region,
-          addresses = AddressList("private" -> address),
-          createdAt = new DateTime(s.getCreated),
-          instanceName = instanceId,
-          internalName = s.getName, // use dnsname
-          region = origin.region,
-          vendor = "openstack",
-          securityGroups = s.getSecurityGroupNames.toSeq.sorted.map{ sg =>
-            Reference[SecurityGroup](
-              s"arn:openstack:ec2:${origin.region}:${origin.tenant}:security-group/$sg",
-              Map("name" -> sg)
-            )
-          },
-          tags = s.getMetadata.toMap,
-          InstanceSpecification(s.getImage.getName, s.getFlavor.getName)
-        )
-      }
-    }.map(origin.transformInstance)
-  }
-}
-
 object Instance {
   def fromApiData( id: String,
              vendorState: Option[String],
@@ -130,7 +76,6 @@ object Instance {
              addresses: AddressList,
              createdAt: DateTime,
              instanceName: String,
-             internalName: String,
              region: String,
              vendor: String,
              securityGroups: Seq[Reference[SecurityGroup]],
@@ -149,7 +94,6 @@ object Instance {
       addresses = addresses.mapOfAddresses,
       createdAt = createdAt,
       instanceName = instanceName,
-      internalName = internalName,
       region = region,
       vendor = vendor,
       securityGroups = securityGroups,
@@ -224,7 +168,6 @@ case class Instance(
                  addresses: Map[String,Address],
                  createdAt: DateTime,
                  instanceName: String,
-                 internalName: String,
                  region: String,
                  vendor: String,
                  securityGroups: Seq[Reference[SecurityGroup]],

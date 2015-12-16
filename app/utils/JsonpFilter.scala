@@ -26,10 +26,10 @@ class JsonpFilter(paramName: String = "callback")(implicit codec: Codec, ex: Exe
     }
   }
 
-  def jsonpify(callback: String)(result: SimpleResult): SimpleResult = {
+  def jsonpify(callback: String)(result: Result): Result = {
     result.header.headers.get(CONTENT_TYPE) match {
       case Some(ct) if ct == JSON =>
-        SimpleResult(
+        Result(
           header = result.header.copy(status = Status.OK),
           body = Enumerator(codec.encode(s"$callback(")) >>> result.body >>> Enumerator(codec.encode(");")),
           connection = result.connection

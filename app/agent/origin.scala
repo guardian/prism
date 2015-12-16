@@ -1,7 +1,6 @@
 package agent
 
 import play.api.libs.json.{JsValue, Json, JsObject}
-import org.jclouds.domain.{LocationScope, LocationBuilder}
 import java.net.{URLConnection, URL, URLStreamHandler}
 import java.io.FileNotFoundException
 import scala.io.Source
@@ -23,7 +22,7 @@ object Accounts {
     } recover {
       case NonFatal(e) => awsOrigin
     } get
-  } ++ openstack.list ++ json.list ++ googleDoc.list
+  } ++ json.list ++ googleDoc.list
 
   def forResource(resource:String) = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
 }
@@ -42,17 +41,9 @@ trait Origin {
 case class AmazonOrigin(account:String, region:String, accessKey:String, resources:Set[String], stagePrefix: Option[String], accountNumber:Option[String] = None)(val secretKey:String) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
-  lazy val jCloudLocation = new LocationBuilder().scope(LocationScope.REGION).id(region).description("region").build()
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
   val jsonFields = Map("region" -> region) ++ accountNumber.map("accountNumber" -> _)
   val creds = new BasicAWSCredentials(accessKey, secretKey)
-}
-case class OpenstackOrigin(endpoint:String, region:String, tenant:String, user:String, resources:Set[String], stagePrefix: Option[String])(val secret:String) extends Origin {
-  lazy val vendor = "openstack"
-  lazy val account = s"$tenant@$region"
-  override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "account" -> tenant, "accountName" -> tenant)
-  override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
-  val jsonFields = Map("region" -> region, "tenant" -> tenant)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin {
   private val classpathHandler = new URLStreamHandler {

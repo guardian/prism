@@ -7,9 +7,8 @@ import model.DataContainer
 import org.joda.time.DateTime
 import play.api.http.{ContentTypes, Status}
 import play.api.libs.json._
-import play.api.mvc.{Results, SimpleResult, RequestHeader}
+import play.api.mvc.{Result, Results, RequestHeader}
 import scala.concurrent.Future
-import scala.Some
 import scala.util.Try
 import utils.{ResourceFilter, Logging}
 import jsonimplicits.joda._
@@ -46,10 +45,10 @@ object ApiResult extends Logging {
     import jsonimplicits.model.labelWriter
 
     case class SourceData[D](sourceData: Try[Map[Label, Seq[D]]]) {
-      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader): Future[SimpleResult] =
+      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader): Future[Result] =
         reduceAsync(input => Future.successful(reduce(input)))(request)
 
-      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader): Future[SimpleResult] = {
+      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader): Future[Result] = {
         sourceData.map { mapSources =>
           val filter = ResourceFilter.fromRequest
           val filteredSources = mapSources.groupBy {
@@ -117,7 +116,7 @@ object ApiResult extends Logging {
     }
   }
 
-  def noSource(block: => JsValue)(implicit request:RequestHeader): Future[SimpleResult] = {
+  def noSource(block: => JsValue)(implicit request:RequestHeader): Future[Result] = {
     val sourceLabel:Label = Label(
       ResourceType(noSourceContainer.name, org.joda.time.Duration.standardMinutes(15)),
       new Origin {

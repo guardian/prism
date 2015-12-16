@@ -2,12 +2,9 @@ package collectors
 
 import org.joda.time.Duration
 import play.api.mvc.Call
-import org.jclouds.ContextBuilder
-import org.jclouds.openstack.nova.v2_0.domain.{SecurityGroup => NovaSecurityGroup, SecurityGroupRule}
 import com.amazonaws.services.ec2.model.{SecurityGroup => AWSSecurityGroup, IpPermission}
 import scala.collection.JavaConversions._
 import controllers.{Prism, routes}
-import org.jclouds.openstack.nova.v2_0.NovaApi
 import agent._
 import com.amazonaws.services.ec2.AmazonEC2Client
 import utils.Logging
@@ -15,7 +12,6 @@ import utils.Logging
 object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
     case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource)
-    case os:OpenstackOrigin => OSSecurityGroupCollector(os, resource)
   }
 }
 
@@ -57,51 +53,6 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     val existingGroups = Prism.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
     val secGroups = client.describeSecurityGroups.getSecurityGroups
     secGroups.map ( fromAWS(_, existingGroups) )
-  }
-}
-
-case class OSSecurityGroupCollector(origin:OpenstackOrigin, resource:ResourceType)
-    extends Collector[SecurityGroup] {
-  lazy val novaApi = ContextBuilder.newBuilder("openstack-nova")
-    .endpoint(origin.endpoint)
-    .credentials(s"${origin.tenant}:${origin.user}", origin.secret)
-    .buildApi(classOf[NovaApi])
-
-  def fromJCloudNova(secGroup: NovaSecurityGroup, lookup:Map[(String,String),SecurityGroup]): SecurityGroup = {
-
-    def groupRefs(rule: SecurityGroupRule) = {
-      val groupOption = Option(rule.getGroup)
-      groupOption.map { group =>
-        SecurityGroupRef(group.getName, group.getTenantId, lookup.get((group.getTenantId,group.getName)).map(_.id))
-      }.toSeq
-    }
-
-    val rules = Option(secGroup.getRules).map(_.toSeq).getOrElse(Nil).map { rule =>
-      Rule(
-        rule.getIpProtocol.toString,
-        Option(rule.getFromPort),
-        Option(rule.getToPort),
-        Option(rule.getIpRange).toSeq.wrap,
-        groupRefs(rule).wrap
-      )
-    }
-    SecurityGroup(
-      s"arn:${origin.vendor}:ec2:${origin.region}:${origin.tenant}:security-group/${secGroup.getName}",
-      secGroup.getId,
-      secGroup.getName,
-      origin.region,
-      rules.toSeq,
-      None,
-      Map.empty
-    )
-  }
-
-  lazy val securityGroupExtension = novaApi.getSecurityGroupExtensionForZone(origin.region).get()
-
-  def crawl: Iterable[SecurityGroup] = {
-    val existingGroups = Prism.securityGroupAgent.get().flatMap(_.data).map(sg => (sg.location,sg.name) -> sg).toMap
-    val secGroups = securityGroupExtension.list()
-    secGroups.map ( fromJCloudNova(_, existingGroups) )
   }
 }
 

@@ -8,6 +8,7 @@ import play.api.http.HeaderNames
 import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.Play.current
 
 // A CSV parser based on RFC4180
 // http://tools.ietf.org/html/rfc4180
@@ -55,7 +56,7 @@ object GoogleDoc extends Logging {
       Seq(HeaderNames.COOKIE -> cookies.map{case (name, value) => s"$name=$value"}.mkString("; "))
     }
     WS.url(url.toString)
-      .withFollowRedirects(follow = false)
+      .withFollowRedirects(false)
       .withHeaders(headers:_*)
       .get().flatMap { response =>
       if (redirectStatus.contains(response.status)) {
