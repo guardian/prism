@@ -109,9 +109,15 @@ def find_instances(filter)
 end
 
 def find_hardware(filter)
-  data = prism_query('/hardware', filter)
-  hardware = data["data"]["hardware"]
-  token_filter(hardware, filter){ |h| [h["dnsName"], h["stage"], h["stack"]] + h["app"] }
+  begin
+    data = prism_query('/hardware', filter)
+    hardware = data["data"]["hardware"]
+    token_filter(hardware, filter){ |h| [h["dnsName"], h["stage"], h["stack"]] + h["app"] }
+  rescue StandardError => error
+    STDERR.puts 'WARNING: The prism server you are using no longer has the hardware endpoint - ignoring request'
+    # return an empty list
+    []
+  end
 end
 
 def user_for_host(hostname)
@@ -127,6 +133,13 @@ def get_field_rec(object, fieldList)
 end
 
 def get_field(object, field)
+  if field.nil?
+    if object['addresses']['public'].nil?
+      field = 'ip'
+    else
+      field = 'dnsName'
+    end
+  end
   get_field_rec(object, field.split('.'))
 end
 
@@ -135,7 +148,7 @@ def display_results(matching, options, noun)
       STDERR.puts "No #{noun} found"
   else
     STDERR.puts "#{matching.length} results"
-    field_name = options.field || 'dnsName'
+    field_name = options.field || nil
     if options.short
       matching.map { |host| get_field(host, field_name) }.compact.each{ |value| puts value }
     else
@@ -151,7 +164,7 @@ end
 ###### COMMANDS ######
 
 command :hosts do |c|
-  c.description = 'List all hosts (hardware or instances) that match the search filter' 
+  c.description = 'List all hosts (hardware or instances) that match the search filter'
   c.syntax = 'marauder hosts <filter>'
   c.option '-s', '--short', 'Only return hostnames'
   c.option '-f', '--field STRING', String, 'Use specified field from prism'
@@ -168,17 +181,17 @@ command :instances do |c|
   c.action do |args, options|
     display_results(find_instances(args), options, 'instances')
   end
-end  
+end
 
 command :hardware do |c|
-  c.description = 'List hardware that matches the search filter' 
+  c.description = 'List hardware that matches the search filter'
   c.syntax = 'marauder hardware <filter>'
   c.option '-s', '--short', 'Only return hostnames'
   c.option '-f', '--field STRING', String, 'Use specified field from prism'
   c.action do |args, options|
     display_results(find_hardware(args), options, 'hardware')
   end
-end   
+end
 
 command :ssh do |c|
   c.syntax = 'marauder ssh <filter>'
@@ -221,4 +234,4 @@ command :ssh do |c|
   end
 end
 
-default_command :hosts
+default_command :instances
