@@ -25,5 +25,5 @@ ${JAVA_HOME}/bin/java -Xmx768M -XX:+UseCompressedOops -XX:MaxPermSize=384m \
     ${TC_PARAMS} \
 	-Dsbt.boot.directory=$SBT_BOOT_DIR \
 	${SBT_EXTRA_PARAMS} \
-	-jar `dirname $0`/sbt-launch.jar "${SBT_ACTIONS}"
+	-jar `dirname $0`/sbt-launch.jar ${SBT_ACTIONS}
 
