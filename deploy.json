@@ -1,0 +1,41 @@
+{
+    "defaultStacks": ["deploy"],
+    "packages":{
+        "prism":{
+            "type":"autoscaling",
+            "data":{
+                "bucket": "deploytools-dist",
+                "publicReadAcl": false
+            }
+        },
+        "cloudformation" : {
+            "type": "cloud-formation",
+            "fileName": "cloudformation",
+            "data": {
+                "templatePath": "prism.json",
+                "cloudFormationStackName": "Prism",
+                "prependStackToCloudFormationStackName": false,
+                "templateParameters": {
+                    "MachineImageAMI": "ami-297c4d5e"
+                }
+            }
+        }
+    },
+    "recipes": {
+        "default": {
+            "depends": ["cloudformation", "artifactUploadOnly", "deployOnly"]
+        },
+
+        "deployOnly": {
+            "actionsBeforeApp": ["prism.deploy"]
+        },
+
+        "artifactUploadOnly": {
+            "actionsBeforeApp": ["prism.uploadArtifacts"]
+        },
+
+        "cloudformation": {
+            "actions": ["cloudformation.updateStack"]
+        }
+    }
+}
