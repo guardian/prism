@@ -12,7 +12,7 @@
             "type": "cloud-formation",
             "fileName": "cloudformation",
             "data": {
-                "templatePath": "prism.json",
+                "templatePath": "prism.template",
                 "cloudFormationStackName": "Prism",
                 "prependStackToCloudFormationStackName": false,
                 "templateParameters": {

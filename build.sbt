@@ -34,11 +34,14 @@ def env(key: String): Option[String] = Option(System.getenv(key))
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, UniversalPlugin)
   .settings(
-      packageName in Universal := normalizedName.value,
-      topLevelDirectory in Universal := Some(normalizedName.value),
-      riffRaffPackageType := (packageZipTarball in Universal).value,
-      riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV"),
-      riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
-      riffRaffUploadManifestBucket := Option("riffraff-builds")
+    packageName in Universal := normalizedName.value,
+    topLevelDirectory in Universal := Some(normalizedName.value),
+    riffRaffPackageType := (packageZipTarball in Universal).value,
+    riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV"),
+    riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
+    riffRaffUploadManifestBucket := Option("riffraff-builds"),
+    riffRaffArtifactResources ++=
+      (baseDirectory.value / "cloudformation" ***) pair
+        rebase(baseDirectory.value / "cloudformation", "packages/cloudformation/")
   )
 
