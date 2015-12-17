@@ -19,7 +19,7 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
     "com.google.code.findbugs" % "jsr305" % "2.0.0",
     "com.amazonaws" % "aws-java-sdk" % "1.7.7",
-    "com.gu" %% "management-play" % "8.0-SNAPSHOT",
+    "com.gu" %% "management-play" % "8.0",
     "com.gu" %% "configuration" % "4.1",
     "com.typesafe.akka" %% "akka-agent" % "2.4.1",
     "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
