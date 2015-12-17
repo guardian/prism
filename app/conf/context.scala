@@ -48,11 +48,12 @@ class Configuration(val application: String, val webappConfDirectory: String = "
       lazy val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
       val list = names.toSeq.sorted.map { name =>
           val region = getStringProperty(name, "region", defaultRegion)
-          val accessKey = getStringProperty(name, "accessKey")
-          val secretKey = getStringProperty(name, "secretKey")
+          val accessKey = getStringPropertyOption(name, "accessKey")
+          val secretKey = getStringPropertyOption(name, "secretKey")
+          val role = getStringPropertyOption(name, "role")
           val resources = getStringPropertiesSplitByComma(name, "resources")
           val stagePrefix = getStringPropertyOption(name, "stagePrefix")
-          AmazonOrigin(name, region, accessKey, resources.toSet, stagePrefix)(secretKey)
+          AmazonOrigin(name, region, accessKey, role, resources.toSet, stagePrefix)(secretKey)
         }
     }
     object json extends NamedProperties(configuration, "accounts.json") {

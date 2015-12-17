@@ -32,7 +32,7 @@ case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) exten
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
-  val client = new AmazonEC2Client(origin.creds)
+  val client = new AmazonEC2Client(origin.credsProvider)
   client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
 
   def getInstances:Iterable[(Reservation, AWSInstance)] = {
