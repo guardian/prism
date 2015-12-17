@@ -5,24 +5,25 @@
     "KeyName": {
       "Description": "The EC2 Key Pair to allow SSH access to the instance",
       "Type": "String",
-      "Default": "composer-team"
+      "Default": "deploy-tools-infrastructure"
     },
     "Stage": {
       "Description": "Environment name",
       "Type": "String",
       "AllowedValues": [
-        "INFRA"
+        "PROD",
+        "CODE"
       ]
     },
     "VpcId": {
       "Description": "ID of the VPC onto which to launch the application eg. vpc-1234abcd",
       "Type": "AWS::EC2::VPC::Id",
-      "Default": "vpc-381fa95d"
+      "Default": "vpc-814a00e4"
     },
     "PrivateVpcSubnets": {
       "Description": "Subnets to use in VPC for private EC2 instances eg. subnet-abcd1234",
       "Type": "List<AWS::EC2::Subnet::Id>",
-      "Default": "subnet-c2620fa7,subnet-2a37bd5d,subnet-2967c870"
+      "Default": "subnet-5dd19404,subnet-7aa8ad1f,subnet-dcebc6ab"
     },
     "MachineImageAMI": {
       "Description": "AMI from machine-images repo",
