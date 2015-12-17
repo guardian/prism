@@ -29,12 +29,6 @@
       "Type": "String"
     }
   },
-  "Mappings" : {
-      "EnvironmentMap": {
-          "CODE": { "lowercase": "code" },
-          "PROD": { "lowercase": "prod" }
-      }
-  },
   "Resources": {
     "Role": {
       "Type": "AWS::IAM::Role",
@@ -78,11 +72,26 @@
             {
               "Effect": "Allow",
               "Action": ["s3:GetObject"],
-              "Resource": ["arn:aws:s3:::deploytools-dist/*"]
+              "Resource": ["arn:aws:s3:::deploy-tools-dist/*"]
             }
           ]
         },
         "Roles": [{"Ref": "Role"}]
+      }
+    },
+    "CrawlerPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "CrawlerPolicy",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::*:role/*prism*"
+          } ]
+        },
+        "Roles": [{ "Ref": "Role" }]
       }
     },
     "InstanceProfile": {
@@ -210,12 +219,12 @@
           },
           {
             "Key": "Stack",
-            "Value": "flexible",
+            "Value": "deploy",
             "PropagateAtLaunch": "true"
           },
           {
             "Key": "App",
-            "Value": "snapshotter",
+            "Value": "prism",
             "PropagateAtLaunch": "true"
           }
         ]
@@ -238,7 +247,7 @@
               "",
               [
                 "#!/bin/bash -ev\n",
-                "/opt/features/native-packager/install.sh -b deploytools-dist -s -t tgz\n"
+                "/opt/features/native-packager/install.sh -b deploy-tools-dist -s -t tgz\n"
               ]
             ]
           }
