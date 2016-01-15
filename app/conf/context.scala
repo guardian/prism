@@ -51,9 +51,10 @@ class Configuration(val application: String, val webappConfDirectory: String = "
           val accessKey = getStringPropertyOption(name, "accessKey")
           val secretKey = getStringPropertyOption(name, "secretKey")
           val role = getStringPropertyOption(name, "role")
+          val profile = getStringPropertyOption(name, "profile")
           val resources = getStringPropertiesSplitByComma(name, "resources")
           val stagePrefix = getStringPropertyOption(name, "stagePrefix")
-          AmazonOrigin(name, region, accessKey, role, resources.toSet, stagePrefix)(secretKey)
+          AmazonOrigin(name, region, accessKey, role, profile, resources.toSet, stagePrefix, secretKey)
         }
     }
     object json extends NamedProperties(configuration, "accounts.json") {
