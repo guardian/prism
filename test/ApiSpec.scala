@@ -59,7 +59,7 @@ object ApiSpec extends PlaySpecification with Results {
   class TestApi() extends Controller with Api
 
   "Application" should {
-    "return a list of instances" in new WithApplication {
+    "return a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
       val api = new TestApi()
       val result = api.instanceList(FakeRequest())
       status(result) must equalTo(OK)
@@ -70,28 +70,28 @@ object ApiSpec extends PlaySpecification with Results {
 
     }
 
-    "filter a list of instances" in new WithApplication {
+    "filter a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
       val api = new TestApi()
       val result = api.instanceList(FakeRequest(GET, "/instances?vendor=aws"))
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 8
     }
 
-    "invert filter a list of instances" in new WithApplication {
+    "invert filter a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
       val api = new TestApi()
       val result = api.instanceList(FakeRequest(GET, "/instances?vendor!=aws"))
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 7
     }
 
-    "filter a list of instances using a regex" in new WithApplication {
+    "filter a list of instances using a regex" in new WithApplicationLoader(new PrismApplicationLoader()) {
       val api = new TestApi()
       val result = api.instanceList(FakeRequest(GET, "/instances?mainclasses~=.*db.*"))
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 6
     }
 
-    "filter a list of instances by nested field" in new WithApplication {
+    "filter a list of instances by nested field" in new WithApplicationLoader(new PrismApplicationLoader()) {
       val api = new TestApi()
       val result = api.instanceList(FakeRequest(GET, "/instances?tags.App=db"))
       //contentAsString(result) mustEqual("")

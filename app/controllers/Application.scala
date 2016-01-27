@@ -10,4 +10,8 @@ object Application extends Controller {
     Ok(views.html.index(Play.routes.documentation))
   }
 
+  def config = Action {
+    Ok(play.api.Play.current.configuration.underlying.root().render())
+  }
+
 }

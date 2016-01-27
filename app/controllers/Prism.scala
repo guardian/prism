@@ -4,7 +4,7 @@ import agent.CollectorAgent
 import collectors._
 
 object Prism {
-  val lazyStartup = conf.Configuration.accounts.lazyStartup
+  val lazyStartup = conf.PrismConfiguration.accounts.lazyStartup
   val instanceAgent = new CollectorAgent[Instance](InstanceCollectorSet.collectors, lazyStartup)
   val dataAgent = new CollectorAgent[Data](DataCollectorSet.collectors, lazyStartup)
   val securityGroupAgent = new CollectorAgent[SecurityGroup](SecurityGroupCollectorSet.collectors, lazyStartup)

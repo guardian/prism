@@ -4,7 +4,7 @@ import org.joda.time.{Duration, DateTime}
 import scala.collection.JavaConversions._
 import utils.Logging
 import java.net.InetAddress
-import conf.Configuration.accounts
+import conf.PrismConfiguration.accounts
 import play.api.libs.json.Json
 import play.api.mvc.Call
 import controllers.routes

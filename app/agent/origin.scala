@@ -17,7 +17,7 @@ import collectors.Instance
 
 object Accounts extends Logging {
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r
-  import conf.Configuration.accounts._
+  import conf.PrismConfiguration.accounts._
   val all:Seq[Origin] = aws.list.map { awsOrigin =>
     Try {
       val iamClient = new AmazonIdentityManagementClient(awsOrigin.credsProvider)
