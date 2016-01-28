@@ -16,7 +16,7 @@
                 "cloudFormationStackName": "Prism",
                 "prependStackToCloudFormationStackName": false,
                 "templateParameters": {
-                    "MachineImageAMI": "ami-297c4d5e"
+                    "MachineImageAMI": "ami-d5c275a6"
                 }
             }
         }
