@@ -25,7 +25,6 @@ libraryDependencies ++= Seq(
     "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-sts" % awsVersion,
     "com.gu" %% "management-play" % "8.0",
-    "com.gu" %% "configuration" % "4.1",
     "com.typesafe.akka" %% "akka-agent" % "2.4.1",
     "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
     filters,
