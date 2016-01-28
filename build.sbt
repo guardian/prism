@@ -16,9 +16,14 @@ resolvers ++= Seq(
   "Guardian Github Snapshots" at "http://guardian.github.com/maven/repo-releases"
 )
 
+val awsVersion = "1.10.46"
+
 libraryDependencies ++= Seq(
     "com.google.code.findbugs" % "jsr305" % "2.0.0",
-    "com.amazonaws" % "aws-java-sdk" % "1.10.46",
+    "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-ec2" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-sts" % awsVersion,
     "com.gu" %% "management-play" % "8.0",
     "com.gu" %% "configuration" % "4.1",
     "com.typesafe.akka" %% "akka-agent" % "2.4.1",
