@@ -1,4 +1,4 @@
-import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.{Regions, Region}
 import conf.{FileConfiguration, DynamoConfiguration, Identity}
 import play.api.ApplicationLoader.Context
@@ -13,7 +13,7 @@ class PrismApplicationLoader extends GuiceApplicationLoader() with Logging {
 
     val extraConfigs = List(
       DynamoConfiguration(
-        new ProfileCredentialsProvider("deployTools"),
+        new DefaultAWSCredentialsProviderChain(),
         Region.getRegion(Regions.EU_WEST_1),
         identity
       ),
