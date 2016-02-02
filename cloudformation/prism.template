@@ -80,6 +80,22 @@
         "Roles": [{"Ref": "Role"}]
       }
     },
+    "ConfigPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "ConfigPolicy",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": ["dynamodb:*"],
+              "Effect": "Allow",
+              "Resource": "arn:aws:dynamodb:eu-west-1:095768028460:table/config-prism"
+            }
+          ]
+        },
+        "Roles": [{"Ref": "Role"}]
+      }
+    },
     "CrawlerPolicy": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
