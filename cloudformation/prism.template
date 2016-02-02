@@ -89,7 +89,7 @@
             {
               "Action": ["dynamodb:*"],
               "Effect": "Allow",
-              "Resource": "arn:aws:dynamodb:eu-west-1:095768028460:table/config-prism"
+              "Resource": "arn:aws:dynamodb:eu-west-1:095768028460:table/config-deploy"
             }
           ]
         },

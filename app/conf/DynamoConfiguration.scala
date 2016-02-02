@@ -25,6 +25,7 @@ class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Region,
                           identity: Identity, prefix:String) extends ConfigurationSource with Logging {
 
   def configuration(mode: Mode.Mode): Configuration = {
+
     if (mode == Mode.Test)
       Configuration.empty
     else {

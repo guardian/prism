@@ -1,6 +1,6 @@
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.{Regions, Region}
-import conf.{FileConfiguration, DynamoConfiguration, Identity}
+import conf.{AWS, FileConfiguration, DynamoConfiguration, Identity}
 import play.api.ApplicationLoader.Context
 import play.api.Configuration
 import play.api.inject.guice.{GuiceApplicationBuilder, GuiceApplicationLoader}
@@ -9,7 +9,9 @@ import utils.Logging
 class PrismApplicationLoader extends GuiceApplicationLoader() with Logging {
 
   override protected def builder(context: Context): GuiceApplicationBuilder = {
-    val identity = Identity("prism", "prism", "DEV")
+    val identity = AWS.instance.identity.getOrElse(Identity("deploy", "prism", "DEV"))
+
+    log.info(s"Getting config for $identity")
 
     val extraConfigs = List(
       DynamoConfiguration(
