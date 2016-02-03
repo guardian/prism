@@ -97,7 +97,7 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
   def data(resource:ResourceType):JsValue = {
     val jsonText: String = new URI(url.replace("%resource%", resource.name)) match {
       case classPathLocation if classPathLocation.getScheme == "classpath" =>
-        Source.fromURL(new URL(classPathLocation.toURL, null, classpathHandler), "utf-8").getLines().mkString
+        Source.fromURL(new URL(null, classPathLocation.toString, classpathHandler), "utf-8").getLines().mkString
       case s3Location if s3Location.getScheme == "s3" =>
         val s3Client = new AmazonS3Client(credsFromS3Url(s3Location))
         val obj = s3Client.getObject(s3Location.getHost, s3Location.getPath.stripPrefix("/"))
