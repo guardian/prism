@@ -29,9 +29,9 @@ For inline usage help, run `marauder help` or `marauder help <command>` for help
 To find a service, just specify its name and the stage you're interested in, e.g.:
 
 ```
-$ marauder hosts r2frontend qa
-QA	r2frontend	10-252-163-240.gc2.dev.dc1.gnm	2013-05-06T05:18:35.000Z
-QA	r2frontend	10-252-163-239.gc2.dev.dc1.gnm	2013-05-06T05:18:54.000Z
+$ marauder frontend CODE
+CODE	frontend 	article     	ec2-54-247-36-120.eu-west-1.compute.amazonaws.com 	2015-08-25T11:47:51.000+01:00
+CODE	frontend 	discussion  	ec2-54-74-196-22.eu-west-1.compute.amazonaws.com  	2015-08-25T10:10:25.000+01:00
 ```
 
 You can match names and stages using suffixes:
