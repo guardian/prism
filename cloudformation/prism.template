@@ -96,6 +96,22 @@
         "Roles": [{"Ref": "Role"}]
       }
     },
+    "DataPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "DataPolicy",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": ["s3:GetObject"],
+              "Effect": "Allow",
+              "Resource": "arn:aws:s3:::prism-data/*"
+            }
+          ]
+        },
+        "Roles": [{"Ref": "Role"}]
+      }
+    },
     "CrawlerPolicy": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
