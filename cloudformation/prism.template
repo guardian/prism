@@ -182,6 +182,7 @@
         ],
         "CrossZone": true,
         "Subnets": {"Ref": "PrivateVpcSubnets"},
+        "Scheme": "internal",
         "Listeners": [
           {
             "LoadBalancerPort": "80",
