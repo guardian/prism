@@ -121,8 +121,13 @@
           "Statement": [{
             "Effect": "Allow",
             "Action": "sts:AssumeRole",
-            "Resource": "arn:aws:iam::*:role/*prism*"
-          } ]
+            "Resource": "arn:aws:iam::*:role/*Prism*"
+          },
+            {
+              "Effect": "Allow",
+              "Action": "sts:AssumeRole",
+              "Resource": "arn:aws:iam::*:role/*prism*"
+            }]
         },
         "Roles": [{ "Ref": "Role" }]
       }
