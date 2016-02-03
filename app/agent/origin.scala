@@ -2,13 +2,14 @@ package agent
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.internal.StaticCredentialsProvider
+import com.amazonaws.services.s3.AmazonS3Client
 import play.api.libs.json.{JsValue, Json, JsObject}
-import java.net.{URLConnection, URL, URLStreamHandler}
+import java.net.{URI, URLConnection, URL, URLStreamHandler}
 import java.io.FileNotFoundException
 import utils.Logging
 
 import scala.io.Source
-import com.amazonaws.auth.{AWSCredentialsProvider, STSAssumeRoleSessionCredentialsProvider, BasicAWSCredentials}
+import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentialsProvider, STSAssumeRoleSessionCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -76,7 +77,7 @@ case class AmazonOrigin(account:String, region:String, credsId: String, credsPro
   val jsonFields = Map("region" -> region) ++ accountNumber.map("accountNumber" -> _)
 
 }
-case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin {
+case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {
     override def openConnection(u: URL): URLConnection = {
       Option(getClass.getResource(u.getPath)).map(_.openConnection()).getOrElse{
@@ -85,12 +86,26 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     }
   }
 
-  def data(resource:ResourceType):JsValue = {
-    val actualUrl = url.replace("%resource%", resource.name) match {
-      case classPathLocation if classPathLocation.startsWith("classpath:") => new URL(null, classPathLocation, classpathHandler)
-      case otherURL => new URL(otherURL)
+  def credsFromS3Url(url: URI): AWSCredentialsProvider = {
+    Option(url.getUserInfo) match {
+      case Some(role) if role.startsWith("arn:") => new STSAssumeRoleSessionCredentialsProvider(role, "prismS3")
+      case Some(profile) => new ProfileCredentialsProvider(profile)
+      case _ => new DefaultAWSCredentialsProviderChain()
     }
-    val jsonText = Source.fromURL(actualUrl, "utf-8").getLines().mkString
+  }
+
+  def data(resource:ResourceType):JsValue = {
+    val jsonText: String = new URI(url.replace("%resource%", resource.name)) match {
+      case classPathLocation if classPathLocation.getScheme == "classpath" =>
+        Source.fromURL(new URL(classPathLocation.toURL, null, classpathHandler), "utf-8").getLines().mkString
+      case s3Location if s3Location.getScheme == "s3" =>
+        val s3Client = new AmazonS3Client(credsFromS3Url(s3Location))
+        val obj = s3Client.getObject(s3Location.getHost, s3Location.getPath.stripPrefix("/"))
+        Source.fromInputStream(obj.getObjectContent).getLines().mkString
+      case otherURL =>
+        Source.fromURL(otherURL.toURL, "utf-8").getLines().mkString
+    }
+
     Json.parse(jsonText)
   }
   val jsonFields = Map("url" -> url)
