@@ -26,9 +26,10 @@ object Accounts extends Logging {
       awsOrigin.copy(accountNumber = Some(derivedAccountNumber))
     } recover {
       case NonFatal(e) =>
-        log.warn(s"Failed to extract the account number for $awsOrigin", e)
-        if (awsOrigin.accountNumber.isDefined) awsOrigin else
+        if (awsOrigin.accountNumber.isDefined) awsOrigin else {
+          log.warn(s"Failed to extract the account number for $awsOrigin", e)
           awsOrigin.copy(accountNumber = Some("?????????"))
+        }
     } get
   } ++ json.list ++ googleDoc.list
 
@@ -59,7 +60,7 @@ object AmazonOrigin {
         (p, new ProfileCredentialsProvider(p))
       case (Some(ak), Some(sk), _, _) =>
         (ak, new StaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
-      case _ => throw new IllegalArgumentException("Must specify either a role, profile or static credentials for an account")
+      case _ => ("default", new DefaultAWSCredentialsProviderChain())
     }
     val accountNumber = role.flatMap {
       case ArnIamAccountExtractor(accountId) => Some(accountId)
