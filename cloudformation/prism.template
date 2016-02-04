@@ -28,6 +28,10 @@
     "MachineImageAMI": {
       "Description": "AMI from machine-images repo",
       "Type": "String"
+    },
+    "CertificateARN": {
+      "Description": "Certificate ARN for ELB",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -186,6 +190,12 @@
             "FromPort": 80,
             "ToPort": 80,
             "CidrIp": "10.0.0.0/8"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "CidrIp": "10.0.0.0/8"
           }
         ]
       }
@@ -209,6 +219,12 @@
             "LoadBalancerPort": "80",
             "InstancePort": "9000",
             "Protocol": "HTTP"
+          },
+          {
+            "LoadBalancerPort": "443",
+            "InstancePort": "9000",
+            "Protocol": "HTTPS",
+            "SSLCertificateId": { "Ref": "CertificateARN" }
           }
         ],
         "HealthCheck": {
