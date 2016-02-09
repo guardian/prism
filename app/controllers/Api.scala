@@ -184,6 +184,13 @@ trait Api extends Logging {
     singleItem(Prism.ownerAgent, id)
   }
 
+  def imageList = Action.async { implicit request =>
+    itemList(Prism.imageAgent, "images")
+  }
+  def image(id:String) = Action.async { implicit request =>
+    singleItem(Prism.imageAgent, id)
+  }
+
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
   def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")

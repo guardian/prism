@@ -66,7 +66,7 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
         startupData
       } else {
         val startupData = update(collector, Datum.empty[T](collector))
-        assert(!startupData.label.isError, s"Error occured collecting data when lazy startup is disabled: ${startupData.label}")
+        assert(!startupData.label.isError, s"Error occurred collecting data when lazy startup is disabled: ${startupData.label}")
         startupData
       }
 
@@ -75,6 +75,8 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
       }
       collector -> agent
     }.toMap
+
+    log.info(s"Started agent for collectors: $collectors")
   }
 
   def shutdown() {

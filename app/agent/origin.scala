@@ -2,6 +2,7 @@ package agent
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.internal.StaticCredentialsProvider
+import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.s3.AmazonS3Client
 import play.api.libs.json.{JsValue, Json, JsObject}
 import java.net.{URI, URLConnection, URL, URLStreamHandler}
@@ -76,7 +77,7 @@ case class AmazonOrigin(account:String, region:String, credsId: String, credsPro
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
   val jsonFields = Map("region" -> region) ++ accountNumber.map("accountNumber" -> _)
-
+  val awsRegion = Region.getRegion(Regions.fromName(region))
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {

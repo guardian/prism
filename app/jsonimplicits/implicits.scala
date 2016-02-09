@@ -45,6 +45,8 @@ object model {
   implicit val dataWriter = Json.writes[Data]
   implicit val ownerWriter = Json.writes[Owner]
 
+  implicit val imageWriter = Json.writes[Image]
+
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
     def writes(l: Label): JsValue = {
       Json.obj(
