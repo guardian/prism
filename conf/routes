@@ -28,6 +28,9 @@ GET        /security-groups/:id           controllers.Api.securityGroup(id)
 GET        /owners                        controllers.Api.ownerList
 GET        /owners/:id                    controllers.Api.owner(id)
 
+GET        /images                        controllers.Api.imageList
+GET        /images/:id                    controllers.Api.image(id)
+
 GET        /data                          controllers.Api.dataList
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
