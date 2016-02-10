@@ -51,7 +51,8 @@ trait Origin {
 object AmazonOrigin {
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):role.*""".r
   def apply(account:String, region:String, accessKey:Option[String], role:Option[String], profile:Option[String],
-            resources:Set[String], stagePrefix: Option[String], secretKey:Option[String]): AmazonOrigin = {
+            resources:Set[String], stagePrefix: Option[String], secretKey:Option[String],
+            additionalImageOwners: Seq[String]): AmazonOrigin = {
     val (credsId, credsProvider) = (accessKey, secretKey, role, profile) match {
       case (_, _, Some(r), Some(p)) =>
         (s"$p/$r", new STSAssumeRoleSessionCredentialsProvider(new ProfileCredentialsProvider(p), r, "prism"))
@@ -67,12 +68,14 @@ object AmazonOrigin {
       case ArnIamAccountExtractor(accountId) => Some(accountId)
       case _ => None
     }
-    AmazonOrigin(account, region, credsId, credsProvider, resources, stagePrefix, accountNumber)
+    AmazonOrigin(account, region, credsId, credsProvider, resources, stagePrefix, accountNumber, additionalImageOwners)
   }
 }
 
-case class AmazonOrigin(account:String, region:String, credsId: String, credsProvider: AWSCredentialsProvider,
-                        resources:Set[String], stagePrefix: Option[String], accountNumber:Option[String]) extends Origin {
+case class AmazonOrigin(account:String, region:String, credsId: String,
+                        credsProvider: AWSCredentialsProvider, resources:Set[String],
+                        stagePrefix: Option[String], accountNumber:Option[String],
+                        additionalImageOwners: Seq[String]) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)

@@ -52,7 +52,8 @@ class PrismConfiguration() extends Logging {
         val profile = subConfig.getString("profile")
         val resources:Seq[String] = subConfig.getStringSeq("resources").getOrElse(Nil)
         val stagePrefix = subConfig.getString("stagePrefix")
-        AmazonOrigin(name, region, accessKey, role, profile, resources.toSet, stagePrefix, secretKey)
+        val additionalImageOwners:Seq[String] = subConfig.getStringSeq("additionalImageOwners").getOrElse(Nil)
+        AmazonOrigin(name, region, accessKey, role, profile, resources.toSet, stagePrefix, secretKey, additionalImageOwners)
       }.toList
     }
 

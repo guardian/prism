@@ -26,7 +26,7 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends
 
   def crawl: Iterable[Image] = {
     val result = client.describeImages(new DescribeImagesRequest()
-      .withFilters(new Filter("owner-id", Seq(origin.accountNumber.get).asJava)))
+      .withFilters(new Filter("owner-id", (origin.accountNumber.get +: origin.additionalImageOwners).asJava)))
     result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
   }
 }
