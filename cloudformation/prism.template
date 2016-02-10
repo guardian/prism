@@ -230,7 +230,7 @@
         "HealthCheck": {
           "Target": "HTTP:9000/management/healthcheck",
           "HealthyThreshold": "2",
-          "UnhealthyThreshold": "2",
+          "UnhealthyThreshold": "6",
           "Interval": "10",
           "Timeout": "5"
         },
