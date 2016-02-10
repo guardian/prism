@@ -14,7 +14,6 @@ import scala.util.Try
 
 object ImageCollectorSet extends CollectorSet[Image](ResourceType("images", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
-    //case json:JsonOrigin => JsonInstanceCollector(json, resource)
     case amazon:AmazonOrigin => AWSImageCollector(amazon, resource)
   }
 }
@@ -26,7 +25,7 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends
 
   def crawl: Iterable[Image] = {
     val result = client.describeImages(new DescribeImagesRequest()
-      .withFilters(new Filter("owner-id", (origin.accountNumber.get +: origin.additionalImageOwners).asJava)))
+      .withFilters(new Filter("owner-id", Seq(origin.alternativeImageOwner.getOrElse(origin.accountNumber.get)).asJava)))
     result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
   }
 }
