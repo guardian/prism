@@ -294,7 +294,7 @@
           {"Ref": "AppServerSecurityGroup"},
           {"Ref": "SSHSecurityGroup"}
         ],
-        "InstanceType": "t2.micro",
+        "InstanceType": "t2.medium",
         "IamInstanceProfile": {"Ref": "InstanceProfile"},
         "UserData": {
           "Fn::Base64": {
