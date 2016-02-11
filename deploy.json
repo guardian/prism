@@ -15,9 +15,21 @@
                 "templatePath": "prism.template",
                 "cloudFormationStackName": "Prism",
                 "prependStackToCloudFormationStackName": false,
-                "templateParameters": {
-                    "MachineImageAMI": "ami-d5c275a6"
-                }
+                "amiTags": {
+                    "ImageName": "ubuntu-vivid-java8"
+                },
+                "amiParameter": "MachineImageAMI"
+            }
+        },
+        "amiUpdate": {
+            "type": "ami-cloudformation-parameter",
+            "data": {
+                "cloudFormationStackName": "Prism",
+                "prependStackToCloudFormationStackName": false,
+                "amiTags": {
+                    "ImageName": "ubuntu-vivid-java8"
+                },
+                "amiParameter": "MachineImageAMI"
             }
         }
     },
@@ -36,6 +48,10 @@
 
         "cloudformation": {
             "actions": ["cloudformation.updateStack"]
+        },
+
+        "updateAmi": {
+            "actions": ["amiUpdate.update"]
         }
     }
 }
