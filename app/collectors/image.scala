@@ -31,9 +31,11 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends
 }
 
 object Image {
+  def arn(region: String, imageId: String) = s"arn:aws:ec2:$region::image/$imageId"
+
   def fromApiData(image: AWSImage, regionName: String): Image = {
     Image(
-      id = s"arn:aws:ec2:$regionName::image/${image.getImageId}",
+      id = arn(regionName, image.getImageId),
       name = image.getName,
       imageId = image.getImageId,
       region = regionName,

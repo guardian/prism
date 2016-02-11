@@ -63,7 +63,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
           )
         },
         tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
-        specs = InstanceSpecification(instance.getImageId, instance.getInstanceType, Option(instance.getVpcId))
+        specs = InstanceSpecification(instance.getImageId, Image.arn(origin.region, instance.getImageId), instance.getInstanceType, Option(instance.getVpcId))
       )
     }.map(origin.transformInstance)
   }
@@ -156,7 +156,7 @@ object Address {
   val empty: Address = Address(null, null)
 }
 
-case class InstanceSpecification(image:String, instanceType:String, vpcId:Option[String] = None)
+case class InstanceSpecification(imageId:String, imageArn:String, instanceType:String, vpcId:Option[String] = None)
 
 case class Instance(
                  id: String,
