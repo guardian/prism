@@ -25,9 +25,6 @@ GET        /instances/:id                 controllers.Api.instance(id)
 GET        /security-groups               controllers.Api.securityGroupList
 GET        /security-groups/:id           controllers.Api.securityGroup(id)
 
-GET        /owners                        controllers.Api.ownerList
-GET        /owners/:id                    controllers.Api.owner(id)
-
 GET        /images                        controllers.Api.imageList
 GET        /images/:id                    controllers.Api.image(id)
 

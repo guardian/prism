@@ -8,7 +8,6 @@ object Prism {
   val instanceAgent = new CollectorAgent[Instance](InstanceCollectorSet.collectors, lazyStartup)
   val dataAgent = new CollectorAgent[Data](DataCollectorSet.collectors, lazyStartup)
   val securityGroupAgent = new CollectorAgent[SecurityGroup](SecurityGroupCollectorSet.collectors, lazyStartup)
-  val ownerAgent = new CollectorAgent[Owner](OwnerCollectorSet.collectors, lazyStartup)
   val imageAgent = new CollectorAgent[Image](ImageCollectorSet.collectors, lazyStartup)
-  val allAgents = Seq(instanceAgent, dataAgent, securityGroupAgent, ownerAgent, imageAgent)
+  val allAgents = Seq(instanceAgent, dataAgent, securityGroupAgent, imageAgent)
 }

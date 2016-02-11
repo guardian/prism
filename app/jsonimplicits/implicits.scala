@@ -43,7 +43,6 @@ object model {
   }
   implicit val valueWriter = Json.writes[Value]
   implicit val dataWriter = Json.writes[Data]
-  implicit val ownerWriter = Json.writes[Owner]
 
   implicit val imageWriter = Json.writes[Image]
 

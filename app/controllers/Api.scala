@@ -177,13 +177,6 @@ trait Api extends Logging {
     singleItem(Prism.securityGroupAgent, id)
   }
 
-  def ownerList = Action.async { implicit request =>
-    itemList(Prism.ownerAgent, "owners")
-  }
-  def owner(id:String) = Action.async { implicit request =>
-    singleItem(Prism.ownerAgent, id)
-  }
-
   def imageList = Action.async { implicit request =>
     itemList(Prism.imageAgent, "images")
   }
