@@ -42,7 +42,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
   def crawl:Iterable[Instance] = {
     getInstances.map { case (reservation, instance) =>
       Instance.fromApiData(
-        id = s"arn:aws:ec2:${origin.region}:${origin.accountNumber.getOrElse(reservation.getOwnerId)}:instance/${instance.getInstanceId}",
+        arn = s"arn:aws:ec2:${origin.region}:${origin.accountNumber.getOrElse(reservation.getOwnerId)}:instance/${instance.getInstanceId}",
         vendorState = Some(instance.getState.getName),
         group = instance.getPlacement.getAvailabilityZone,
         addresses = AddressList(
@@ -70,7 +70,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
 }
 
 object Instance {
-  def fromApiData( id: String,
+  def fromApiData( arn: String,
              vendorState: Option[String],
              group: String,
              addresses: AddressList,
@@ -85,7 +85,7 @@ object Instance {
     val app = tags.get("App").map(_.split(",").toList).getOrElse(Nil)
 
     apply(
-      id = id,
+      arn = arn,
       name = addresses.primary.dnsName,
       vendorState = vendorState,
       group = group,
@@ -159,7 +159,7 @@ object Address {
 case class InstanceSpecification(imageId:String, imageArn:String, instanceType:String, vpcId:Option[String] = None)
 
 case class Instance(
-                 id: String,
+                 arn: String,
                  name: String,
                  vendorState: Option[String],
                  group: String,
@@ -181,7 +181,7 @@ case class Instance(
                  specification:Option[InstanceSpecification]
                 ) extends IndexedItem {
 
-  def callFromId: (String) => Call = id => routes.Api.instance(id)
+  def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
   override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {

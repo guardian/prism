@@ -84,7 +84,7 @@ object model {
     }
   }
 
-  implicit def referenceReads[T](implicit idLookup:IdLookup[T]): Reads[Reference[T]] = new Reads[Reference[T]] {
+  implicit def referenceReads[T](implicit idLookup:ArnLookup[T]): Reads[Reference[T]] = new Reads[Reference[T]] {
     override def reads(json: JsValue): JsResult[Reference[T]] = JsSuccess(Reference[T](json.as[String]))
   }
 }

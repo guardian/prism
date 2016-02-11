@@ -16,17 +16,17 @@ object Api extends Controller with Api
 trait Api extends Logging {
   this: Controller =>
 
-  implicit def referenceWrites[T <: IndexedItem](implicit idLookup:IdLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
+  implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
       request.getQueryString("_reference") match {
         case Some("inline") =>
-          idLookup.item(o.id).flatMap { case (label, t) =>
+          arnLookup.item(o.arn).flatMap { case (label, t) =>
             itemJson(item = t, label = Some(label), expand = true)
-          }.getOrElse(JsString(o.id))
+          }.getOrElse(JsString(o.arn))
         case Some("uri") =>
-          Json.toJson(idLookup.call(o.id).absoluteURL()(request))
+          Json.toJson(arnLookup.call(o.arn).absoluteURL()(request))
         case _ =>
-          Json.toJson(o.id)
+          Json.toJson(o.arn)
       }
     }
   }
@@ -102,7 +102,7 @@ trait Api extends Logging {
   def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, label: Option[Label] = None, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
     val json = Json.toJson(item).as[JsObject] ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin)))
     if (filter.isMatch(json)) {
-      val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
+      val filtered = if (expand) json else JsObject(json.fields.filter(List("arn") contains _._1))
       Some(filtered)
     } else {
       None
@@ -131,19 +131,19 @@ trait Api extends Logging {
     }
   }
 
-  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String)
                                 (implicit request: RequestHeader, writes: Writes[T]) =
     ApiResult.filter {
       val sources = agent.get()
       sources.flatMap{ datum =>
-        datum.data.find(_.id == id).map(datum.label -> Seq(_))
+        datum.data.find(_.arn == arn).map(datum.label -> Seq(_))
       }.toMap
     } reduce { sources =>
       sources.headOption.map {
         case (label, items) =>
           itemJson(items.head, expand = true, label=Some(label)).get
       } getOrElse {
-        throw ApiCallException(Json.obj("id" -> s"Item with id $id doesn't exist"), NOT_FOUND)
+        throw ApiCallException(Json.obj("arn" -> s"Item with arn $arn doesn't exist"), NOT_FOUND)
       }
     }
 
@@ -165,23 +165,23 @@ trait Api extends Logging {
   def instanceList = Action.async { implicit request =>
     itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
   }
-  def instance(id:String) = Action.async { implicit request =>
-    singleItem(Prism.instanceAgent, id)
+  def instance(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.instanceAgent, arn)
   }
 
   def securityGroupList = Action.async { implicit request =>
     itemList(Prism.securityGroupAgent, "security-groups")
   }
 
-  def securityGroup(id:String) = Action.async { implicit request =>
-    singleItem(Prism.securityGroupAgent, id)
+  def securityGroup(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.securityGroupAgent, arn)
   }
 
   def imageList = Action.async { implicit request =>
     itemList(Prism.imageAgent, "images")
   }
-  def image(id:String) = Action.async { implicit request =>
-    singleItem(Prism.imageAgent, id)
+  def image(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.imageAgent, arn)
   }
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
@@ -200,8 +200,8 @@ trait Api extends Logging {
   def dataList = Action.async { implicit request =>
     itemList(Prism.dataAgent, "data")
   }
-  def data(id:String) = Action.async { implicit request =>
-    singleItem(Prism.dataAgent, id)
+  def data(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.dataAgent, arn)
   }
   def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 

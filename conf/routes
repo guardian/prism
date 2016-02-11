@@ -20,18 +20,18 @@ GET        /instances/regions             controllers.Api.regionList
 GET        /instances/vendors             controllers.Api.vendorList
 GET        /instances/roles               controllers.Api.roleList
 GET        /instances/mainclasses         controllers.Api.mainclassList
-GET        /instances/:id                 controllers.Api.instance(id)
+GET        /instances/:arn                 controllers.Api.instance(arn)
 
 GET        /security-groups               controllers.Api.securityGroupList
-GET        /security-groups/:id           controllers.Api.securityGroup(id)
+GET        /security-groups/:arn           controllers.Api.securityGroup(arn)
 
 GET        /images                        controllers.Api.imageList
-GET        /images/:id                    controllers.Api.image(id)
+GET        /images/:arn                    controllers.Api.image(arn)
 
 GET        /data                          controllers.Api.dataList
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
-GET        /data/:id                      controllers.Api.data(id)
+GET        /data/:arn                      controllers.Api.data(arn)
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                  controllers.Assets.at(path="/public", file)

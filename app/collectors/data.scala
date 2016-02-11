@@ -19,8 +19,8 @@ case class JsonDataCollector(origin:JsonOrigin, resource: ResourceType) extends 
 }
 
 case class Data( key:String, values:Seq[Value]) extends IndexedItem {
-  def id: String = s"arn:gu:data:key/$key"
-  def callFromId: (String) => Call = id => routes.Api.data(id)
+  def arn: String = s"arn:gu:data:key/$key"
+  def callFromArn: (String) => Call = arn => routes.Api.data(arn)
   def firstMatchingData(stack:Option[String], app:String, stage:String): Option[Value] = {
     stack.map { s =>
       values.filter {

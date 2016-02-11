@@ -21,7 +21,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
   def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
       rule.getUserIdGroupPairs.map { pair =>
-        SecurityGroupRef(pair.getGroupId, pair.getUserId, lookup.get(pair.getGroupId).map(_.id))
+        SecurityGroupRef(pair.getGroupId, pair.getUserId, lookup.get(pair.getGroupId).map(_.arn))
       }
     }
 
@@ -62,22 +62,22 @@ case class Rule( protocol:String,
                  sourceCidrBlocks:Option[Seq[String]],
                  sourceGroupRefs:Option[Seq[SecurityGroupRef]] )
 
-case class SecurityGroup(id:String,
+case class SecurityGroup(arn:String,
                          groupId:String,
                          name:String,
                          location:String,
                          rules:Seq[Rule],
                          vpcId:Option[String],
                          tags:Map[String, String]) extends IndexedItem {
-  def callFromId: (String) => Call = id => routes.Api.securityGroup(id)
+  def callFromArn: (String) => Call = arn => routes.Api.securityGroup(arn)
 }
 
 object SecurityGroup {
-  implicit val idLookup = new IdLookup[SecurityGroup] {
-    override def call(id: String): Call = routes.Api.securityGroup(id)
-    override def item(id: String): Option[(Label,SecurityGroup)] =
-      Prism.securityGroupAgent.getTuples.find(_._2.id==id).headOption
+  implicit val arnLookup = new ArnLookup[SecurityGroup] {
+    override def call(arn: String): Call = routes.Api.securityGroup(arn)
+    override def item(arn: String): Option[(Label,SecurityGroup)] =
+      Prism.securityGroupAgent.getTuples.find(_._2.arn==arn).headOption
   }
 }
 
-case class SecurityGroupRef(groupId:String, account:String, id:Option[String])
+case class SecurityGroupRef(groupId:String, account:String, arn:Option[String])

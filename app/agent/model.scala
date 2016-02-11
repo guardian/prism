@@ -11,10 +11,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 trait IndexedItem {
-  def id: String
-  def callFromId: String => Call
-  def call: Call = callFromId(id)
-  def fieldIndex: Map[String, String] = Map("id" -> id)
+  def arn: String
+  def callFromArn: String => Call
+  def call: Call = callFromArn(arn)
+  def fieldIndex: Map[String, String] = Map("arn" -> arn)
 }
 
 abstract class CollectorSet[T](val resource:ResourceType) extends Logging {

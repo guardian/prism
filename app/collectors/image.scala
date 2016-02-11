@@ -35,7 +35,7 @@ object Image {
 
   def fromApiData(image: AWSImage, regionName: String): Image = {
     Image(
-      id = arn(regionName, image.getImageId),
+      arn = arn(regionName, image.getImageId),
       name = image.getName,
       imageId = image.getImageId,
       region = regionName,
@@ -53,7 +53,7 @@ object Image {
 }
 
 case class Image(
-                id: String,
+                arn: String,
                 name: String,
                 imageId: String,
                 region: String,
@@ -67,5 +67,5 @@ case class Image(
                 hypervisor: String,
                 sriovNetSupport: String
                   ) extends IndexedItem {
-  def callFromId: (String) => Call = id => routes.Api.image(id)
+  def callFromArn: (String) => Call = arn => routes.Api.image(arn)
 }
