@@ -150,7 +150,7 @@ trait Api extends Logging {
   def itemList[T<:IndexedItem](agent:CollectorAgent[T], objectKey:String, defaultFilter: (String,String)*)
                               (implicit request: RequestHeader, writes: Writes[T]) =
     ApiResult.filter {
-      val expand = request.getQueryString("_expand").isDefined
+      val expand = request.getQueryString("_brief").isEmpty
       val filter =  ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
       agent.get().map { agent =>
         agent.label ->

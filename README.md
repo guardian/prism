@@ -25,7 +25,7 @@ Fields that are prefixed with an `_` control the query format in some way - they
 
 Parameter | Description
 --------- | -----------
-`_expand` or `_expand=true` | return all fields of objects in a list
+`_brief` or `_brief=true` | return only the ID of objects in a list
 `_length` or `_length=true` | add companion fields to objects detailing the size of any arrays that are members of the object
 `stage=TEST` | return objects whose stage field has the value of TEST
 `stage!=TEST`	| invert - return objects whose stage field does not have the value of TEST
