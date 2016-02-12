@@ -35,18 +35,18 @@
     },
     "recipes": {
         "default": {
-            "depends": ["cloudformation", "artifactUploadOnly", "deployOnly"]
+            "depends": ["artifactUploadStep", "deployStep"]
         },
 
         "updateAmi": {
-            "depends": ["updateAmiOnly", "deployOnly"]
+            "depends": ["updateAmiStep", "deployStep"]
         },
 
-        "deployOnly": {
+        "deployStep": {
             "actionsBeforeApp": ["prism.deploy"]
         },
 
-        "artifactUploadOnly": {
+        "artifactUploadStep": {
             "actionsBeforeApp": ["prism.uploadArtifacts"]
         },
 
@@ -54,7 +54,7 @@
             "actions": ["cloudformation.updateStack"]
         },
 
-        "updateAmiOnly": {
+        "updateAmiStep": {
             "actions": ["amiUpdate.update"]
         }
     }
