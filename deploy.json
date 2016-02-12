@@ -38,6 +38,10 @@
             "depends": ["cloudformation", "artifactUploadOnly", "deployOnly"]
         },
 
+        "updateAmi": {
+            "depends": ["updateAmiOnly", "deployOnly"]
+        },
+
         "deployOnly": {
             "actionsBeforeApp": ["prism.deploy"]
         },
@@ -50,7 +54,7 @@
             "actions": ["cloudformation.updateStack"]
         },
 
-        "updateAmi": {
+        "updateAmiOnly": {
             "actions": ["amiUpdate.update"]
         }
     }

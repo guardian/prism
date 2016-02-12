@@ -230,8 +230,8 @@
         "HealthCheck": {
           "Target": "HTTP:9000/management/healthcheck",
           "HealthyThreshold": "2",
-          "UnhealthyThreshold": "6",
-          "Interval": "10",
+          "UnhealthyThreshold": "12",
+          "Interval": "5",
           "Timeout": "5"
         },
         "Tags": [
@@ -306,7 +306,14 @@
               ]
             ]
           }
-        }
+        },
+        "BlockDeviceMappings" : [{
+          "DeviceName": "/dev/sda1",
+          "Ebs":{
+            "VolumeType":"gp2",
+            "VolumeSize": 8
+          }
+        }]
       }
     }
   }
