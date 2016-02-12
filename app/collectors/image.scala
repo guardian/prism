@@ -36,10 +36,10 @@ object Image {
   def fromApiData(image: AWSImage, regionName: String): Image = {
     Image(
       arn = arn(regionName, image.getImageId),
-      name = image.getName,
+      name = Option(image.getName),
       imageId = image.getImageId,
       region = regionName,
-      description = image.getDescription,
+      description = Option(image.getDescription),
       tags = image.getTags.asScala.map(t => t.getKey -> t.getValue).toMap,
       creationDate = Try(new DateTime(image.getCreationDate)).toOption,
       state = image.getState,
@@ -47,17 +47,17 @@ object Image {
       ownerId = image.getOwnerId,
       virtualizationType = image.getVirtualizationType,
       hypervisor = image.getHypervisor,
-      sriovNetSupport = image.getSriovNetSupport
+      sriovNetSupport = Option(image.getSriovNetSupport)
     )
   }
 }
 
 case class Image(
                 arn: String,
-                name: String,
+                name: Option[String],
                 imageId: String,
                 region: String,
-                description: String,
+                description: Option[String],
                 tags: Map[String,String],
                 creationDate: Option[DateTime],
                 state: String,
@@ -65,7 +65,7 @@ case class Image(
                 ownerId: String,
                 virtualizationType: String,
                 hypervisor: String,
-                sriovNetSupport: String
+                sriovNetSupport: Option[String]
                   ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.image(arn)
 }
