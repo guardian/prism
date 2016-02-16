@@ -25,7 +25,11 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends
 
   def crawl: Iterable[Image] = {
     val result = client.describeImages(new DescribeImagesRequest()
-      .withFilters(new Filter("owner-id", Seq(origin.accountNumber.get).asJava)))
+      .withFilters(
+        new Filter("owner-id", Seq(origin.accountNumber.get).asJava),
+        new Filter("image-type", Seq("machine").asJava)
+      )
+    )
     result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
   }
 }
@@ -47,7 +51,9 @@ object Image {
       ownerId = image.getOwnerId,
       virtualizationType = image.getVirtualizationType,
       hypervisor = image.getHypervisor,
-      sriovNetSupport = Option(image.getSriovNetSupport)
+      sriovNetSupport = Option(image.getSriovNetSupport),
+      rootDeviceType = image.getRootDeviceType,
+      imageType = image.getImageType
     )
   }
 }
@@ -65,7 +71,9 @@ case class Image(
                 ownerId: String,
                 virtualizationType: String,
                 hypervisor: String,
-                sriovNetSupport: Option[String]
+                sriovNetSupport: Option[String],
+                rootDeviceType: String,
+                imageType: String
                   ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.image(arn)
 }
