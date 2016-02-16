@@ -45,7 +45,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     )
   }
 
-  val client = new AmazonEC2Client(origin.credsProvider)
+  val client = new AmazonEC2Client(origin.credentials.provider)
   client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
 
   def crawl: Iterable[SecurityGroup] = {

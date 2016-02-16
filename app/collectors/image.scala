@@ -20,12 +20,12 @@ object ImageCollectorSet extends CollectorSet[Image](ResourceType("images", Dura
 
 case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Image] with Logging {
 
-  val client = new AmazonEC2Client(origin.credsProvider)
+  val client = new AmazonEC2Client(origin.credentials.provider)
   client.setRegion(origin.awsRegion)
 
   def crawl: Iterable[Image] = {
     val result = client.describeImages(new DescribeImagesRequest()
-      .withFilters(new Filter("owner-id", Seq(origin.alternativeImageOwner.getOrElse(origin.accountNumber.get)).asJava)))
+      .withFilters(new Filter("owner-id", Seq(origin.accountNumber.get).asJava)))
     result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
   }
 }

@@ -20,9 +20,9 @@ import collectors.Instance
 object Accounts extends Logging {
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r
   import conf.PrismConfiguration.accounts._
-  val all:Seq[Origin] = aws.list.map { awsOrigin =>
+  val all:Seq[Origin] = (aws.list ++ amis.list).map { awsOrigin =>
     Try {
-      val iamClient = new AmazonIdentityManagementClient(awsOrigin.credsProvider)
+      val iamClient = new AmazonIdentityManagementClient(awsOrigin.credentials.provider)
       val ArnIamAccountExtractor(derivedAccountNumber) = iamClient.getUser.getUser.getArn
       awsOrigin.copy(accountNumber = Some(derivedAccountNumber))
     } recover {
@@ -48,38 +48,42 @@ trait Origin {
   def toJson: JsObject = JsObject((standardFields ++ jsonFields).mapValues(Json.toJson(_)).toSeq)
 }
 
-object AmazonOrigin {
-  val ArnIamAccountExtractor = """arn:aws:iam::(\d+):role.*""".r
-  def apply(account:String, region:String, accessKey:Option[String], role:Option[String], profile:Option[String],
-            resources:Set[String], stagePrefix: Option[String], secretKey:Option[String],
-            alternativeImageOwner: Option[String]): AmazonOrigin = {
-    val (credsId, credsProvider) = (accessKey, secretKey, role, profile) match {
-      case (_, _, Some(r), Some(p)) =>
-        (s"$p/$r", new STSAssumeRoleSessionCredentialsProvider(new ProfileCredentialsProvider(p), r, "prism"))
-      case (_, _, Some(r), _) =>
-        (r, new STSAssumeRoleSessionCredentialsProvider(r, "prism"))
-      case (_, _, _, Some(p)) =>
-        (p, new ProfileCredentialsProvider(p))
-      case (Some(ak), Some(sk), _, _) =>
-        (ak, new StaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
-      case _ => ("default", new DefaultAWSCredentialsProviderChain())
-    }
-    val accountNumber = role.flatMap {
-      case ArnIamAccountExtractor(accountId) => Some(accountId)
-      case _ => None
-    }
-    AmazonOrigin(account, region, credsId, credsProvider, resources, stagePrefix, accountNumber, alternativeImageOwner)
+case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String])(secretKey: Option[String]) {
+  val (id, provider) = (accessKey, secretKey, role, profile) match {
+    case (_, _, Some(r), Some(p)) =>
+      (s"$p/$r", new STSAssumeRoleSessionCredentialsProvider(new ProfileCredentialsProvider(p), r, "prism"))
+    case (_, _, Some(r), _) =>
+      (r, new STSAssumeRoleSessionCredentialsProvider(r, "prism"))
+    case (_, _, _, Some(p)) =>
+      (p, new ProfileCredentialsProvider(p))
+    case (Some(ak), Some(sk), _, _) =>
+      (ak, new StaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
+    case _ => ("default", new DefaultAWSCredentialsProviderChain())
   }
 }
 
-case class AmazonOrigin(account:String, region:String, credsId: String,
-                        credsProvider: AWSCredentialsProvider, resources:Set[String],
-                        stagePrefix: Option[String], accountNumber:Option[String],
-                        alternativeImageOwner: Option[String]) extends Origin {
+object AmazonOrigin {
+  val ArnIamAccountExtractor = """arn:aws:iam::(\d+):role.*""".r
+  def apply(account:String, region:String, resources:Set[String], stagePrefix: Option[String],
+            credentials: Credentials): AmazonOrigin = {
+    val accountNumber = credentials.role.flatMap {
+      case ArnIamAccountExtractor(accountId) => Some(accountId)
+      case _ => None
+    }
+    AmazonOrigin(account, region, credentials, resources, stagePrefix, accountNumber)
+  }
+
+  def amis(name: String, region: String, accountNumber: Option[String], credentials: Credentials): AmazonOrigin = {
+    AmazonOrigin(name, region, credentials, Set("images"), None, accountNumber)
+  }
+}
+
+case class AmazonOrigin(account:String, region:String, credentials: Credentials, resources:Set[String],
+                        stagePrefix: Option[String], accountNumber:Option[String]) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
-  val jsonFields = Map("region" -> region) ++ accountNumber.map("accountNumber" -> _)
+  val jsonFields = Map("region" -> region, "credentials" -> credentials.id) ++ accountNumber.map("accountNumber" -> _)
   val awsRegion = Region.getRegion(Regions.fromName(region))
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin with Logging {
