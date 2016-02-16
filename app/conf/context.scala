@@ -52,9 +52,25 @@ class PrismConfiguration() extends Logging {
         val profile = subConfig.getString("profile")
         val resources:Seq[String] = subConfig.getStringSeq("resources").getOrElse(Nil)
         val stagePrefix = subConfig.getString("stagePrefix")
-        val alternativeImageOwner = subConfig.getString("alternativeImageOwner")
+        val credentials = Credentials(accessKey, role, profile)(secretKey)
         regions.map(region =>
-          AmazonOrigin(name, region, accessKey, role, profile, resources.toSet, stagePrefix, secretKey, alternativeImageOwner)
+          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials)
+        )
+      }.toList
+    }
+
+    object amis {
+      lazy val defaultRegions = configuration.getStringSeq("accounts.amis.defaultRegions").getOrElse(aws.defaultRegions)
+      val list: Seq[AmazonOrigin] = subConfigurations("accounts.amis").flatMap{ case (name, subConfig) =>
+        val regions = subConfig.getStringSeq("regions").getOrElse(defaultRegions)
+        val accessKey = subConfig.getString("accessKey")
+        val secretKey = subConfig.getString("secretKey")
+        val role = subConfig.getString("role")
+        val profile = subConfig.getString("profile")
+        val accountNumber = subConfig.getString("accountNumber")
+        val credentials = Credentials(accessKey, role, profile)(secretKey)
+        regions.map(region =>
+          AmazonOrigin.amis(name, region, accountNumber, credentials)
         )
       }.toList
     }
