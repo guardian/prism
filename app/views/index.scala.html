@@ -15,12 +15,10 @@
     <p>For the sake of everyones sanity, this page lists the endpoints that are available to experiment with.</p>
 
     <ul>
-        <li><a href="@routes.Api.instanceList">Instances</a> - try this with
-            <a href="@routes.Api.instanceList?_expand">_expand</a>, filter using any key as a query param e.g.
-            <a href="@routes.Api.instanceList?vendor=openstack">vendor=openstack</a> or a more complex example
+        <li><a href="@routes.Api.instanceList">Instances</a> - filter using any key as a query param e.g.
+            <a href="@routes.Api.instanceList?vendor=Faws">vendor=aws</a> or a more complex example
             <a href="@routes.Api.instanceList?mainclasses~=soulmates.*&stage!=PROD">mainclasses~=soulmates.*&stage!=PROD</a>
         </li>
-        <li><a href="@routes.Api.hardwareList">Hardware</a> (i.e. physical servers)</li>
         <li><a href="@routes.Api.securityGroupList">Security Groups</a></li>
         <li><a href="@routes.Api.roleList">Roles</a></li>
         <li><a href="@routes.Api.stackList">Stacks</a></li>
@@ -36,7 +34,7 @@
     <p>Some simple examples:</p>
     <table>
         <tbody>
-            <tr><td><tt>_expand</tt> or <tt>_expand=true</tt></td><td>return all fields of objects in a list</td></tr>
+            <tr><td><tt>_brief</tt> or <tt>_brief=true</tt></td><td>return only the id of objects</td></tr>
             <tr><td><tt>_length</tt> or <tt>_length=true</tt></td><td>add companion fields to objects detailing the size of any arrays that are members of the object</td></tr>
             <tr><td><tt>_pretty</tt> or <tt>_pretty=true</tt></td><td>output json results in prettified format</td></tr>
             <tr><td><tt>_reference=uri</tt></td><td>output references to objects as Prism object URI (default is Prism ARN ID)</td></tr>

@@ -8,8 +8,7 @@ Entities
 
 Prism collects data on the following entities:
 
- - Instances (AWS and Openstack)
- - Hardware (physical servers - by virtue of data from a CMDB or similar)
+ - Instances
  - Security Groups
  - Stages
  - Stacks
@@ -26,7 +25,7 @@ Fields that are prefixed with an `_` control the query format in some way - they
 
 Parameter | Description
 --------- | -----------
-`_expand` or `_expand=true` | return all fields of objects in a list
+`_brief` or `_brief=true` | return only the ID of objects in a list
 `_length` or `_length=true` | add companion fields to objects detailing the size of any arrays that are members of the object
 `stage=TEST` | return objects whose stage field has the value of TEST
 `stage!=TEST`	| invert - return objects whose stage field does not have the value of TEST
@@ -50,53 +49,3 @@ A typical Prism response includes the following top level fields:
  - `staleSources` - a list of any sources that haven't been crawled successfully but may have contributed to the API response
  - `data` - the API response
  - `sources` - the list of sources that were interrogated to assemble the response
-
-An example response can be seen below:
-
-```json
-{
-  "status":"success",
-  "lastUpdated":"2014-03-27T10:30:06.033Z",
-  "stale":false,
-  "staleSources":[],
-  "data": {
-    "instances":[{ 
-      "id":"arn:openstack:ec2:dc1:websys:instance/i-00000ba0",
-      "meta":{
-        "href":"http://prism.gutools.co.uk/instances/arn:openstack:ec2:dc1:websys:instance%2Fi-00000ba0",
-        "origin":{
-          "vendor":"openstack",
-          "accountName":"websys@dc1",
-          "region":"dc1",
-          "tenant":"websys"
-        }
-      }
-    },
-    {
-      "id":"arn:openstack:ec2:dc1:websys:instance/i-00000b7f",
-      "meta":{
-        "href":"http://prism.gutools.co.uk/instances/arn:openstack:ec2:dc1:websys:instance%2Fi-00000b7f",
-        "origin":{
-          "vendor":"openstack",
-          "accountName":"websys@dc1",
-          "region":"dc1",
-          "tenant":"websys"
-        }
-      }
-    }]
-  },
-  "sources":[{
-    "resource":"instance",
-    "origin":{
-      "vendor":"openstack",
-      "accountName":"websys@dc1",
-      "region":"dc1",
-      "tenant":"websys"
-    },
-    "status":"success",
-    "createdAt":"2014-03-27T10:30:06.033Z",
-    "age":35,
-    "stale":false
-  }]
-}
-```

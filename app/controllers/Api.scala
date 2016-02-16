@@ -11,19 +11,22 @@ import jsonimplicits.joda._
 import agent._
 import jsonimplicits.RequestWrites
 
-object Api extends Controller with Logging {
+object Api extends Controller with Api
 
-  implicit def referenceWrites[T <: IndexedItem](implicit idLookup:IdLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
+trait Api extends Logging {
+  this: Controller =>
+
+  implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
       request.getQueryString("_reference") match {
         case Some("inline") =>
-          idLookup.item(o.id).flatMap { case (label, t) =>
+          arnLookup.item(o.arn).flatMap { case (label, t) =>
             itemJson(item = t, label = Some(label), expand = true)
-          }.getOrElse(JsString(o.id))
+          }.getOrElse(JsString(o.arn))
         case Some("uri") =>
-          Json.toJson(idLookup.call(o.id).absoluteURL()(request))
+          Json.toJson(arnLookup.call(o.arn).absoluteURL()(request))
         case _ =>
-          Json.toJson(o.id)
+          Json.toJson(o.arn)
       }
     }
   }
@@ -99,7 +102,7 @@ object Api extends Controller with Logging {
   def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, label: Option[Label] = None, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
     val json = Json.toJson(item).as[JsObject] ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin)))
     if (filter.isMatch(json)) {
-      val filtered = if (expand) json else JsObject(json.fields.filter(List("id") contains _._1))
+      val filtered = if (expand) json else JsObject(json.fields.filter(List("arn") contains _._1))
       Some(filtered)
     } else {
       None
@@ -128,29 +131,31 @@ object Api extends Controller with Logging {
     }
   }
 
-  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], id:String)
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String)
                                 (implicit request: RequestHeader, writes: Writes[T]) =
     ApiResult.filter {
       val sources = agent.get()
       sources.flatMap{ datum =>
-        datum.data.find(_.id == id).map(datum.label -> Seq(_))
+        datum.data.find(_.arn == arn).map(datum.label -> Seq(_))
       }.toMap
     } reduce { sources =>
       sources.headOption.map {
         case (label, items) =>
           itemJson(items.head, expand = true, label=Some(label)).get
       } getOrElse {
-        throw ApiCallException(Json.obj("id" -> s"Item with id $id doesn't exist"), NOT_FOUND)
+        throw ApiCallException(Json.obj("arn" -> s"Item with arn $arn doesn't exist"), NOT_FOUND)
       }
     }
 
   def itemList[T<:IndexedItem](agent:CollectorAgent[T], objectKey:String, defaultFilter: (String,String)*)
                               (implicit request: RequestHeader, writes: Writes[T]) =
     ApiResult.filter {
-      val expand = request.getQueryString("_expand").isDefined
-      val filter = ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
-      agent.get().map { agent => agent.label -> agent.data.flatMap(host =>
-        itemJson(host, expand, Some(agent.label), filter=filter)) }.toMap
+      val expand = request.getQueryString("_brief").isEmpty
+      val filter =  ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
+      agent.get().map { agent =>
+        agent.label ->
+          agent.data.flatMap(host => itemJson(host, expand, Some(agent.label), filter=filter))
+      }.toMap
     } reduce { collection =>
       Json.obj(
         objectKey -> toJson(collection.values.flatten)
@@ -160,49 +165,34 @@ object Api extends Controller with Logging {
   def instanceList = Action.async { implicit request =>
     itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
   }
-  def instance(id:String) = Action.async { implicit request =>
-    singleItem(Prism.instanceAgent, id)
-  }
-
-  def hardwareList = Action.async { implicit request =>
-      itemList(Prism.hardwareAgent, "hardware")
-  }
-  def hardware(id:String) = Action.async { implicit request =>
-    singleItem(Prism.hardwareAgent, id)
+  def instance(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.instanceAgent, arn)
   }
 
   def securityGroupList = Action.async { implicit request =>
     itemList(Prism.securityGroupAgent, "security-groups")
   }
 
-  def securityGroup(id:String) = Action.async { implicit request =>
-    singleItem(Prism.securityGroupAgent, id)
+  def securityGroup(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.securityGroupAgent, arn)
   }
 
-  def ownerList = Action.async { implicit request =>
-    itemList(Prism.ownerAgent, "owners")
+  def imageList = Action.async { implicit request =>
+    itemList(Prism.imageAgent, "images")
   }
-  def owner(id:String) = Action.async { implicit request =>
-    singleItem(Prism.ownerAgent, id)
+  def image(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.imageAgent, arn)
   }
 
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-  def stackList = summaryFromTwo[Instance, Hardware](
-    Prism.instanceAgent, i => i.stack.map(Json.toJson(_)),
-    Prism.hardwareAgent, h => h.stack.map(Json.toJson(_)),
-    "stacks")
-  def stageList = summaryFromTwo[Instance, Hardware](
-    Prism.instanceAgent, i => i.stage.map(Json.toJson(_)),
-    Prism.hardwareAgent, h => h.stage.map(Json.toJson(_)),
-    "stages")(conf.Configuration.stages.ordering)
+  def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
+  def stageList = summary[Instance](Prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(conf.PrismConfiguration.stages.ordering)
   def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
   def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
-  def appList = summaryFromTwo[Instance, Hardware](
+  def appList = summary[Instance](
     Prism.instanceAgent,
     i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
-    Prism.hardwareAgent,
-    h => h.app.flatMap{ app => h.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
     "app",
     enableFilter = true
   )
@@ -210,8 +200,8 @@ object Api extends Controller with Logging {
   def dataList = Action.async { implicit request =>
     itemList(Prism.dataAgent, "data")
   }
-  def data(id:String) = Action.async { implicit request =>
-    singleItem(Prism.dataAgent, id)
+  def data(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.dataAgent, arn)
   }
   def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 

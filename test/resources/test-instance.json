@@ -1,6 +1,6 @@
 [
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000d44",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000d44",
         "name": "10-252-193-129.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -14,7 +14,6 @@
         },
         "createdAt": "2013-12-10T15:54:35.000Z",
         "instanceName": "i-00000d44",
-        "internalName": "TEST:disdb:02",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -36,7 +35,7 @@
         }
     },
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000d43",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000d43",
         "name": "10-252-193-128.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -50,7 +49,6 @@
         },
         "createdAt": "2013-12-10T15:54:22.000Z",
         "instanceName": "i-00000d43",
-        "internalName": "TEST:disdb:01",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -72,7 +70,7 @@
         }
     },
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cfe",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000cfe",
         "name": "10-252-193-102.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -86,7 +84,6 @@
         },
         "createdAt": "2013-10-24T15:56:54.000+01:00",
         "instanceName": "i-00000cfe",
-        "internalName": "TEST:mngdb_backup",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -105,7 +102,7 @@
         }
     },
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cfd",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000cfd",
         "name": "10-252-193-101.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -119,7 +116,6 @@
         },
         "createdAt": "2013-10-24T15:56:40.000+01:00",
         "instanceName": "i-00000cfd",
-        "internalName": "TEST:mngdb",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -138,7 +134,7 @@
         }
     },
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cfc",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000cfc",
         "name": "10-252-193-100.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -152,7 +148,6 @@
         },
         "createdAt": "2013-10-24T15:56:26.000+01:00",
         "instanceName": "i-00000cfc",
-        "internalName": "TEST:mngdb",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -171,7 +166,7 @@
         }
     },
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cdf",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000cdf",
         "name": "10-252-193-119.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -185,7 +180,6 @@
         },
         "createdAt": "2013-10-03T12:33:22.000+01:00",
         "instanceName": "i-00000cdf",
-        "internalName": "TEST:oradb",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -204,7 +198,7 @@
         }
     },
     {
-        "id": "arn:openstack:ec2:dev1:websys:instance/i-00000cde",
+        "arn": "arn:openstack:ec2:dev1:websys:instance/i-00000cde",
         "name": "10-252-193-118.gc2.dev.dc1.gnm",
         "vendorState": "ACTIVE",
         "group": "dev1",
@@ -218,7 +212,6 @@
         },
         "createdAt": "2013-10-03T12:33:10.000+01:00",
         "instanceName": "i-00000cde",
-        "internalName": "TEST:oradb",
         "region": "dev1",
         "vendor": "openstack",
         "securityGroups": [],
@@ -237,7 +230,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:362307275615:instance/i-6cd9b11a",
+        "arn": "arn:aws:ec2:eu-west-1:362307275615:instance/i-6cd9b11a",
         "name": "ec2-46-137-42-15.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1c",
@@ -255,7 +248,6 @@
         },
         "createdAt": "2011-06-09T17:19:54.000+01:00",
         "instanceName": "i-6cd9b11a",
-        "internalName": "ip-10-58-255-158.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -274,7 +266,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:362307275615:instance/i-29f73c5f",
+        "arn": "arn:aws:ec2:eu-west-1:362307275615:instance/i-29f73c5f",
         "name": "ec2-46-137-99-242.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1c",
@@ -292,7 +284,6 @@
         },
         "createdAt": "2011-03-17T18:44:40.000Z",
         "instanceName": "i-29f73c5f",
-        "internalName": "ip-10-58-54-203.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -300,7 +291,8 @@
             "Name": "TEST:arts-books",
             "Stage": "TEST",
             "Mainclass": "arts-books,arts-solr",
-            "Role": "arts-books"
+            "Role": "arts-books",
+            "App": "books"
         },
         "stage": "TEST",
         "app": [],
@@ -311,7 +303,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-129d0559",
+        "arn": "arn:aws:ec2:eu-west-1:649430877268:instance/i-129d0559",
         "name": "ec2-54-247-17-171.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1a",
@@ -329,7 +321,6 @@
         },
         "createdAt": "2012-11-14T07:47:26.000Z",
         "instanceName": "i-129d0559",
-        "internalName": "ip-10-246-89-221.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -349,7 +340,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-c482158f",
+        "arn": "arn:aws:ec2:eu-west-1:649430877268:instance/i-c482158f",
         "name": "ec2-46-51-157-62.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1c",
@@ -367,7 +358,6 @@
         },
         "createdAt": "2012-11-14T07:50:50.000Z",
         "instanceName": "i-c482158f",
-        "internalName": "ip-10-65-57-149.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -387,7 +377,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-dc821597",
+        "arn": "arn:aws:ec2:eu-west-1:649430877268:instance/i-dc821597",
         "name": "ec2-46-137-39-49.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1a",
@@ -405,7 +395,6 @@
         },
         "createdAt": "2012-11-14T07:46:31.000Z",
         "instanceName": "i-dc821597",
-        "internalName": "ip-10-246-123-222.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -425,7 +414,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-485fc803",
+        "arn": "arn:aws:ec2:eu-west-1:649430877268:instance/i-485fc803",
         "name": "ec2-46-137-11-19.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1c",
@@ -443,7 +432,6 @@
         },
         "createdAt": "2012-11-26T15:53:10.000Z",
         "instanceName": "i-485fc803",
-        "internalName": "ip-10-208-43-142.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -463,7 +451,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-da821591",
+        "arn": "arn:aws:ec2:eu-west-1:649430877268:instance/i-da821591",
         "name": "ec2-46-137-72-83.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1c",
@@ -481,7 +469,6 @@
         },
         "createdAt": "2012-11-14T07:49:08.000Z",
         "instanceName": "i-da821591",
-        "internalName": "ip-10-64-135-205.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],
@@ -501,7 +488,7 @@
         }
     },
     {
-        "id": "arn:aws:ec2:eu-west-1:649430877268:instance/i-d2821599",
+        "arn": "arn:aws:ec2:eu-west-1:649430877268:instance/i-d2821599",
         "name": "ec2-176-34-168-84.eu-west-1.compute.amazonaws.com",
         "vendorState": "running",
         "group": "eu-west-1b",
@@ -519,7 +506,6 @@
         },
         "createdAt": "2012-11-26T14:08:37.000Z",
         "instanceName": "i-d2821599",
-        "internalName": "ip-10-234-49-80.eu-west-1.compute.internal",
         "region": "eu-west-1",
         "vendor": "aws",
         "securityGroups": [],

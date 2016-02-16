@@ -2,12 +2,12 @@ package agent
 
 import play.api.mvc.Call
 
-case class Reference[T](id:String, fields: Map[String, String] = Map.empty)(implicit idLookup: IdLookup[T]) {
-  def dereference(implicit idLookup: IdLookup[T]): Option[(Label,T)] = idLookup.item(id)
-  def call(implicit idLookup: IdLookup[T]): Call = idLookup.call(id)
+case class Reference[T](arn:String, fields: Map[String, String] = Map.empty)(implicit arnLookup: ArnLookup[T]) {
+  def dereference(implicit arnLookup: ArnLookup[T]): Option[(Label,T)] = arnLookup.item(arn)
+  def call(implicit arnLookup: ArnLookup[T]): Call = arnLookup.call(arn)
 }
 
-trait IdLookup[T] {
-  def item(id: String): Option[(Label,T)]
-  def call(id: String): Call
+trait ArnLookup[T] {
+  def item(arn: String): Option[(Label,T)]
+  def call(arn: String): Call
 }

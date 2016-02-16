@@ -2,20 +2,50 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-resolvers += "Guardian Github Snapshots" at "http://guardian.github.com/maven/repo-releases"
+scalaVersion in ThisBuild := "2.11.7"
+
+scalacOptions ++= Seq("-unchecked", "-optimise", "-deprecation",
+  "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings",
+  "-Xfatal-warnings"
+)
+
+scalacOptions in Test ++= Seq("-Yrangepos")
+
+resolvers ++= Seq(
+  "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
+  "Guardian Github Snapshots" at "http://guardian.github.com/maven/repo-releases"
+)
+
+val awsVersion = "1.10.46"
 
 libraryDependencies ++= Seq(
     "com.google.code.findbugs" % "jsr305" % "2.0.0",
-    "org.apache.jclouds" % "jclouds-all" % "1.7.1",
-    "com.amazonaws" % "aws-java-sdk" % "1.7.7",
-    "com.gu" %% "management-play" % "6.0" exclude("javassist", "javassist"), // http://code.google.com/p/reflections/issues/detail?id=140
-    "com.gu" %% "configuration" % "3.9",
-    "com.typesafe.akka" %% "akka-agent" % "2.1.2",
-    filters
+    "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-ec2" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-sts" % awsVersion,
+    "com.gu" %% "management-play" % "8.0",
+    "com.typesafe.akka" %% "akka-agent" % "2.4.1",
+    "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
+    filters,
+    specs2 % "test"
 )
 
 scalacOptions ++= Seq("-feature")
 
-play.Project.playScalaSettings
+def env(key: String): Option[String] = Option(System.getenv(key))
 
-com.gu.deploy.MagentaArtifact.magentaArtifactSettings
+lazy val root = (project in file("."))
+  .enablePlugins(PlayScala, RiffRaffArtifact, UniversalPlugin)
+  .settings(
+    packageName in Universal := normalizedName.value,
+    topLevelDirectory in Universal := Some(normalizedName.value),
+    riffRaffPackageType := (packageZipTarball in Universal).value,
+    riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV"),
+    riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
+    riffRaffUploadManifestBucket := Option("riffraff-builds"),
+    riffRaffArtifactResources ++=
+      (baseDirectory.value / "cloudformation" ***) pair
+        rebase(baseDirectory.value / "cloudformation", "packages/cloudformation/")
+  )
+

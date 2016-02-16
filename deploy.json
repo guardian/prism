@@ -1,0 +1,61 @@
+{
+    "defaultStacks": ["deploy"],
+    "packages":{
+        "prism":{
+            "type":"autoscaling",
+            "data":{
+                "bucket": "deploy-tools-dist",
+                "publicReadAcl": false
+            }
+        },
+        "cloudformation" : {
+            "type": "cloud-formation",
+            "fileName": "cloudformation",
+            "data": {
+                "templatePath": "prism.template",
+                "cloudFormationStackName": "Prism",
+                "prependStackToCloudFormationStackName": false,
+                "amiTags": {
+                    "ImageName": "ubuntu-vivid-java8"
+                },
+                "amiParameter": "MachineImageAMI"
+            }
+        },
+        "amiUpdate": {
+            "type": "ami-cloudformation-parameter",
+            "data": {
+                "cloudFormationStackName": "Prism",
+                "prependStackToCloudFormationStackName": false,
+                "amiTags": {
+                    "ImageName": "ubuntu-vivid-java8"
+                },
+                "amiParameter": "MachineImageAMI"
+            }
+        }
+    },
+    "recipes": {
+        "default": {
+            "depends": ["artifactUploadStep", "deployStep"]
+        },
+
+        "updateAmi": {
+            "depends": ["updateAmiStep", "deployStep"]
+        },
+
+        "deployStep": {
+            "actionsBeforeApp": ["prism.deploy"]
+        },
+
+        "artifactUploadStep": {
+            "actionsBeforeApp": ["prism.uploadArtifacts"]
+        },
+
+        "cloudformation": {
+            "actions": ["cloudformation.updateStack"]
+        },
+
+        "updateAmiStep": {
+            "actions": ["amiUpdate.update"]
+        }
+    }
+}

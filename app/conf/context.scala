@@ -1,22 +1,28 @@
 package conf
 
-import com.gu.conf.ConfigurationFactory
+import com.gu.management.{ManifestPage, CountMetric, TimingMetric, GaugeMetric, Switchboard, HealthcheckManagementPage, StatusPage, PropertiesPage}
 import utils.{UnnaturalOrdering, Logging}
 import scala.language.postfixOps
-import play.api.{Mode, Play}
-import com.gu.management._
+import play.api.{Configuration, Mode, Play}
 import com.gu.management.play.{RequestMetrics, Management => GuManagement}
 import com.gu.management.logback.LogbackLevelPage
 import agent._
 import java.net.URL
 import controllers.Prism
 
+import scala.util.Try
+import scala.util.control.NonFatal
+
 object App {
   val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
 }
 
-class Configuration(val application: String, val webappConfDirectory: String = "env") extends Logging {
-  protected val configuration = ConfigurationFactory.getConfiguration(application, webappConfDirectory)
+trait ConfigurationSource {
+  def configuration(mode: Mode.Mode): Configuration
+}
+
+class PrismConfiguration() extends Logging {
+  val configuration = Play.current.configuration
 
   implicit class option2getOrException[T](option: Option[T]) {
     def getOrException(exceptionMessage: String): T = {
@@ -26,82 +32,78 @@ class Configuration(val application: String, val webappConfDirectory: String = "
     }
   }
 
-  class NamedProperties(configuration: com.gu.conf.Configuration, prefix: String) {
-    val NameRegex = s"""$prefix\\.([^\\.]*)\\..*""".r
-    def names = configuration.getPropertyNames.flatMap {
-      case NameRegex(name) => Some(name)
-      case _ => None
-    }
-    def getStringPropertyOption(name:String, property:String): Option[String] =
-      configuration.getStringProperty(s"$prefix.$name.$property")
-    def getStringProperty(name:String, property:String, default:String): String = getStringPropertyOption(name, property).getOrElse(default)
-    def getStringProperty(name:String, property:String): String = getStringPropertyOption(name, property).getOrElse {
-      throw new IllegalStateException(s"No $property property specified for $name (expected $prefix.$name.$property)")
-    }
-    def getStringPropertiesSplitByComma(name:String, property:String) =
-      configuration.getStringPropertiesSplitByComma(s"$prefix.$name.$property")
+  def subConfigurations(prefix:String): Map[String,Configuration] = {
+    val config = configuration.getConfig(prefix).getOrElse(Configuration.empty)
+    config.subKeys.flatMap{ subKey =>
+      Try(config.getConfig(subKey)).getOrElse(None).map(subKey ->)
+    }.toMap
   }
 
   object accounts {
-    lazy val lazyStartup = configuration.getStringProperty("accounts.lazyStartup", "true") == "true"
-    object aws extends NamedProperties(configuration, "accounts.aws") {
-      lazy val defaultRegion = configuration.getStringProperty("accounts.aws.defaultRegion", "eu-west-1")
-      val list = names.toSeq.sorted.map { name =>
-          val region = getStringProperty(name, "region", defaultRegion)
-          val accessKey = getStringProperty(name, "accessKey")
-          val secretKey = getStringProperty(name, "secretKey")
-          val resources = getStringPropertiesSplitByComma(name, "resources")
-          val stagePrefix = getStringPropertyOption(name, "stagePrefix")
-          AmazonOrigin(name, region, accessKey, resources.toSet, stagePrefix)(secretKey)
+    lazy val lazyStartup = configuration.getString("accounts.lazyStartup").exists("true" ==)
+
+    object aws {
+      lazy val defaultRegions = configuration.getStringSeq("accounts.aws.defaultRegions").getOrElse(Seq("eu-west-1"))
+      val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
+        val regions = subConfig.getStringSeq("regions").getOrElse(defaultRegions)
+        val accessKey = subConfig.getString("accessKey")
+        val secretKey = subConfig.getString("secretKey")
+        val role = subConfig.getString("role")
+        val profile = subConfig.getString("profile")
+        val resources:Seq[String] = subConfig.getStringSeq("resources").getOrElse(Nil)
+        val stagePrefix = subConfig.getString("stagePrefix")
+        val alternativeImageOwner = subConfig.getString("alternativeImageOwner")
+        regions.map(region =>
+          AmazonOrigin(name, region, accessKey, role, profile, resources.toSet, stagePrefix, secretKey, alternativeImageOwner)
+        )
+      }.toList
+    }
+
+    object json {
+      lazy val list = subConfigurations("accounts.json").map { case (name, config) =>
+        log.info(s"processing $name")
+        try {
+          val vendor = config.getString("vendor").getOrElse("file")
+          val account = config.getString("account").getOrException("Account must be specified")
+          val resources = config.getStringSeq("resources").getOrElse(Nil)
+          val url = config.getString("url").getOrException("URL must be specified")
+
+          val o = JsonOrigin(vendor, account, url, resources.toSet)
+          log.info(s"Parsed $name, got $o")
+          o
+        } catch {
+          case NonFatal(e) =>
+            log.warn(s"Failed to process $name", e)
+            throw e
         }
+      }.toList
     }
-    object openstack extends NamedProperties(configuration, "accounts.openstack") {
-      lazy val list = names.toSeq.sorted.map { name =>
-        val tenant = getStringProperty(name, "tenant")
-        val region = getStringProperty(name, "region")
-        val endpoint = getStringProperty(name, "endpoint")
-        val accessKey = getStringProperty(name, "user")
-        val secretKey = getStringProperty(name, "secret")
-        val resources = getStringPropertiesSplitByComma(name, "resources")
-        val stagePrefix = getStringPropertyOption(name, "stagePrefix")
-        OpenstackOrigin(endpoint, region, tenant, accessKey, resources.toSet, stagePrefix)(secretKey)
-      }
-    }
-    object json extends NamedProperties(configuration, "accounts.json") {
-      lazy val list = names.toSeq.sorted.map { name =>
-        val vendor = getStringProperty(name, "vendor", "file")
-        val account = getStringProperty(name, "account")
-        val resources = getStringPropertiesSplitByComma(name, "resources")
-        val url = getStringProperty(name, "url")
-        JsonOrigin(vendor, account, url, resources.toSet)
-      }
-    }
-    object googleDoc extends NamedProperties(configuration, "accounts.googleDoc") {
-      lazy val list = names.toSeq.sorted.map { name =>
-        val url = getStringProperty(name, "url")
-        val resources = getStringPropertiesSplitByComma(name, "resources")
+    object googleDoc {
+      lazy val list = subConfigurations("accounts.googleDoc").map { case(name, config) =>
+        val url = config.getString("url").getOrException("URL must be specified")
+        val resources = config.getStringSeq("resources").getOrElse(Nil)
         GoogleDocOrigin(name, new URL(url), resources.toSet)
-      }
+      }.toList
     }
   }
 
   object logging {
-    lazy val verbose = configuration.getStringProperty("logging").exists(_.equalsIgnoreCase("VERBOSE"))
+    lazy val verbose = configuration.getString("logging").exists(_.equalsIgnoreCase("VERBOSE"))
   }
 
   object stages {
-    lazy val order = configuration.getStringPropertiesSplitByComma("stages.order").filterNot(""==)
+    lazy val order = configuration.getStringSeq("stages.order").getOrElse(Nil).toList.filterNot(""==)
     lazy val ordering = UnnaturalOrdering(order, aliensAtEnd = true)
   }
 
   object urls {
-    lazy val publicPrefix: String = configuration.getStringProperty("urls.publicPrefix", "http://localhost:9000")
+    lazy val publicPrefix: String = configuration.getString("urls.publicPrefix").getOrElse("http://localhost:9000")
   }
 
   override def toString: String = configuration.toString
 }
 
-object Configuration extends Configuration(App.name, webappConfDirectory = "env")
+object PrismConfiguration extends PrismConfiguration()
 
 object PlayRequestMetrics extends RequestMetrics.Standard
 

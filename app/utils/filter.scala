@@ -1,7 +1,7 @@
 package utils
 
 import scala.util.matching.Regex
-import play.api.libs.json.{JsArray, JsNumber, JsString, JsValue}
+import play.api.libs.json._
 import play.api.mvc.RequestHeader
 
 trait Matchable[T] {
@@ -16,22 +16,20 @@ case class RegExMatchable(matcher: Regex) extends Matchable[String] {
 case class InverseMatchable[T](matcher: Matchable[T]) extends Matchable[T] {
   def isMatch(value: T): Boolean = !matcher.isMatch(value)
 }
-case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] {
+case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] with Logging {
   def isMatch(json: JsValue): Boolean = {
     filter.map { case (field, values) =>
-      val value = field.split('.').foldLeft(json)(_\_)
-      value match {
-        case JsString(str) => values exists (_.isMatch(str))
-        case JsNumber(int) => values exists (_.isMatch(int.toString))
-        case JsArray(seq) =>
-          seq.exists {
-            case JsString(str) => values exists (_.isMatch(str))
-            case _ => false
-          }
-        case _ => false
-      }
-
-    } forall(ok => ok)
+      values -> field.split('.').foldLeft(json){case (jv, part) => (jv \ part).getOrElse(JsNull)}
+    } forall {
+      case (values, JsString(str)) => values exists (_.isMatch(str))
+      case (values, JsNumber(int)) => values exists (_.isMatch(int.toString() ))
+      case (values, JsArray(seq)) =>
+        seq.exists {
+          case JsString(str) => values exists (_.isMatch(str))
+          case _ => false
+        }
+      case _ => false
+    }
   }
 
   def isMatch(map: Map[String, String]): Boolean = {

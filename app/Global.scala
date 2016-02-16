@@ -37,6 +37,7 @@ object Global extends WithFilters(new GzipFilter() :: new JsonpFilter() :: PlayR
         case t:Throwable => log.error("Caught unhandled exception whilst calling shutdown() on Lifecycle singleton", t)
       }
     }
+    lifecycleSingletons.clear()
   }
 
 }

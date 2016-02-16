@@ -27,7 +27,7 @@ object ScheduledAgent extends LifecycleWithoutApp {
   }
 
   def shutdown() {
-    scheduleSystem.foreach(_.shutdown())
+    scheduleSystem.foreach(_.terminate())
   }
 }
 
@@ -73,7 +73,7 @@ object DailyScheduledAgentUpdate {
 
 class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: ScheduledAgentUpdate[T]*)(implicit ec:ExecutionContext) extends Logging {
 
-  val agent = Agent[T](initialValue)(system)
+  val agent = Agent[T](initialValue)(ec)
 
   val cancellablesAgent = Agent[Map[ScheduledAgentUpdate[T],Cancellable]]{
     updates.map { update =>
@@ -87,7 +87,7 @@ class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: Scheduled
       }
       update -> cancellable
     }.toMap
-  }(system)
+  }(ec)
 
   def scheduleNext(update: DailyScheduledAgentUpdate[T]): Cancellable = {
     val delay = update.timeToNextExecution

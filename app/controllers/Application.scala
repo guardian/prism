@@ -7,7 +7,11 @@ object Application extends Controller {
 
   def index = Action {
     import play.api.Play.current
-    Ok(views.html.index(Play.routes.map(_.documentation).getOrElse(Nil)))
+    Ok(views.html.index(Play.routes.documentation))
+  }
+
+  def config = Action {
+    Ok(play.api.Play.current.configuration.underlying.root().render())
   }
 
 }

@@ -5,23 +5,16 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
 import play.api.libs.json._
-import scala.io.Source
-import java.net.{URLConnection, URL, URLStreamHandler}
-import java.io.FileNotFoundException
-import scala.Some
 import utils.{GoogleDoc, Logging}
-import conf.Configuration.accounts
 import play.api.mvc.Call
-import org.jclouds.domain.{LocationScope, LocationBuilder}
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import play.api.libs.json.Json.JsValueWrapper
 
 trait IndexedItem {
-  def id: String
-  def callFromId: String => Call
-  def call: Call = callFromId(id)
-  def fieldIndex: Map[String, String] = Map("id" -> id)
+  def arn: String
+  def callFromArn: String => Call
+  def call: Call = callFromArn(arn)
+  def fieldIndex: Map[String, String] = Map("arn" -> arn)
 }
 
 abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
@@ -78,14 +71,12 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
   def origin:JsonOrigin
   def json:JsValue = origin.data(resource)
   def crawlJson(implicit writes:Reads[F]):Iterable[T] = {
-    try {
-      Json.fromJson[Seq[F]](json) match {
-        case JsError(errors) =>
-          val failure = s"Encountered failure to parse json source: $errors"
-          log.error(failure)
-          throw new IllegalArgumentException(failure)
-        case JsSuccess(result, _) => result.map(translate)
-      }
+    Json.fromJson[Seq[F]](json) match {
+      case JsError(errors) =>
+        val failure = s"Encountered failure to parse json source: $errors"
+        log.error(failure)
+        throw new IllegalArgumentException(failure)
+      case JsSuccess(result, _) => result.map(translate)
     }
   }
   def translate(input: F): T
