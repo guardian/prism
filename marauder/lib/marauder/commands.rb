@@ -134,7 +134,7 @@ end
 
 def get_field(object, field)
   if field.nil?
-    if object['addresses']['public'].nil?
+    if object['addresses'] && object['addresses']['public'].nil?
       field = 'ip'
     else
       field = 'dnsName'
