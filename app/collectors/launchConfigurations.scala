@@ -13,11 +13,11 @@ import scala.util.Try
 
 object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
-    case amazon:AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
+    case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
   }
 }
 
-case class AWSLaunchConfigurationCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[LaunchConfiguration] with Logging {
+case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LaunchConfiguration] with Logging {
 
   val client = new AmazonAutoScalingClient(origin.credentials.provider)
   client.setRegion(origin.awsRegion)
@@ -25,7 +25,9 @@ case class AWSLaunchConfigurationCollector(origin:AmazonOrigin, resource:Resourc
   def crawlWithToken(nextToken: Option[String]): Iterable[LaunchConfiguration] = {
     val request = new DescribeLaunchConfigurationsRequest().withNextToken(nextToken.orNull)
     val result = client.describeLaunchConfigurations(request)
-    val configs = result.getLaunchConfigurations.asScala.map { LaunchConfiguration.fromApiData(_, origin.region) }
+    val configs = result.getLaunchConfigurations.asScala.map {
+      LaunchConfiguration.fromApiData(_, origin)
+    }
     Option(result.getNextToken) match {
       case None => configs
       case Some(token) => configs ++ crawlWithToken(Some(token))
@@ -36,35 +38,37 @@ case class AWSLaunchConfigurationCollector(origin:AmazonOrigin, resource:Resourc
 }
 
 object LaunchConfiguration {
-  def fromApiData(config: AWSLaunchConfiguration, regionName: String): LaunchConfiguration = {
+  def fromApiData(config: AWSLaunchConfiguration, origin: AmazonOrigin): LaunchConfiguration = {
     LaunchConfiguration(
       arn = config.getLaunchConfigurationARN,
       name = config.getLaunchConfigurationName,
       imageId = config.getImageId,
-      region = regionName,
+      region = origin.region,
       instanceProfile = Option(config.getIamInstanceProfile),
       createdTime = Try(new DateTime(config.getCreatedTime)).toOption,
       instanceType = config.getInstanceType,
       keyName = config.getKeyName,
       placementTenancy = Option(config.getPlacementTenancy),
-      securityGroups = Option(config.getSecurityGroups).map(_.asScala).toList.flatten,
+      securityGroups = Option(config.getSecurityGroups).map(_.asScala).toList.flatten.map { sg =>
+        s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
+      },
       userData = Option(config.getUserData)
     )
   }
 }
 
 case class LaunchConfiguration(
-                  arn: String,
-                  name: String,
-                  imageId: String,
-                  region: String,
-                  instanceProfile: Option[String],
-                  createdTime: Option[DateTime],
-                  instanceType: String,
-                  keyName: String,
-                  placementTenancy: Option[String],
-                  securityGroups: List[String],
-                  userData: Option[String]
-                  ) extends IndexedItem {
+  arn: String,
+  name: String,
+  imageId: String,
+  region: String,
+  instanceProfile: Option[String],
+  createdTime: Option[DateTime],
+  instanceType: String,
+  keyName: String,
+  placementTenancy: Option[String],
+  securityGroups: List[String],
+  userData: Option[String]
+) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.launchConfiguration(arn)
 }
