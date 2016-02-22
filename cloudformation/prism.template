@@ -21,9 +21,9 @@
       "Default": "vpc-814a00e4"
     },
     "PrivateVpcSubnets": {
-      "Description": "Subnets to use in VPC for private EC2 instances eg. subnet-abcd1234",
+      "Description": "Subnets (one each in AZ a and b) to use in VPC for private EC2 instances eg. subnet-abcd1234",
       "Type": "List<AWS::EC2::Subnet::Id>",
-      "Default": "subnet-5dd19404,subnet-7aa8ad1f,subnet-dcebc6ab"
+      "Default": "subnet-5dd19404,subnet-7aa8ad1f"
     },
     "MachineImageAMI": {
       "Description": "AMI from machine-images repo",
@@ -230,9 +230,9 @@
         "HealthCheck": {
           "Target": "HTTP:9000/management/healthcheck",
           "HealthyThreshold": "2",
-          "UnhealthyThreshold": "12",
+          "UnhealthyThreshold": "10",
           "Interval": "5",
-          "Timeout": "5"
+          "Timeout": "3"
         },
         "Tags": [
           {
@@ -255,7 +255,10 @@
     "AutoscalingGroup": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "AvailabilityZones": {"Fn::GetAZs": ""},
+        "AvailabilityZones": [
+          {"Fn::Select" : [0, { "Fn::GetAZs": "" }]},
+          {"Fn::Select" : [1, { "Fn::GetAZs": "" }]}
+        ],
         "VPCZoneIdentifier": {"Ref": "PrivateVpcSubnets"},
         "LaunchConfigurationName": {"Ref": "LaunchConfig"},
         "MinSize": "2",
