@@ -49,7 +49,7 @@ object LaunchConfiguration {
       instanceType = config.getInstanceType,
       keyName = config.getKeyName,
       placementTenancy = Option(config.getPlacementTenancy),
-      securityGroups = Option(config.getSecurityGroups).map(_.asScala).toList.flatten.map { sg =>
+      securityGroups = Option(config.getSecurityGroups).toList.flatMap(_.asScala).map { sg =>
         s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
       },
       userData = Option(config.getUserData)
