@@ -23,7 +23,8 @@
                   "Action":[
                       "ec2:Describe*",
                       "iam:Get*",
-                      "iam:List*"
+                      "iam:List*",
+                      "autoscaling:Describe*"
                   ],
                   "Resource":"*"
              }]

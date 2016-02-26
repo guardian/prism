@@ -28,6 +28,9 @@ GET        /security-groups/:arn           controllers.Api.securityGroup(arn)
 GET        /images                        controllers.Api.imageList
 GET        /images/:arn                    controllers.Api.image(arn)
 
+GET        /launch-configurations                        controllers.Api.launchConfigurationList
+GET        /launch-configurations/:arn                    controllers.Api.launchConfiguration(arn)
+
 GET        /data                          controllers.Api.dataList
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
