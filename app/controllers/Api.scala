@@ -191,6 +191,13 @@ trait Api extends Logging {
     singleItem(Prism.launchConfigurationAgent, arn)
   }
 
+  def serverCertificateList = Action.async { implicit request =>
+    itemList(Prism.serverCertificateAgent, "server-certificates")
+  }
+  def serverCertificate(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.serverCertificateAgent, arn)
+  }
+
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
   def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
