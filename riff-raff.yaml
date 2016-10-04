@@ -1,7 +1,8 @@
+regions: [eu-west-1]
+stacks: [deploy]
 deployments:
   prism:
     type: autoscaling
-    stacks: [deploy]
     parameters:
       bucket: deploy-tools-dist
       publicReadAcl: false
