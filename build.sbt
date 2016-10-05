@@ -2,7 +2,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion in ThisBuild := "2.11.7"
+scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-optimise", "-deprecation",
   "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings",
