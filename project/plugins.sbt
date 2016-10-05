@@ -4,6 +4,6 @@ logLevel := Level.Warn
 // The Typesafe repository 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "0.9.5-SNAPSHOT")
+addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "0.9.5")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.6")
