@@ -1,3 +1,5 @@
+import scala.language.postfixOps
+
 name := "prism"
 
 version := "1.0-SNAPSHOT"
@@ -46,8 +48,10 @@ lazy val root = (project in file("."))
     riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV"),
     riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
     riffRaffUploadManifestBucket := Option("riffraff-builds"),
-    riffRaffArtifactResources ++=
-      (baseDirectory.value / "cloudformation" ***) pair
-        rebase(baseDirectory.value / "cloudformation", "packages/cloudformation/")
+    riffRaffArtifactResources := Seq(
+      riffRaffPackageType.value ->
+        s"${riffRaffPackageName.value}/${riffRaffPackageType.value.getName}",
+      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml"
+    )
   )
 
