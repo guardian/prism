@@ -34,7 +34,7 @@ GET        /launch-configurations/:arn    controllers.Api.launchConfiguration(ar
 GET        /server-certificates           controllers.Api.serverCertificateList
 GET        /server-certificates/:arn      controllers.Api.serverCertificate(arn)
 
-GET        /bucket                        controllers.Api.bucketList
+GET        /buckets                       controllers.Api.bucketList
 GET        /buckets/:arn                  controllers.Api.bucket(arn)
 
 GET        /data                          controllers.Api.dataList
