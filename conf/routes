@@ -20,24 +20,27 @@ GET        /instances/regions             controllers.Api.regionList
 GET        /instances/vendors             controllers.Api.vendorList
 GET        /instances/roles               controllers.Api.roleList
 GET        /instances/mainclasses         controllers.Api.mainclassList
-GET        /instances/:arn                 controllers.Api.instance(arn)
+GET        /instances/:arn                controllers.Api.instance(arn)
 
 GET        /security-groups               controllers.Api.securityGroupList
-GET        /security-groups/:arn           controllers.Api.securityGroup(arn)
+GET        /security-groups/:arn          controllers.Api.securityGroup(arn)
 
 GET        /images                        controllers.Api.imageList
-GET        /images/:arn                    controllers.Api.image(arn)
+GET        /images/:arn                   controllers.Api.image(arn)
 
-GET        /launch-configurations                        controllers.Api.launchConfigurationList
-GET        /launch-configurations/:arn                    controllers.Api.launchConfiguration(arn)
+GET        /launch-configurations         controllers.Api.launchConfigurationList
+GET        /launch-configurations/:arn    controllers.Api.launchConfiguration(arn)
 
-GET        /server-certificates                        controllers.Api.serverCertificateList
-GET        /server-certificates/:arn                    controllers.Api.serverCertificate(arn)
+GET        /server-certificates           controllers.Api.serverCertificateList
+GET        /server-certificates/:arn      controllers.Api.serverCertificate(arn)
+
+GET        /buckets                       controllers.Api.bucketList
+GET        /buckets/:arn                  controllers.Api.bucket(arn)
 
 GET        /data                          controllers.Api.dataList
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
-GET        /data/:arn                      controllers.Api.data(arn)
+GET        /data/:arn                     controllers.Api.data(arn)
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                  controllers.Assets.at(path="/public", file)

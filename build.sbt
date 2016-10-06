@@ -2,7 +2,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion in ThisBuild := "2.11.7"
+scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-optimise", "-deprecation",
   "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings",
@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
     "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-sts" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-s3" % awsVersion,
 
     "com.gu" %% "management-play" % "8.0",
     "com.typesafe.akka" %% "akka-agent" % "2.4.1",
