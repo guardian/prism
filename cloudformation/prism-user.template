@@ -25,7 +25,8 @@
                       "iam:Get*",
                       "iam:List*",
                       "autoscaling:Describe*",
-                      "s3:List*"
+                      "s3:ListAllMyBuckets",
+                      "s3:GetBucketLocation"
                   ],
                   "Resource":"*"
              }]
