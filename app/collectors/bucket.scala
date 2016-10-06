@@ -50,14 +50,6 @@ case class Bucket(
   name: String,
   region: String,
   createdTime: Option[DateTime]
-  /*  
-      Other properties we may add in the future: 
-
-      Policy                   -> client.getBucketPolicy(String bucketName)
-      ReplicationConfiguration -> client.getBucketReplicationConfiguration(String bucketName)
-      TaggingConfiguration     -> client.getBucketTaggingConfiguration(String bucketName)
-  */
-
 ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
+  override def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
 }
