@@ -1,5 +1,3 @@
-import scala.language.postfixOps
-
 name := "prism"
 
 version := "1.0-SNAPSHOT"
