@@ -10,7 +10,7 @@ import play.api.mvc.Call
 import controllers.routes
 import scala.language.postfixOps
 import com.amazonaws.services.ec2.AmazonEC2Client
-import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation}
+import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
@@ -35,7 +35,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
   val client = new AmazonEC2Client(origin.credentials.provider)
   client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
 
-  def getInstances:Iterable[(Reservation, AWSInstance)] = {
+  def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
     client.describeInstances().getReservations.flatMap(r => r.getInstances.map(r -> _))
   }
 

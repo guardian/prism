@@ -37,6 +37,9 @@ GET        /server-certificates/:arn      controllers.Api.serverCertificate(arn)
 GET        /buckets                       controllers.Api.bucketList
 GET        /buckets/:arn                  controllers.Api.bucket(arn)
 
+GET        /reservations                  controllers.Api.reservationList
+GET        /reservations/:arn             controllers.Api.reservation(arn)
+
 GET        /data                          controllers.Api.dataList
 GET        /data/keys                     controllers.Api.dataKeysList
 GET        /data/lookup/:key              controllers.Api.dataLookup(key)
