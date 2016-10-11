@@ -11,7 +11,7 @@ import utils.Logging
 import collection.JavaConverters._
 import scala.util.Try
 
-object ReservationCollectorSet extends CollectorSet[Reservation](ResourceType("reservations", Duration.standardMinutes(15L))) {
+object ReservationCollectorSet extends CollectorSet[Reservation](ResourceType("reservation", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
     case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource)
   }

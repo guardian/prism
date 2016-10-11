@@ -206,7 +206,7 @@ trait Api extends Logging {
   }
 
   def reservationList = Action.async { implicit request =>
-    itemList(Prism.reservationAgent, "reservations")
+    itemList(Prism.reservationAgent, "reservation")
   }
   def reservation(arn:String) = Action.async { implicit request =>
     singleItem(Prism.reservationAgent, arn)
