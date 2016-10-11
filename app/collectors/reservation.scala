@@ -24,28 +24,30 @@ case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType)
 
   def crawl: Iterable[Reservation] = {
     client.describeReservedInstances(new DescribeReservedInstancesRequest()).getReservedInstances.asScala.map {
-      Reservation.fromApiData
+      Reservation.fromApiData(_, origin)
     }
   }
 }
 
 case class Reservation(
-  key: String,
+  id: String,
+  accountId: Option[String],
   region: String,
   instanceType: String,
   instanceCount: Int,
   startTime: Option[DateTime],
   endTime: Option[DateTime]
 ) extends IndexedItem {
-  override def arn: String = s"arn:gu:reservation:key/$key"
+  override def arn: String = s"arn:aws:ec2:$region:${accountId.getOrElse("")}:reservation/$id"
   override def callFromArn: (String) => Call = arn => routes.Api.reservation(arn)
 
 }
 
 object Reservation {
-  def fromApiData(reservationInstance: ReservedInstances): Reservation = {
+  def fromApiData(reservationInstance: ReservedInstances, origin: AmazonOrigin): Reservation = {
     Reservation(
-      key = reservationInstance.getReservedInstancesId,
+      id = reservationInstance.getReservedInstancesId,
+      accountId = origin.accountNumber,
       region = reservationInstance.getAvailabilityZone,
       instanceType = reservationInstance.getInstanceType,
       instanceCount = reservationInstance.getInstanceCount,
