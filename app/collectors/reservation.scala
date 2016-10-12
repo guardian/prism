@@ -30,25 +30,24 @@ case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType)
 }
 
 case class Reservation(
-  id: String,
-  accountId: Option[String],
+  arn: String,
   region: String,
   instanceType: String,
   instanceCount: Int,
   startTime: Option[DateTime],
   endTime: Option[DateTime]
 ) extends IndexedItem {
-  override def arn: String = s"arn:aws:ec2:$region:${accountId.getOrElse("")}:reservation/$id"
   override def callFromArn: (String) => Call = arn => routes.Api.reservation(arn)
 
 }
 
 object Reservation {
   def fromApiData(reservationInstance: ReservedInstances, origin: AmazonOrigin): Reservation = {
+    val region = reservationInstance.getAvailabilityZone
+    val arn = s"arn:aws:ec2:$region:${origin.accountNumber.getOrElse("")}:reservation/${reservationInstance.getReservedInstancesId}"
     Reservation(
-      id = reservationInstance.getReservedInstancesId,
-      accountId = origin.accountNumber,
-      region = reservationInstance.getAvailabilityZone,
+      arn = arn,
+      region = region,
       instanceType = reservationInstance.getInstanceType,
       instanceCount = reservationInstance.getInstanceCount,
       startTime = Try(new DateTime(reservationInstance.getStart)).toOption,
