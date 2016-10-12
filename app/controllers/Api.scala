@@ -205,6 +205,13 @@ trait Api extends Logging {
     singleItem(Prism.bucketAgent, arn)
   }
 
+  def reservationList = Action.async { implicit request =>
+    itemList(Prism.reservationAgent, "reservation")
+  }
+  def reservation(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.reservationAgent, arn)
+  }
+
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
   def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
