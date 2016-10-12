@@ -48,7 +48,10 @@ object model {
   implicit val launchConfigurationWriter = Json.writes[LaunchConfiguration]
   implicit val serverCertificateWriter = Json.writes[ServerCertificate]
   implicit val bucketWriter = Json.writes[Bucket]
-  implicit val reservationWriter = Json.writes[Reservation]
+  implicit val reservationWriter: Writes[Reservation] = {
+    implicit val recurringCharge = Json.writes[RecurringCharge]
+    Json.writes[Reservation]
+  }
 
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
     def writes(l: Label): JsValue = {
