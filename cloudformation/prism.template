@@ -302,10 +302,13 @@
         "UserData": {
           "Fn::Base64": {
             "Fn::Join": [
-              "",
+              "\n",
               [
-                "#!/bin/bash -ev\n",
-                "/opt/features/native-packager/install.sh -b deploy-tools-dist -s -t tgz\n"
+                "#!/bin/bash -ev",
+                "mkdir /prism",
+                { "Fn::Join": [ "", [ "aws --region eu-west-1 s3 cp s3://deploy-tools-dist/deploy/", { "Ref": "Stage" }, "/prism/prism.deb /prism/" ] ] },
+                "dpkg -i /prism/prism.deb",
+                "systemctl start prism"
               ]
             ]
           }

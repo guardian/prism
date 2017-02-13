@@ -38,6 +38,10 @@ libraryDependencies ++= Seq(
 
 scalacOptions ++= Seq("-feature")
 
+javaOptions in Universal ++= Seq(
+  s"-Dpidfile.path=/dev/null"
+)
+
 def env(key: String): Option[String] = Option(System.getenv(key))
 
 lazy val root = (project in file("."))
