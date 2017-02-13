@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
+
 name := "prism"
 
 version := "1.0-SNAPSHOT"
@@ -42,10 +44,16 @@ lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, UniversalPlugin)
   .settings(
     packageName in Universal := normalizedName.value,
+    maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
     topLevelDirectory in Universal := Some(normalizedName.value),
-    riffRaffPackageType := (packageZipTarball in Universal).value,
+    serverLoading in Debian := Systemd,
+    riffRaffPackageType := (packageBin in Debian).value,
     riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV"),
     riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
-    riffRaffUploadManifestBucket := Option("riffraff-builds")
+    riffRaffUploadManifestBucket := Option("riffraff-builds"),
+    riffRaffArtifactResources  := Seq(
+      riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
+      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml"
+    )
   )
 
