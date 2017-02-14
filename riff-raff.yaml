@@ -5,3 +5,14 @@ deployments:
     type: autoscaling
     parameters:
       bucket: deploy-tools-dist
+    dependencies:
+      - update-ami
+  update-ami:
+    type: ami-cloudformation-parameter
+    app: prism
+    parameters:
+      amiParameter: MachineImageAMI
+      amiTags:
+        Recipe: xenial-java8-deploy-infrastructure
+        AmigoStage: PROD
+        BuiltBy: amigo
