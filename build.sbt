@@ -48,8 +48,6 @@ javaOptions in Universal ++= Seq(
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
 )
 
-def env(key: String): Option[String] = Option(System.getenv(key))
-
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, UniversalPlugin)
   .settings(
@@ -58,7 +56,6 @@ lazy val root = (project in file("."))
     topLevelDirectory in Universal := Some(normalizedName.value),
     serverLoading in Debian := Systemd,
     riffRaffPackageType := (packageBin in Debian).value,
-    riffRaffBuildIdentifier := env("BUILD_NUMBER").getOrElse("DEV"),
     riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
     riffRaffUploadManifestBucket := Option("riffraff-builds"),
     riffRaffArtifactResources  := Seq(
