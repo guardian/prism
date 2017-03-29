@@ -6,6 +6,7 @@ import collectors._
 import play.api.libs.json.JsString
 import agent._
 import play.api.mvc.RequestHeader
+import _root_.model.{Owner, SSA}
 
 trait RequestWrites[T] {
   def writes(request: RequestHeader): Writes[T]
@@ -93,5 +94,25 @@ object model {
 
   implicit def referenceReads[T](implicit idLookup:ArnLookup[T]): Reads[Reference[T]] = new Reads[Reference[T]] {
     override def reads(json: JsValue): JsResult[Reference[T]] = JsSuccess(Reference[T](json.as[String]))
+  }
+
+  implicit val ssaWriter = new Writes[SSA] {
+    def writes(ssa: SSA): JsValue = {
+      JsObject(
+        Seq() ++
+        ssa.stack.map(stack => "stack" -> JsString(stack)) ++
+        ssa.stage.map(stage => "stage" -> JsString(stage)) ++
+        ssa.app.map(app => "app" -> JsString(app))
+      )
+    }
+  }
+
+  implicit val ownerWriter = new Writes[Owner] {
+    def writes(o: Owner): JsValue = {
+      Json.obj(
+        "id" -> o.id,
+        "stacks" -> Json.toJson(o.ssas)
+      )
+    }
   }
 }
