@@ -15,11 +15,15 @@ trait Owners {
 
   def find(ssa: SSA): Option[Owner] = all.find(_.hasSSA(ssa))
 
-  def forStack(stackName: Option[String], stageName: Option[String], appName: Option[String]): Option[Owner] = all
-    .find(_.hasSSA(SSA(stackName, stageName, appName)))
-    .orElse(all.find(_.hasSSA(SSA(stackName, stageName))))
-    .orElse(all.find(_.hasSSA(SSA(stackName))))
-    .orElse(all.find(_.hasSSA(SSA())))
+  def forStack(stackName: Option[String], stageName: Option[String], appName: Option[String]): Option[Owner] = {
+    if(stackName.nonEmpty) {
+      all.find(_.hasSSA(SSA(stackName, stageName, appName)))
+        .orElse(all.find(_.hasSSA(SSA(stackName, app = appName))))
+        .orElse(all.find(_.hasSSA(SSA(stackName, stageName))))
+        .orElse(all.find(_.hasSSA(SSA(stackName))))
+        .orElse(all.find(_.hasSSA(SSA())))
+    } else None
+  }
 }
 
 object Owners extends Owners {

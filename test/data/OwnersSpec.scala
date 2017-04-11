@@ -53,6 +53,18 @@ class OwnersSpec extends Specification {
     "return default owner when stack, stage and app don't exist" in {
       verify(TestOwners.forStack(Some("doesNotExist"), Some("doesNotExist"), Some("doesNotExist")), "aron")
     }
+
+    "return none when quering only using app" in {
+      TestOwners.forStack(None, None, appName =  Some("a1")) must beNone
+    }
+
+    "return none when quering only using stage" in {
+      TestOwners.forStack(None, stageName = Some("PROD"), None) must beNone
+    }
+
+    "return none when quering only using stage and app" in {
+      TestOwners.forStack(None, Some("PROD"), Some("a1")) must beNone
+    }
   }
 
   "all" should {

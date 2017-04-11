@@ -10,6 +10,7 @@ import play.api.libs.json.Json._
 import play.api.mvc.{Action, RequestHeader, Result}
 import utils.ResourceFilter
 import play.api.http.Status._
+import play.api.mvc.Results._
 
 import scala.concurrent.Future
 
@@ -50,10 +51,12 @@ object OwnerApi {
     val stack: Option[String] = request.getQueryString("stack")
     val stage: Option[String] = request.getQueryString("stage")
     val app: Option[String] = request.getQueryString("app")
-    itemsResult("owner", Owners.forStack(stack, stage, app))
+    val ownerOpt = Owners.forStack(stack, stage, app)
+    val badRequest = BadRequest(s"Invalid request for${stack.fold("")(" Stack: " + _)}${stage.fold("")(" Stage: " + _)}${app.fold("")(" App: " + _)}")
+    ownerOpt.fold(Future.successful(badRequest)) {o => itemsResult("owner", Some(o))}
   }
 
-  def owner(id:String) = Action.async { implicit request =>
+  def owner(id: String) = Action.async { implicit request =>
     val owner = Owners
       .find(id)
       .orElse(throw ApiCallException(Json.obj("id" -> s"Owner with id '$id' doesn't exist"), NOT_FOUND))
