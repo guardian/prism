@@ -99,8 +99,7 @@ object model {
   implicit val ssaWriter = new Writes[SSA] {
     def writes(ssa: SSA): JsValue = {
       JsObject(
-        Seq() ++
-        ssa.stack.map(stack => "stack" -> JsString(stack)) ++
+        Seq("stack" -> JsString(ssa.stack)) ++
         ssa.stage.map(stage => "stage" -> JsString(stage)) ++
         ssa.app.map(app => "app" -> JsString(app))
       )

@@ -5,22 +5,20 @@ import data.Owners
 import jsonimplicits.model._
 import model.Owner
 import org.joda.time.{DateTime, Duration}
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{JsObject, Json, Writes}
 import play.api.libs.json.Json._
-import play.api.mvc.{Action, RequestHeader, Result}
+import play.api.mvc.{Action, Controller, RequestHeader, Result}
 import utils.ResourceFilter
-import play.api.http.Status._
-import play.api.mvc.Results._
 
 import scala.concurrent.Future
 
-object OwnerApi {
+object OwnerApi extends Controller {
 
-  private def itemsResult[T](key: String, items: => Iterable[T])(implicit request: RequestHeader, tw: Writes[T]): Future[Result] = {
+  private def itemsResult[T](key: String, items: => Iterable[T], baseObject: JsObject = Json.obj())(implicit request: RequestHeader, tw: Writes[T]): Future[Result] = {
     ApiResult.filter {
       Map(ownerLabel -> items.toSeq)
     } reduce { collection =>
-      Json.obj(key -> toJson(collection.values.flatten))
+      baseObject ++ Json.obj(key -> toJson(collection.values.flatten))
     }
   }
 
@@ -44,16 +42,14 @@ object OwnerApi {
       val json = Json.toJson(owner)
       if (requestFilter.isMatch(json)) Some(json) else None
     }
-    itemsResult("owners", Owners.all.toSeq.flatMap(filter))
+    itemsResult("owners", Owners.all.toSeq.flatMap(filter), Json.obj("defaultOwner" -> Owners.default))
   }
 
-  def ownerForStack = Action.async { implicit request =>
-    val stack: Option[String] = request.getQueryString("stack")
+  def ownerForStack(stack: String) = Action.async { implicit request =>
     val stage: Option[String] = request.getQueryString("stage")
     val app: Option[String] = request.getQueryString("app")
-    val ownerOpt = Owners.forStack(stack, stage, app)
-    val badRequest = BadRequest(s"Invalid request for${stack.fold("")(" Stack: " + _)}${stage.fold("")(" Stage: " + _)}${app.fold("")(" App: " + _)}")
-    ownerOpt.fold(Future.successful(badRequest)) {o => itemsResult("owner", Some(o))}
+    val owner = Owners.forStack(stack, stage, app)
+    itemsResult("owner", Some(owner))
   }
 
   def owner(id: String) = Action.async { implicit request =>

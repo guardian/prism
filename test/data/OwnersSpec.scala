@@ -1,7 +1,6 @@
 package data
 
 import model._
-import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 
 class OwnersSpec extends Specification {
@@ -14,17 +13,17 @@ class OwnersSpec extends Specification {
     }
   }
 
-  val defaultSsa = SSA()
-  val ssa1 = SSA(stack = Some("s1"))
-  val ssa2 = SSA(stack = Some("s1"), app = Some("a1"))
-  val ssa3 = SSA(stack = Some("s1"), stage = Some("PROD"), app = Some("a1"))
-  val ssa4 = SSA(stack = Some("s2"), stage = Some("PROD"))
-  val ssa5 = SSA(stack = Some("s3"))
+  val ssa1 = SSA(stack = "s1")
+  val ssa2 = SSA(stack = "s1", app = Some("a1"))
+  val ssa3 = SSA(stack = "s1", stage = Some("PROD"), app = Some("a1"))
+  val ssa4 = SSA(stack = "s2", stage = Some("PROD"))
+  val ssa5 = SSA(stack = "s3")
 
 
   object TestOwners extends Owners {
+    override def default = Owner("aron")
+
     override def stacks = Set(
-      "aron" -> defaultSsa,
       "bob" -> ssa1,
       "bob" -> ssa2,
       "david" -> ssa3,
@@ -33,44 +32,27 @@ class OwnersSpec extends Specification {
     )
   }
 
-  def verify(owner: Option[Owner], expectedId: String): MatchResult[Option[String]] = {
-    owner.map(_.id) should equalTo(Some(expectedId))
-  }
-
   "forStack" should {
     "return owner with matching stack, stage, app" in {
-      verify(TestOwners.forStack(Some("s1"), Some("PROD"), Some("a1")), "david")
+      TestOwners.forStack("s1", Some("PROD"), Some("a1")).id shouldEqual "david"
     }
     "return owner with matching stack and stage" in {
-      verify(TestOwners.forStack(Some("s2"), Some("PROD"), None), "eric")
+      TestOwners.forStack("s2", Some("PROD"), None).id shouldEqual "eric"
     }
     "return owner with matching stack" in {
-      verify(TestOwners.forStack(Some("s1"), None, None), "bob")
+      TestOwners.forStack("s1", None, None).id shouldEqual "bob"
     }
     "return owner with matching stack when app doesn't exist" in {
-      verify(TestOwners.forStack(Some("s3"), None, Some("doesNotExist")), "frank")
+      TestOwners.forStack("s3", None, Some("doesNotExist")).id shouldEqual "frank"
     }
     "return default owner when stack, stage and app don't exist" in {
-      verify(TestOwners.forStack(Some("doesNotExist"), Some("doesNotExist"), Some("doesNotExist")), "aron")
-    }
-
-    "return none when quering only using app" in {
-      TestOwners.forStack(None, None, appName =  Some("a1")) must beNone
-    }
-
-    "return none when quering only using stage" in {
-      TestOwners.forStack(None, stageName = Some("PROD"), None) must beNone
-    }
-
-    "return none when quering only using stage and app" in {
-      TestOwners.forStack(None, Some("PROD"), Some("a1")) must beNone
+      TestOwners.forStack("doesNotExist", Some("doesNotExist"), Some("doesNotExist")).id shouldEqual "aron"
     }
   }
 
   "all" should {
     "return all owners with the stacks they own" in {
       val expected = Set(
-        Owner("aron", Set(defaultSsa)),
         Owner("bob", Set(ssa1, ssa2)),
         Owner("david", Set(ssa3)),
         Owner("eric", Set(ssa4)),

@@ -49,5 +49,5 @@ GET        /data/:arn                     controllers.Api.data(arn)
 GET        /assets/*file                  controllers.Assets.at(path="/public", file)
 
 GET        /owners                        controllers.OwnerApi.ownerList
-GET        /owners/for                    controllers.OwnerApi.ownerForStack
+GET        /owners/forStack/:stack        controllers.OwnerApi.ownerForStack(stack)
 GET        /owners/:id                    controllers.OwnerApi.owner(id)
