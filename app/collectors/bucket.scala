@@ -1,14 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
+import com.amazonaws.services.s3.model.{ListBucketsRequest, Bucket => AWSBucket}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.Logging
-import collection.JavaConverters._
-import com.amazonaws.services.s3.model.{Bucket => AWSBucket, ListBucketsRequest}
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", Duration.standardMinutes(15L))) {
@@ -19,8 +19,10 @@ object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", Du
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Bucket] with Logging {
 
-  val client = new AmazonS3Client(origin.credentials.provider)
-  client.setRegion(origin.awsRegion)
+  val client = AmazonS3ClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   def crawl: Iterable[Bucket] = {
     val request = new ListBucketsRequest()
@@ -34,7 +36,7 @@ object Bucket {
 
   private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
 
-  def fromApiData(bucket: AWSBucket, client: AmazonS3Client): Bucket = {
+  def fromApiData(bucket: AWSBucket, client: AmazonS3): Bucket = {
     val bucketName = bucket.getName
     Bucket(
       arn = arn(bucketName),

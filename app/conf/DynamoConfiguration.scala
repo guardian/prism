@@ -1,12 +1,11 @@
 package conf
 
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.regions.Region
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item, PrimaryKey, TableKeysAndAttributes}
 import com.typesafe.config.ConfigFactory
-import play.api.Configuration
-import play.api.Mode
+import play.api.{Configuration, Mode}
 import utils.Logging
 
 import scala.collection.JavaConverters._
@@ -15,13 +14,13 @@ case class Identity(stack: String, app: String, stage: String)
 case class ConfigSegment(app: String, stage: String)
 
 object DynamoConfiguration {
-  def apply(credProvider: AWSCredentialsProvider, region: Region,
+  def apply(credProvider: AWSCredentialsProvider, region: Regions,
             identity: Identity, prefix:String="config-"): ConfigurationSource = {
     new DynamoConfiguration(credProvider, region, identity, prefix)
   }
 }
 
-class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Region,
+class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
                           identity: Identity, prefix:String) extends ConfigurationSource with Logging {
 
   def configuration(mode: Mode.Mode): Configuration = {
@@ -29,8 +28,10 @@ class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Region,
     if (mode == Mode.Test)
       Configuration.empty
     else {
-      val client = new AmazonDynamoDBClient(credProvider)
-      client.setRegion(region)
+      val client = AmazonDynamoDBClientBuilder.standard()
+        .withCredentials(credProvider)
+        .withRegion(region)
+        .build()
       val dynamoDb = new DynamoDB(client)
 
       val tableName = s"$prefix${identity.stack}"

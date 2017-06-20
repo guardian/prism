@@ -1,15 +1,18 @@
 package collectors
 
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.{DateTime, Duration}
+
 import scala.collection.JavaConversions._
 import utils.Logging
 import java.net.InetAddress
+
 import conf.PrismConfiguration.accounts
 import play.api.libs.json.Json
 import play.api.mvc.Call
 import controllers.routes
+
 import scala.language.postfixOps
-import com.amazonaws.services.ec2.AmazonEC2Client
+import com.amazonaws.services.ec2.{AmazonEC2Client, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
 
@@ -32,8 +35,10 @@ case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) exten
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
-  val client = new AmazonEC2Client(origin.credentials.provider)
-  client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
+  val client = AmazonEC2ClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
     client.describeInstances().getReservations.flatMap(r => r.getInstances.map(r -> _))

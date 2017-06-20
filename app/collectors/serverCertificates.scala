@@ -1,14 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
+import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ServerCertificateMetadata}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.Logging
-import collection.JavaConverters._
-import com.amazonaws.services.identitymanagement.model.{ServerCertificateMetadata, ListServerCertificatesRequest}
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 object ServerCertificateCollectorSet extends CollectorSet[ServerCertificate](ResourceType("server-certificates", Duration.standardMinutes(14L))) {
@@ -19,8 +19,10 @@ object ServerCertificateCollectorSet extends CollectorSet[ServerCertificate](Res
 
 case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[ServerCertificate] with Logging {
 
-  val client = new AmazonIdentityManagementClient(origin.credentials.provider)
-  client.setRegion(origin.awsRegion)
+  val client = AmazonIdentityManagementClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   private def crawlWithMarker(marker: Option[String]): Iterable[ServerCertificate] = {
     val request = new ListServerCertificatesRequest().withMarker(marker.orNull)

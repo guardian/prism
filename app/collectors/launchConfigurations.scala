@@ -1,13 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.autoscaling.AmazonAutoScalingClient
+import com.amazonaws.services.autoscaling.{AmazonAutoScalingClient, AmazonAutoScalingClientBuilder}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.Logging
+
 import collection.JavaConverters._
-import com.amazonaws.services.autoscaling.model.{LaunchConfiguration => AWSLaunchConfiguration, DescribeLaunchConfigurationsRequest}
+import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
 
 import scala.util.Try
 
@@ -19,8 +20,10 @@ object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration]
 
 case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LaunchConfiguration] with Logging {
 
-  val client = new AmazonAutoScalingClient(origin.credentials.provider)
-  client.setRegion(origin.awsRegion)
+  val client = AmazonAutoScalingClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   def crawlWithToken(nextToken: Option[String]): Iterable[LaunchConfiguration] = {
     val request = new DescribeLaunchConfigurationsRequest().withNextToken(nextToken.orNull)

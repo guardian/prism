@@ -54,6 +54,10 @@ object model {
     Json.writes[Reservation]
   }
 
+  implicit val domainValidationWriter = Json.writes[DomainValidation]
+  implicit val renewalInfoWriter = Json.writes[RenewalInfo]
+  implicit val acmCertificateWriter = Json.writes[AcmCertificate]
+
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
     def writes(l: Label): JsValue = {
       Json.obj(

@@ -11,8 +11,9 @@ object Prism {
   val imageAgent = new CollectorAgent[Image](ImageCollectorSet.collectors, lazyStartup)
   val launchConfigurationAgent = new CollectorAgent[LaunchConfiguration](LaunchConfigurationCollectorSet.collectors, lazyStartup)
   val serverCertificateAgent = new CollectorAgent[ServerCertificate](ServerCertificateCollectorSet.collectors, lazyStartup)
+  val acmCertificateAgent = new CollectorAgent[AcmCertificate](AmazonCertificateCollectorSet.collectors, lazyStartup)
   val bucketAgent = new CollectorAgent[Bucket](BucketCollectorSet.collectors, lazyStartup)
   val reservationAgent = new CollectorAgent[Reservation](ReservationCollectorSet.collectors, lazyStartup)
   val allAgents = Seq(instanceAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
-    serverCertificateAgent, bucketAgent, reservationAgent)
+    serverCertificateAgent, acmCertificateAgent, bucketAgent, reservationAgent)
 }
