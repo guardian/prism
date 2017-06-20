@@ -35,10 +35,10 @@ object Owners extends Owners {
     "adam.fisher" -> SSA("security"),
     "digitalcms.dev" -> SSA("flexible"),
     "digitalcms.dev" -> SSA("workflow"),
+    "digitalcms.dev" -> SSA("cms-fronts"),
+    "digitalcms.dev" -> SSA("elk-new"),
     "thegrid.dev" -> SSA("media-service")
     //TODO: complete list
   )
 
 }
-
-
