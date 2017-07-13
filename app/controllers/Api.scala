@@ -199,7 +199,7 @@ trait Api extends Logging {
   }
 
   def acmCertificateList = Action.async { implicit request =>
-    itemList(Prism.acmCertificateAgent, "acm-certificates")
+    itemList(Prism.acmCertificateAgent, "acmCertificates")
   }
   def acmCertificate(arn:String) = Action.async { implicit request =>
     singleItem(Prism.acmCertificateAgent, arn)

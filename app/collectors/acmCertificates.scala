@@ -11,7 +11,7 @@ import utils.Logging
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acm-certificates", Duration.standardMinutes(14L))) {
+object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", Duration.standardMinutes(15L))) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
     case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
   }
