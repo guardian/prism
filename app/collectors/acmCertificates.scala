@@ -52,7 +52,7 @@ object DomainValidation {
   def fromApiData(dv: AwsDomainValidation): DomainValidation = {
     DomainValidation(
       dv.getDomainName,
-      dv.getValidationEmails.asScala.toList,
+      Option(dv.getValidationEmails).toList.flatMap(_.asScala.toList),
       dv.getValidationDomain,
       dv.getValidationStatus
     )
