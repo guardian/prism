@@ -2,11 +2,12 @@ package conf
 
 import java.net.InetAddress
 
-import com.amazonaws.regions.{Region, Regions}
-import com.amazonaws.services.ec2.AmazonEC2Client
-import com.amazonaws.services.ec2.model.{DescribeTagsRequest => EC2DescribeTagsRequest, DescribeInstancesRequest, Filter}
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
 import com.amazonaws.util.EC2MetadataUtils
 import com.gu.management.Loggable
+
 import scala.collection.JavaConverters._
 import scala.util.Try
 
@@ -17,15 +18,17 @@ object AWS extends Loggable {
   lazy val isAWS = Try(InetAddress.getByName("instance-data")).isSuccess
   def awsOption[T](f: => T): Option[T] = if (isAWS) Option(f) else None
 
-  lazy val connectionRegion = instance.region.getOrElse(Region.getRegion(Regions.EU_WEST_1))
+  lazy val connectionRegion: Regions = instance.region.getOrElse(Regions.EU_WEST_1)
 
-  lazy val EC2Client = connectionRegion.createClient(classOf[AmazonEC2Client], null, null)
+  lazy val EC2Client = AmazonEC2ClientBuilder.standard().withRegion(connectionRegion).build()
 
   type Tag = (String, String)
 
   object instance {
     lazy val id:Option[String] = awsOption(EC2MetadataUtils.getInstanceId)
-    lazy val region:Option[Region] = awsOption(Regions.getCurrentRegion)
+    lazy val region:Option[Regions] = awsOption {
+      Regions.fromName(Regions.getCurrentRegion.getName)
+    }
     lazy val allTags:Map[String,String] =
       id.toSeq.flatMap { id =>
         val tagsResult = AWS.EC2Client.describeTags(

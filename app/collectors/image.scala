@@ -1,12 +1,13 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.ec2.AmazonEC2Client
-import com.amazonaws.services.ec2.model.{Filter, DescribeImagesRequest}
+import com.amazonaws.services.ec2.{AmazonEC2Client, AmazonEC2ClientBuilder}
+import com.amazonaws.services.ec2.model.{DescribeImagesRequest, Filter}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.Logging
+
 import collection.JavaConverters._
 import com.amazonaws.services.ec2.model.{Image => AWSImage}
 
@@ -20,8 +21,10 @@ object ImageCollectorSet extends CollectorSet[Image](ResourceType("images", Dura
 
 case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Image] with Logging {
 
-  val client = new AmazonEC2Client(origin.credentials.provider)
-  client.setRegion(origin.awsRegion)
+  val client = AmazonEC2ClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   def crawl: Iterable[Image] = {
     val result = client.describeImages(new DescribeImagesRequest()

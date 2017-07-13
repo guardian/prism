@@ -1,13 +1,13 @@
 package collectors
 
+import agent._
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.model.{IpPermission, SecurityGroup => AWSSecurityGroup}
+import controllers.{routes, Prism}
 import org.joda.time.Duration
 import play.api.mvc.Call
-import com.amazonaws.services.ec2.model.{SecurityGroup => AWSSecurityGroup, IpPermission}
+
 import scala.collection.JavaConversions._
-import controllers.{Prism, routes}
-import agent._
-import com.amazonaws.services.ec2.AmazonEC2Client
-import utils.Logging
 
 object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", Duration.standardMinutes(15L))) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
@@ -30,7 +30,8 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
         rule.getIpProtocol.replace("-1","all"),
         Option(rule.getFromPort).map(_.toInt),
         Option(rule.getToPort).map(_.toInt),
-        rule.getIpRanges.toSeq.sorted.wrap,
+        rule.getIpv4Ranges.toSeq.map(_.toString).sorted.wrap,
+        rule.getIpv6Ranges.toSeq.map(_.toString).sorted.wrap,
         groupRefs(rule).wrap
       )
     }
@@ -45,8 +46,10 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     )
   }
 
-  val client = new AmazonEC2Client(origin.credentials.provider)
-  client.setEndpoint(s"ec2.${origin.region}.amazonaws.com")
+  val client = AmazonEC2ClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   def crawl: Iterable[SecurityGroup] = {
     // get all existing groups to allow for cross referencing
@@ -59,7 +62,8 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
 case class Rule( protocol:String,
                  fromPort:Option[Int],
                  toPort:Option[Int],
-                 sourceCidrBlocks:Option[Seq[String]],
+                 sourceIpv4CidrBlocks:Option[Seq[String]],
+                 sourceIpv6CidrBlocks:Option[Seq[String]],
                  sourceGroupRefs:Option[Seq[SecurityGroupRef]] )
 
 case class SecurityGroup(arn:String,

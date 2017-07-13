@@ -198,6 +198,13 @@ trait Api extends Logging {
     singleItem(Prism.serverCertificateAgent, arn)
   }
 
+  def acmCertificateList = Action.async { implicit request =>
+    itemList(Prism.acmCertificateAgent, "acm-certificates")
+  }
+  def acmCertificate(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.acmCertificateAgent, arn)
+  }
+
   def bucketList = Action.async { implicit request =>
     itemList(Prism.bucketAgent, "bucket")
   }

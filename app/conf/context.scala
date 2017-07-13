@@ -52,10 +52,10 @@ class PrismConfiguration() extends Logging {
         val profile = subConfig.getString("profile")
         val resources:Seq[String] = subConfig.getStringSeq("resources").getOrElse(Nil)
         val stagePrefix = subConfig.getString("stagePrefix")
-        val credentials = Credentials(accessKey, role, profile)(secretKey)
-        regions.map(region =>
+        regions.map { region =>
+          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
           AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials)
-        )
+        }
       }.toList
     }
 
@@ -68,10 +68,10 @@ class PrismConfiguration() extends Logging {
         val role = subConfig.getString("role")
         val profile = subConfig.getString("profile")
         val accountNumber = subConfig.getString("accountNumber")
-        val credentials = Credentials(accessKey, role, profile)(secretKey)
-        regions.map(region =>
+        regions.map { region =>
+          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
           AmazonOrigin.amis(name, region, accountNumber, credentials)
-        )
+        }
       }.toList
     }
 

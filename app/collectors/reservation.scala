@@ -1,14 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.ec2.AmazonEC2Client
-import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, RecurringCharge => AWSRecurringCharge, ReservedInstances}
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AWSRecurringCharge}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.Logging
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 object ReservationCollectorSet extends CollectorSet[Reservation](ResourceType("reservation", Duration.standardMinutes(15L))) {
@@ -19,8 +19,10 @@ object ReservationCollectorSet extends CollectorSet[Reservation](ResourceType("r
 
 case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Reservation] with Logging {
 
-  val client = new AmazonEC2Client(origin.credentials.provider)
-  client.setRegion(origin.awsRegion)
+  val client = AmazonEC2ClientBuilder.standard()
+    .withCredentials(origin.credentials.provider)
+    .withRegion(origin.awsRegion)
+    .build()
 
   def crawl: Iterable[Reservation] = {
     client.describeReservedInstances(new DescribeReservedInstancesRequest()).getReservedInstances.asScala.map {

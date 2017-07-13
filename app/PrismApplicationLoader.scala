@@ -21,7 +21,7 @@ class PrismApplicationLoader extends GuiceApplicationLoader() with Logging {
     val extraConfigs = List(
       DynamoConfiguration(
         new DefaultAWSCredentialsProviderChain(),
-        Region.getRegion(Regions.EU_WEST_1),
+        Regions.EU_WEST_1,
         identity
       ),
       FileConfiguration(identity)

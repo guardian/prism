@@ -1,28 +1,33 @@
 package agent
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider
-import com.amazonaws.internal.StaticCredentialsProvider
-import com.amazonaws.regions.{Region, Regions}
-import com.amazonaws.services.s3.AmazonS3Client
-import play.api.libs.json.{JsValue, Json, JsObject}
-import java.net.{URI, URLConnection, URL, URLStreamHandler}
 import java.io.FileNotFoundException
+import java.net.{URI, URL, URLConnection, URLStreamHandler}
+
+import collectors.Instance
+import com.amazonaws.auth._
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
+import conf.AWS
+import play.api.libs.json.{JsObject, Json, JsValue}
 import utils.Logging
 
 import scala.io.Source
-import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentialsProvider, STSAssumeRoleSessionCredentialsProvider, BasicAWSCredentials}
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
+import scala.language.postfixOps
 import scala.util.Try
 import scala.util.control.NonFatal
-import scala.language.postfixOps
-import collectors.Instance
 
 object Accounts extends Logging {
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r
   import conf.PrismConfiguration.accounts._
   val all:Seq[Origin] = (aws.list ++ amis.list).map { awsOrigin =>
     Try {
-      val iamClient = new AmazonIdentityManagementClient(awsOrigin.credentials.provider)
+      val iamClient = AmazonIdentityManagementClientBuilder.standard()
+        .withCredentials(awsOrigin.credentials.provider)
+        .withRegion(AWS.connectionRegion)
+        .build()
       val ArnIamAccountExtractor(derivedAccountNumber) = iamClient.getUser.getUser.getArn
       awsOrigin.copy(accountNumber = Some(derivedAccountNumber))
     } recover {
@@ -48,16 +53,20 @@ trait Origin {
   def toJson: JsObject = JsObject((standardFields ++ jsonFields).mapValues(Json.toJson(_)).toSeq)
 }
 
-case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String])(secretKey: Option[String]) {
+case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], region: String)(secretKey: Option[String]) {
   val (id, provider) = (accessKey, secretKey, role, profile) match {
     case (_, _, Some(r), Some(p)) =>
-      (s"$p/$r", new STSAssumeRoleSessionCredentialsProvider(new ProfileCredentialsProvider(p), r, "prism"))
+      val stsClient = AWSSecurityTokenServiceClientBuilder.standard()
+        .withCredentials(new ProfileCredentialsProvider(p))
+        .withRegion(region)
+        .build()
+      (s"$p/$r", new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").withStsClient(stsClient).build())
     case (_, _, Some(r), _) =>
-      (r, new STSAssumeRoleSessionCredentialsProvider(r, "prism"))
+      (r, new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").build())
     case (_, _, _, Some(p)) =>
       (p, new ProfileCredentialsProvider(p))
     case (Some(ak), Some(sk), _, _) =>
-      (ak, new StaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
+      (ak, new AWSStaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
     case _ => ("default", new DefaultAWSCredentialsProviderChain())
   }
 }
@@ -84,7 +93,7 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
   val jsonFields = Map("region" -> region, "credentials" -> credentials.id) ++ accountNumber.map("accountNumber" -> _)
-  val awsRegion = Region.getRegion(Regions.fromName(region))
+  val awsRegion = Regions.fromName(region)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {
@@ -97,7 +106,7 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
 
   def credsFromS3Url(url: URI): AWSCredentialsProvider = {
     Option(url.getUserInfo) match {
-      case Some(role) if role.startsWith("arn:") => new STSAssumeRoleSessionCredentialsProvider(role, "prismS3")
+      case Some(role) if role.startsWith("arn:") => new STSAssumeRoleSessionCredentialsProvider.Builder(role, "prismS3").build()
       case Some(profile) => new ProfileCredentialsProvider(profile)
       case _ => new DefaultAWSCredentialsProviderChain()
     }
@@ -108,7 +117,10 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
       case classPathLocation if classPathLocation.getScheme == "classpath" =>
         Source.fromURL(new URL(null, classPathLocation.toString, classpathHandler), "utf-8").getLines().mkString
       case s3Location if s3Location.getScheme == "s3" =>
-        val s3Client = new AmazonS3Client(credsFromS3Url(s3Location))
+        val s3Client = AmazonS3ClientBuilder.standard()
+          .withCredentials(credsFromS3Url(s3Location))
+          .withRegion(AWS.connectionRegion)
+          .build()
         val obj = s3Client.getObject(s3Location.getHost, s3Location.getPath.stripPrefix("/"))
         Source.fromInputStream(obj.getObjectContent).getLines().mkString
       case otherURL =>
