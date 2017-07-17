@@ -5,14 +5,6 @@ import org.specs2.mutable._
 
 class OwnersSpec extends Specification {
 
-  "A guardian stack" should {
-    "have only one owner" in {
-      val stacksWithMultipleOwners = Owners.stacks.groupBy(_._2).filter(_._2.size > 1).toSeq
-      val akaMessage = s"Number of stacks with more than one owner (${stacksWithMultipleOwners.map(_._1).mkString(", ")})"
-      stacksWithMultipleOwners.size aka akaMessage should beEqualTo(0)
-    }
-  }
-
   val ssa1 = SSA(stack = "s1")
   val ssa2 = SSA(stack = "s1", app = Some("a1"))
   val ssa3 = SSA(stack = "s1", stage = Some("PROD"), app = Some("a1"))
@@ -23,12 +15,11 @@ class OwnersSpec extends Specification {
   object TestOwners extends Owners {
     override def default = Owner("aron")
 
-    override def stacks = Set(
-      "bob" -> ssa1,
-      "bob" -> ssa2,
-      "david" -> ssa3,
-      "eric" -> ssa4,
-      "frank" -> ssa5
+    override def all = Set(
+      Owner("bob", Set(ssa1, ssa2)),
+      Owner("david", Set(ssa3)),
+      Owner("eric", Set(ssa4)),
+      Owner("frank", Set(ssa5))
     )
   }
 
@@ -49,17 +40,4 @@ class OwnersSpec extends Specification {
       TestOwners.forStack("doesNotExist", Some("doesNotExist"), Some("doesNotExist")).id shouldEqual "aron"
     }
   }
-
-  "all" should {
-    "return all owners with the stacks they own" in {
-      val expected = Set(
-        Owner("bob", Set(ssa1, ssa2)),
-        Owner("david", Set(ssa3)),
-        Owner("eric", Set(ssa4)),
-        Owner("frank", Set(ssa5))
-      )
-      TestOwners.all should beEqualTo(expected)
-    }
-  }
-
 }
