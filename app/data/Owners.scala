@@ -4,13 +4,8 @@ import model._
 
 trait Owners {
   def default: Owner
-  def stacks: Set[(String, SSA)]
 
-  def all: Set[Owner] = stacks
-    .groupBy(_._1)
-    .map { case (ownerId, stacks) =>
-      Owner(ownerId, stacks.map(_._2))
-    }.toSet
+  def all: Set[Owner]
 
   def find(id: String): Option[Owner] = all.find(_.id == id)
 
@@ -29,16 +24,22 @@ object Owners extends Owners {
 
   override def default = Owner("phil.wills")
 
-  override def stacks: Set[(String, SSA)] = Set(
-    "dotcom.platform" -> SSA("frontend"),
-    "simon.hildrew" -> SSA("deploy"),
-    "adam.fisher" -> SSA("security"),
-    "digitalcms.dev" -> SSA("flexible"),
-    "digitalcms.dev" -> SSA("workflow"),
-    "digitalcms.dev" -> SSA("cms-fronts"),
-    "digitalcms.dev" -> SSA("elk-new"),
-    "thegrid.dev" -> SSA("media-service")
-    //TODO: complete list
+  override def all: Set[Owner] = Set(
+    Owner("journalism.dev", ssas = Set(SSA("content-api"), SSA("content-api-preview")), accounts = Set("capi")),
+    Owner("dig.dev.tooling", ssas = Set(SSA("deploy")), accounts = Set("deploy-tools")),
+    Owner("digitalcms.dev", ssas = Set(
+      SSA("flexible"),
+      SSA("workflow"),
+      SSA("cms-fronts"),
+      SSA("elk-new")
+    ), accounts = Set("cmsFronts", "composer", "workflow", "media-service", "cmsSupport")),
+    Owner("dotcom.platform", ssas = Set(SSA("frontend")), accounts = Set("frontend")),
+    Owner("discussiondev", accounts = Set("discussion")),
+    Owner("infosec", accounts = Set("infosec", "security")),
+    Owner("membership.dev", accounts = Set("membership")),
+    Owner("mobile.server.side", accounts = Set("mobile")),
+    Owner("multimedia", accounts = Set("multimedia")),
+    Owner("ophan", accounts = Set("ophan", "tailor"))
   )
 
 }

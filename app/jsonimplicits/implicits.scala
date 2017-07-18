@@ -114,7 +114,8 @@ object model {
     def writes(o: Owner): JsValue = {
       Json.obj(
         "id" -> o.id,
-        "stacks" -> Json.toJson(o.ssas)
+        "stacks" -> Json.toJson(o.ssas),
+        "accounts" -> o.accounts
       )
     }
   }
