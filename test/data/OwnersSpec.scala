@@ -40,4 +40,11 @@ class OwnersSpec extends Specification {
       TestOwners.forStack("doesNotExist", Some("doesNotExist"), Some("doesNotExist")).id shouldEqual "aron"
     }
   }
+
+  "A stack" should {
+    "have only one owner" in {
+      val allStacks = Owners.all.toList.flatMap(_.ssas).map(_.stack)
+      allStacks.size shouldEqual allStacks.toSet.size
+    }
+  }
 }
