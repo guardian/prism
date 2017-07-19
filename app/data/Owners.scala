@@ -37,7 +37,8 @@ object Owners extends Owners {
     "digitalcms.dev" -> SSA("workflow"),
     "digitalcms.dev" -> SSA("cms-fronts"),
     "digitalcms.dev" -> SSA("elk-new"),
-    "thegrid.dev" -> SSA("media-service")
+    "thegrid.dev" -> SSA("media-service"),
+    "commercial.dev" -> SSA(stack = "frontend", app = Some("ipad-ad-preview"))
     //TODO: complete list
   )
 
