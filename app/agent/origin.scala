@@ -74,25 +74,28 @@ case class Credentials(accessKey: Option[String], role: Option[String], profile:
 object AmazonOrigin {
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):role.*""".r
   def apply(account:String, region:String, resources:Set[String], stagePrefix: Option[String],
-            credentials: Credentials): AmazonOrigin = {
+            credentials: Credentials, ownerId: Option[String]): AmazonOrigin = {
     val accountNumber = credentials.role.flatMap {
       case ArnIamAccountExtractor(accountId) => Some(accountId)
       case _ => None
     }
-    AmazonOrigin(account, region, credentials, resources, stagePrefix, accountNumber)
+    AmazonOrigin(account, region, credentials, resources, stagePrefix, accountNumber, ownerId)
   }
 
-  def amis(name: String, region: String, accountNumber: Option[String], credentials: Credentials): AmazonOrigin = {
-    AmazonOrigin(name, region, credentials, Set("images"), None, accountNumber)
+  def amis(name: String, region: String, accountNumber: Option[String], credentials: Credentials,
+           ownerId: Option[String]): AmazonOrigin = {
+    AmazonOrigin(name, region, credentials, Set("images"), None, accountNumber, ownerId)
   }
 }
 
 case class AmazonOrigin(account:String, region:String, credentials: Credentials, resources:Set[String],
-                        stagePrefix: Option[String], accountNumber:Option[String]) extends Origin {
+                        stagePrefix: Option[String], accountNumber:Option[String], ownerId: Option[String]) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
-  val jsonFields = Map("region" -> region, "credentials" -> credentials.id) ++ accountNumber.map("accountNumber" -> _)
+  val jsonFields = Map("region" -> region, "credentials" -> credentials.id) ++
+    accountNumber.map("accountNumber" -> _) ++
+    ownerId.map("ownerId" -> _)
   val awsRegion = Regions.fromName(region)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin with Logging {
