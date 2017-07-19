@@ -44,17 +44,19 @@ class PrismConfiguration() extends Logging {
 
     object aws {
       lazy val defaultRegions = configuration.getStringSeq("accounts.aws.defaultRegions").getOrElse(Seq("eu-west-1"))
+      lazy val defaultOwnerId = configuration.getString("accounts.aws.defaultOwnerId")
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
         val regions = subConfig.getStringSeq("regions").getOrElse(defaultRegions)
         val accessKey = subConfig.getString("accessKey")
         val secretKey = subConfig.getString("secretKey")
         val role = subConfig.getString("role")
+        val ownerId = subConfig.getString("ownerId").orElse(defaultOwnerId)
         val profile = subConfig.getString("profile")
         val resources:Seq[String] = subConfig.getStringSeq("resources").getOrElse(Nil)
         val stagePrefix = subConfig.getString("stagePrefix")
         regions.map { region =>
           val credentials = Credentials(accessKey, role, profile, region)(secretKey)
-          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials)
+          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId)
         }
       }.toList
     }
@@ -70,7 +72,7 @@ class PrismConfiguration() extends Logging {
         val accountNumber = subConfig.getString("accountNumber")
         regions.map { region =>
           val credentials = Credentials(accessKey, role, profile, region)(secretKey)
-          AmazonOrigin.amis(name, region, accountNumber, credentials)
+          AmazonOrigin.amis(name, region, accountNumber, credentials, ownerId = None)
         }
       }.toList
     }
