@@ -8,7 +8,7 @@ scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-optimise", "-deprecation",
   "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings",
-  "-Xfatal-warnings"
+  "-Xfatal-warnings", "-Ybackend:GenBCode"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
