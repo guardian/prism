@@ -54,8 +54,7 @@ object LaunchConfiguration {
       placementTenancy = Option(config.getPlacementTenancy),
       securityGroups = Option(config.getSecurityGroups).toList.flatMap(_.asScala).map { sg =>
         s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
-      },
-      userData = Option(config.getUserData)
+      }
     )
   }
 }
@@ -70,8 +69,7 @@ case class LaunchConfiguration(
   instanceType: String,
   keyName: String,
   placementTenancy: Option[String],
-  securityGroups: List[String],
-  userData: Option[String]
+  securityGroups: List[String]
 ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.launchConfiguration(arn)
 }
