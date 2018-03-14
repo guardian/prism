@@ -34,7 +34,7 @@ case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType)
 case class Reservation(
   arn: String,
   id: String,
-  region: String,
+  availabilityZone: String,
   instanceType: String,
   instanceCount: Int,
   productDescription: String,
@@ -55,13 +55,13 @@ case class Reservation(
 
 object Reservation {
   def fromApiData(reservationInstance: ReservedInstances, origin: AmazonOrigin): Reservation = {
-    val region = reservationInstance.getAvailabilityZone
-    val arn = s"arn:aws:ec2:$region:${origin.accountNumber.getOrElse("")}:reservation/${reservationInstance.getReservedInstancesId}"
+    val availabilityZone = reservationInstance.getAvailabilityZone
+    val arn = s"arn:aws:ec2:$availabilityZone:${origin.accountNumber.getOrElse("")}:reservation/${reservationInstance.getReservedInstancesId}"
     val recurringCharges = reservationInstance.getRecurringCharges.asScala.map(RecurringCharge.fromApiData(_)).toList
     Reservation(
       arn = arn,
       id = reservationInstance.getReservedInstancesId,
-      region = region,
+      availabilityZone = availabilityZone,
       instanceType = reservationInstance.getInstanceType,
       instanceCount = reservationInstance.getInstanceCount,
       productDescription = reservationInstance.getProductDescription,
