@@ -12,6 +12,7 @@ deployments:
     app: prism
     parameters:
       amiParameter: MachineImageAMI
+      amiEncrypted: true
       amiTags:
         Recipe: xenial-java8-deploy-infrastructure
         AmigoStage: PROD
