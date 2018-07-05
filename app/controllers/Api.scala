@@ -250,15 +250,16 @@ trait Api extends Logging {
       val errors:Map[String,String] = Map.empty ++
           (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++
           (if (stage.isEmpty) Some("stage" -> "Must specify stage") else None) ++
+          (if (stage.isEmpty) Some("stack" -> "Must specify stack") else None) ++
           (if (validKey.size == 0) Some("key" -> s"The key name $key was not found") else None) ++
           (if (validKey.size > 1) Some("key" -> s"The key name $key was matched multiple times") else None)
 
       if (!errors.isEmpty) throw ApiCallException(Json.toJson(errors).as[JsObject])
 
       val (label, data) = validKey.head
-      data.firstMatchingData(stack, app.get, stage.get).map(data => Map(label -> Seq(data))).getOrElse{
+      data.firstMatchingData(stack.get, app.get, stage.get).map(data => Map(label -> Seq(data))).getOrElse{
         throw ApiCallException(
-          Json.obj("value" -> s"Key $key has no matching value for stack=${stack.getOrElse("")}, app=$app and stage=$stage")
+          Json.obj("value" -> s"Key $key has no matching value for stack=$stack, app=$app and stage=$stage")
         )
       }
     } reduce { result =>
