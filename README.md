@@ -58,3 +58,7 @@ A typical Prism response includes the following top level fields:
 * The output of the stack created is a Key named Role. Take the value of Role (`arn:aws:iam:[account-number]/PrismAccess-PrismRole-[code]`) and add it the spreadsheet listing all AWS Role values (ask a fellow Guardian developer for access to the sheet).
 * In DeployTools AWS account go the `config-deploy` DynamoDB table. Select the App `prism`, Stage `PROD` item. Choose `Text` view. Details of the AWS account requiring prism will need to be added here. There are many examples to follow, the format of the name must be the `[aws-account-name].role` (we strongly recommend that this matches the short name used by janus) with the output Role value of the step above. Save and close.
 * Re-deploy latest prism for the changes to be picked up.
+
+Using prism from the command line
+------------------------------
+There is a [ruby gem](./marauder/README.md) that allows you to query the api from the command line.
