@@ -2,10 +2,11 @@ package collectors
 
 import agent._
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
-import com.amazonaws.services.ec2.model.{IpPermission, SecurityGroup => AWSSecurityGroup}
+import com.amazonaws.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AWSSecurityGroup}
 import controllers.{routes, Prism}
 import org.joda.time.Duration
 import play.api.mvc.Call
+import utils.PaginatedAWSRequest
 
 import scala.collection.JavaConversions._
 
@@ -54,7 +55,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
   def crawl: Iterable[SecurityGroup] = {
     // get all existing groups to allow for cross referencing
     val existingGroups = Prism.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
-    val secGroups = client.describeSecurityGroups.getSecurityGroups
+    val secGroups = PaginatedAWSRequest.run(client.describeSecurityGroups)(new DescribeSecurityGroupsRequest())
     secGroups.map ( fromAWS(_, existingGroups) )
   }
 }

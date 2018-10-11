@@ -14,11 +14,11 @@ scalacOptions ++= Seq("-unchecked", "-optimise", "-deprecation",
 scalacOptions in Test ++= Seq("-Yrangepos")
 
 resolvers ++= Seq(
-  "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
-  "Guardian Github Snapshots" at "http://guardian.github.com/maven/repo-releases"
+  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+  "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
 )
 
-val awsVersion = "1.11.150"
+val awsVersion = "1.11.425"
 
 libraryDependencies ++= Seq(
     "com.google.code.findbugs" % "jsr305" % "2.0.0",
@@ -29,6 +29,7 @@ libraryDependencies ++= Seq(
     "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-s3" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-acm" % awsVersion,
+    "com.amazonaws" % "aws-java-sdk-route53" % awsVersion,
 
     "com.gu" %% "management-play" % "8.0",
     "com.typesafe.akka" %% "akka-agent" % "2.4.1",

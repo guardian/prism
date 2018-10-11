@@ -6,7 +6,7 @@ import com.amazonaws.services.certificatemanager.model.{CertificateDetail, Descr
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
-import utils.Logging
+import utils.{Logging, PaginatedAWSRequest}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -24,21 +24,11 @@ case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceTy
     .withRegion(origin.awsRegion)
     .build()
 
-  private def crawlWithMarker(token: Option[String]): Iterable[AcmCertificate] = {
-    val request = new ListCertificatesRequest().withNextToken(token.orNull)
-    val result = client.listCertificates(request)
-    val configs = result.getCertificateSummaryList.asScala.map { cert =>
-      val requestDetails = new DescribeCertificateRequest().withCertificateArn(cert.getCertificateArn)
-      val resultDetails = client.describeCertificate(requestDetails)
-      AcmCertificate.fromApiData(resultDetails.getCertificate, origin)
-    }
-    Option(result.getNextToken) match {
-      case None => configs
-      case t@Some(_) => configs ++ crawlWithMarker(t)
-    }
+  def crawl: Iterable[AcmCertificate] = PaginatedAWSRequest.run(client.listCertificates)(new ListCertificatesRequest()).map{ cert =>
+    val requestDetails = new DescribeCertificateRequest().withCertificateArn(cert.getCertificateArn)
+    val resultDetails = client.describeCertificate(requestDetails)
+    AcmCertificate.fromApiData(resultDetails.getCertificate, origin)
   }
-
-  def crawl: Iterable[AcmCertificate] = crawlWithMarker(None)
 }
 
 case class DomainValidation(

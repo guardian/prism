@@ -6,7 +6,7 @@ import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRe
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
-import utils.Logging
+import utils.{Logging, PaginatedAWSRequest}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -24,19 +24,8 @@ case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: Resourc
     .withRegion(origin.awsRegion)
     .build()
 
-  private def crawlWithMarker(marker: Option[String]): Iterable[ServerCertificate] = {
-    val request = new ListServerCertificatesRequest().withMarker(marker.orNull)
-    val result = client.listServerCertificates(request)
-    val configs = result.getServerCertificateMetadataList.asScala.map {
-      ServerCertificate.fromApiData(_, origin)
-    }
-    Option(result.getMarker) match {
-      case None => configs
-      case t @ Some(token) => configs ++ crawlWithMarker(t)
-    }
-  }
-
-  def crawl: Iterable[ServerCertificate] = crawlWithMarker(None)
+  def crawl: Iterable[ServerCertificate] =
+    PaginatedAWSRequest.run(client.listServerCertificates)(new ListServerCertificatesRequest()).map(ServerCertificate.fromApiData(_, origin))
 }
 
 object ServerCertificate {
