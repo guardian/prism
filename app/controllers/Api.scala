@@ -205,6 +205,13 @@ trait Api extends Logging {
     singleItem(Prism.acmCertificateAgent, arn)
   }
 
+  def route53ZoneList = Action.async { implicit request =>
+    itemList(Prism.route53ZoneAgent, "route53Zones")
+  }
+  def route53Zone(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.route53ZoneAgent, arn)
+  }
+
   def bucketList = Action.async { implicit request =>
     itemList(Prism.bucketAgent, "bucket")
   }
