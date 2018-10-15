@@ -57,6 +57,8 @@ object model {
   implicit val domainValidationWriter = Json.writes[DomainValidation]
   implicit val renewalInfoWriter = Json.writes[RenewalInfo]
   implicit val acmCertificateWriter = Json.writes[AcmCertificate]
+  implicit val route53AliasWriter = Json.writes[Route53Alias]
+  implicit val route53RecordWriter = Json.writes[Route53Record]
   implicit val route53ZoneWriter = Json.writes[Route53Zone]
 
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
