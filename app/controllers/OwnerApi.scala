@@ -11,6 +11,9 @@ import play.api.mvc.{Action, Controller, RequestHeader, Result}
 import utils.ResourceFilter
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 
 object OwnerApi extends Controller {
 
@@ -22,7 +25,7 @@ object OwnerApi extends Controller {
     }
   }
 
-  object OwnerResourceType extends ResourceType("Owners", Duration.standardDays(30))
+  object OwnerResourceType extends ResourceType("Owners", 30 days, 30 days)
 
   val ownerLabel = Label(
     OwnerResourceType,

@@ -13,9 +13,10 @@ import play.api.libs.json.Json.JsValueWrapper
 import conf.SourceMetrics
 import com.gu.management.StopWatch
 
-class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 
   implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
+  val collectors = collectorSet.collectors
 
   val resourceName = collectors.headOption.map(_.resource.name)
 
@@ -70,7 +71,7 @@ class CollectorAgent[T<:IndexedItem](val collectors:Seq[Collector[T]], lazyStart
         startupData
       }
 
-      val agent = ScheduledAgent[Datum[T]](0 seconds, 60 seconds, initial){ previous =>
+      val agent = ScheduledAgent[Datum[T]](0 seconds, collectorSet.resource.refreshPeriod, initial){ previous =>
         update(collector, previous)
       }
       collector -> agent
@@ -109,9 +110,9 @@ object CollectorAgent {
     val statusList = labelAgent().values
     val statusDates = statusList.map(_.latest.createdAt)
     val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
-    val smallestDuration = statusList.map(_.latest.resource.shelfLife).minBy(_.getStandardSeconds)
+    val smallestDuration = statusList.map(_.latest.resource.shelfLife).minBy(_.toSeconds)
     val label = Label(
-      ResourceType("sources", smallestDuration),
+      ResourceType("sources", smallestDuration, smallestDuration),
       new Origin {
         val vendor = "prism"
         val account = "prism"

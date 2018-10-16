@@ -5,14 +5,17 @@ import com.amazonaws.services.autoscaling.{AmazonAutoScalingClient, AmazonAutoSc
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
-import utils.Logging
+import utils.{Logging, PaginatedAWSRequest}
 
 import collection.JavaConverters._
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
 
 import scala.util.Try
 
-object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", Duration.standardMinutes(15L))) {
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes)) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
     case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
   }
@@ -25,19 +28,9 @@ case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: Resou
     .withRegion(origin.awsRegion)
     .build()
 
-  def crawlWithToken(nextToken: Option[String]): Iterable[LaunchConfiguration] = {
-    val request = new DescribeLaunchConfigurationsRequest().withNextToken(nextToken.orNull)
-    val result = client.describeLaunchConfigurations(request)
-    val configs = result.getLaunchConfigurations.asScala.map {
-      LaunchConfiguration.fromApiData(_, origin)
-    }
-    Option(result.getNextToken) match {
-      case None => configs
-      case Some(token) => configs ++ crawlWithToken(Some(token))
-    }
+  def crawl: Iterable[LaunchConfiguration] = {
+    PaginatedAWSRequest.run(client.describeLaunchConfigurations)(new DescribeLaunchConfigurationsRequest()).map(lc => LaunchConfiguration.fromApiData(lc, origin))
   }
-
-  def crawl: Iterable[LaunchConfiguration] = crawlWithToken(None)
 }
 
 object LaunchConfiguration {

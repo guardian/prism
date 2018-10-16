@@ -3,7 +3,7 @@ package collectors
 import org.joda.time.{DateTime, Duration}
 
 import scala.collection.JavaConversions._
-import utils.Logging
+import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
 import conf.PrismConfiguration.accounts
@@ -13,10 +13,12 @@ import controllers.routes
 
 import scala.language.postfixOps
 import com.amazonaws.services.ec2.{AmazonEC2Client, AmazonEC2ClientBuilder}
-import com.amazonaws.services.ec2.model.{Instance => AWSInstance, Reservation => AWSReservation}
+import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
+import scala.concurrent.duration._
 
-object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", Duration.standardMinutes(15L))) {
+
+object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
     case json:JsonOrigin => JsonInstanceCollector(json, resource)
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
@@ -41,7 +43,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
     .build()
 
   def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
-    client.describeInstances().getReservations.flatMap(r => r.getInstances.map(r -> _))
+    PaginatedAWSRequest.run(client.describeInstances)(new DescribeInstancesRequest())
   }
 
   def crawl:Iterable[Instance] = {
