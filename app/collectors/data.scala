@@ -6,7 +6,10 @@ import play.api.mvc.Call
 import controllers.routes
 import agent._
 
-object DataCollectorSet extends CollectorSet[Data](ResourceType("data", Duration.standardMinutes(15L))) {
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+object DataCollectorSet extends CollectorSet[Data](ResourceType("data", 15 minutes, 1 minute)) {
   def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
     case json:JsonOrigin => JsonDataCollector(json, resource)
   }

@@ -12,7 +12,10 @@ import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsReq
 
 import scala.util.Try
 
-object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", Duration.standardMinutes(15L))) {
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes)) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
     case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
   }

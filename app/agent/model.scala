@@ -55,10 +55,10 @@ case class Label(resource:ResourceType, origin:Origin, itemCount:Int, createdAt:
   lazy val bestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)
 }
 
-case class ResourceType( name: String, shelfLife: Duration )
+case class ResourceType( name: String, shelfLife: FiniteDuration, refreshPeriod: FiniteDuration )
 
-case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
-  val bestBefore:DateTime = created plus shelfLife
+case class BestBefore(created:DateTime, shelfLife:FiniteDuration, error:Boolean) {
+  val bestBefore:DateTime = created plus Duration.millis(shelfLife.toMillis)
   def isStale:Boolean = error || (new DateTime() compareTo bestBefore) >= 0
   def age:Duration = new Duration(created, new DateTime)
 }

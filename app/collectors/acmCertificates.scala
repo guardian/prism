@@ -10,8 +10,11 @@ import utils.{Logging, PaginatedAWSRequest}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", Duration.standardMinutes(15L))) {
+
+object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 5 minutes)) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
     case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
   }

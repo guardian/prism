@@ -4,12 +4,14 @@ import agent._
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder
 import com.amazonaws.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, LoadBalancerDescription}
 import controllers.routes
-import org.joda.time.Duration
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
-import scala.collection.JavaConverters._
 
-object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", Duration.standardMinutes(15L))) {
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes)) {
   val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
     case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource)
   }

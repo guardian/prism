@@ -11,8 +11,11 @@ import utils.Logging
 import scala.collection.JavaConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", Duration.standardMinutes(15L))) {
+
+object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes)) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource)
   }

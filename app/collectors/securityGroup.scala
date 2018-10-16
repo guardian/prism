@@ -4,13 +4,14 @@ import agent._
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AWSSecurityGroup}
 import controllers.{routes, Prism}
-import org.joda.time.Duration
 import play.api.mvc.Call
 import utils.PaginatedAWSRequest
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", Duration.standardMinutes(15L))) {
+object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes)) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
     case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource)
   }

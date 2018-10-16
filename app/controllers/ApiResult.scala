@@ -13,6 +13,9 @@ import scala.util.Try
 import utils.{ResourceFilter, Logging}
 import jsonimplicits.joda._
 
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 // use this when the API call has illegal parameters
 case class ApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
   extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
@@ -118,7 +121,7 @@ object ApiResult extends Logging {
 
   def noSource(block: => JsValue)(implicit request:RequestHeader): Future[Result] = {
     val sourceLabel:Label = Label(
-      ResourceType(noSourceContainer.name, org.joda.time.Duration.standardMinutes(15)),
+      ResourceType(noSourceContainer.name, 15 minutes, 1 minute),
       new Origin {
         val account = "unknown"
         val vendor = "unknown"

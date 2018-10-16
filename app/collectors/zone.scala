@@ -4,13 +4,14 @@ import agent._
 import com.amazonaws.services.route53.AmazonRoute53ClientBuilder
 import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
 import controllers.routes
-import org.joda.time.Duration
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("route53Zones", Duration.standardMinutes(15L))) {
+object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes)) {
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
     case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
   }
