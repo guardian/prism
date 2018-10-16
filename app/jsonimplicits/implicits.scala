@@ -61,6 +61,8 @@ object model {
   implicit val route53RecordWriter = Json.writes[Route53Record]
   implicit val route53ZoneWriter = Json.writes[Route53Zone]
 
+  implicit val loadBalancerWriter = Json.writes[LoadBalancer]
+
   implicit val labelWriter:Writes[Label] = new Writes[Label] {
     def writes(l: Label): JsValue = {
       Json.obj(

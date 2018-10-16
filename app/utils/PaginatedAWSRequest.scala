@@ -4,6 +4,7 @@ import com.amazonaws.{AmazonWebServiceRequest, AmazonWebServiceResult}
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, DescribeLaunchConfigurationsResult, LaunchConfiguration}
 import com.amazonaws.services.certificatemanager.model.{CertificateSummary, ListCertificatesRequest, ListCertificatesResult}
 import com.amazonaws.services.ec2.model._
+import com.amazonaws.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, DescribeLoadBalancersResult, LoadBalancerDescription}
 import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ListServerCertificatesResult, ServerCertificateMetadata}
 import com.amazonaws.services.route53.model._
 
@@ -63,6 +64,8 @@ object Paging {
   implicit def describeAcmCertificates: Paging[ListCertificatesRequest, ListCertificatesResult, String, CertificateSummary] =
     Paging.instance(r => Option(r.getNextToken), r => t => r.withNextToken(t.orNull), r => r.getCertificateSummaryList.asScala)
 
+  implicit def describeLoadBalancers: Paging[DescribeLoadBalancersRequest, DescribeLoadBalancersResult, String, LoadBalancerDescription] =
+    Paging.instance(r => Option(r.getNextMarker), r => m => r.withMarker(m.orNull), r => r.getLoadBalancerDescriptions.asScala)
 }
 
 object PaginatedAWSRequest {

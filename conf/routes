@@ -40,6 +40,9 @@ GET        /acm-certificates/:arn             controllers.Api.acmCertificate(arn
 GET        /route53-zones                     controllers.Api.route53ZoneList
 GET        /route53-zones/:arn                controllers.Api.route53Zone(arn)
 
+GET        /elbs                              controllers.Api.elbList
+GET        /elbs/:arn                         controllers.Api.elb(arn)
+
 GET        /buckets                           controllers.Api.bucketList
 GET        /buckets/:arn                      controllers.Api.bucket(arn)
 

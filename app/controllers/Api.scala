@@ -212,6 +212,13 @@ trait Api extends Logging {
     singleItem(Prism.route53ZoneAgent, arn)
   }
 
+  def elbList = Action.async { implicit request =>
+    itemList(Prism.elbAgent, "elb")
+  }
+  def elb(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.elbAgent, arn)
+  }
+
   def bucketList = Action.async { implicit request =>
     itemList(Prism.bucketAgent, "bucket")
   }
