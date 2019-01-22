@@ -36,7 +36,6 @@ object Owners extends Owners {
     "dotcom.platform" -> SSA(stack = "discussion"),
     "dotcom.platform" -> SSA(stack = "abacus"),
     "identitydev" -> SSA(stack = "identity"),
-    "identitydev" -> SSA(stack = "identity-elk"),
     "dig.dev.tooling" -> SSA("deploy"),
     "dig.dev.tooling" -> SSA("domains"),
     "digitalcms.dev" -> SSA("flexible"),
