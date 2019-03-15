@@ -18,7 +18,7 @@ resolvers ++= Seq(
   "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
 )
 
-val awsVersion = "1.11.425"
+val awsVersion = "1.11.518"
 
 libraryDependencies ++= Seq(
     "com.google.code.findbugs" % "jsr305" % "2.0.0",
