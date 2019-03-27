@@ -39,6 +39,9 @@ libraryDependencies ++= Seq(
     specs2 % "test"
 )
 
+dependencyOverrides +=
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.9.8"
+
 scalacOptions ++= Seq("-feature")
 
 javaOptions in Universal ++= Seq(
