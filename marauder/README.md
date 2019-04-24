@@ -2,7 +2,7 @@
 
 Small command-line tool to locate services.
 
-Uses the [Prism](http://prism.gutools.co.uk/) API to locate any service across the Guardian estate.
+Uses the [Prism](https://prism.gutools.co.uk/) API to locate any service across the Guardian estate.
 
 ## Install
 
@@ -14,7 +14,7 @@ $ gem install prism-marauder
 Create a config file at `~/.config/marauder/defaults.yaml`:
 ```
 ---
-prism-url: http://<prism-host>
+prism-url: https://prism.gutools.co.uk/
 ```
 
 **Note**: If you are installing on a host that only has Ruby 1.8.7 then you should install httparty version 
