@@ -33,7 +33,7 @@ object Owners extends Owners {
     "adam.fisher" -> SSA("security"),
     "dotcom.platform" -> SSA("frontend"),
     "dotcom.platform" -> SSA("frontend-elk"),
-    "dotcom.platform" -> SSA(stack = "discussion"),
+    "identitydev" -> SSA(stack = "discussion"),
     "dotcom.platform" -> SSA(stack = "abacus"),
     "identitydev" -> SSA(stack = "identity"),
     "dig.dev.tooling" -> SSA("deploy"),
