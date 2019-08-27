@@ -43,6 +43,8 @@ object Owners extends Owners {
     "digitalcms.dev" -> SSA("workflow"),
     "digitalcms.dev" -> SSA("cms-fronts"),
     "digitalcms.dev" -> SSA("elk-new"),
+    "digital.investigations" -> SSA("pfi-giant"),
+    "digital.investigations" -> SSA("pfi-playground"),
     "thegrid.dev" -> SSA("media-service"),
     "commercial.dev" -> SSA(stack = "frontend", app = Some("ipad-ad-preview")),
     "commercial.dev" -> SSA(stack = "flexible", app = Some("campaign-central")),
