@@ -4,18 +4,19 @@ import play.api.libs.concurrent.Akka
 import utils.{LifecycleWithoutApp, Logging, ScheduledAgent}
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import akka.actor.ActorSystem
 import akka.agent.Agent
 import org.joda.time.DateTime
 import akka.actor.ActorSystem
 import play.api.Play.current
 import scala.concurrent.ExecutionContext
 import play.api.libs.json.Json.JsValueWrapper
-import conf.SourceMetrics
+import conf.Metrics
 import com.gu.management.StopWatch
 
-class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val system: ActorSystem, val globalCollectorAgent: GlobalCollectorAgent, val collectorSet: CollectorSet[T], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 
-  implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
+  implicit private val ec: ExecutionContext = system.dispatchers.lookup("collectorAgent")
   val collectors = collectorSet.collectors
 
   val resourceName = collectors.headOption.map(_.resource.name)
@@ -36,12 +37,12 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStar
       val s = new StopWatch
       val datum = Datum[T](collector)
       val timeSpent = s.elapsed
-      SourceMetrics.CrawlTimer.recordTimeSpent(timeSpent)
-      CollectorAgent.update(datum.label)
+      globalCollectorAgent.metrics.sourceMetrics.CrawlTimer.recordTimeSpent(timeSpent)
+      globalCollectorAgent.update(datum.label)
       datum.label match {
         case l@Label(product, origin, size, _, None) =>
           log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
-          SourceMetrics.CrawlSuccessCounter.increment()
+          globalCollectorAgent.metrics.sourceMetrics.CrawlSuccessCounter.increment()
           datum
         case Label(product, origin, _, _, Some(error)) =>
           previous.label match {
@@ -52,7 +53,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStar
             case notYetStale if !notYetStale.bestBefore.isStale =>
               log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
           }
-          SourceMetrics.CrawlFailureCounter.increment()
+          globalCollectorAgent.metrics.sourceMetrics.CrawlFailureCounter.increment()
           previous
       }
   }
@@ -63,7 +64,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStar
     datumAgents = collectors.map { collector =>
       val initial = if (lazyStartup) {
         val startupData = Datum.empty[T](collector)
-        CollectorAgent.update(startupData.label)
+        globalCollectorAgent.update(startupData.label)
         startupData
       } else {
         val startupData = update(collector, Datum.empty[T](collector))
@@ -90,8 +91,8 @@ case class SourceStatus(state: Label, error: Option[Label] = None) {
   lazy val latest = error.getOrElse(state)
 }
 
-object CollectorAgent {
-  implicit private val collectorAgent: ExecutionContext = Akka.system.dispatchers.lookup("collectorAgent")
+class GlobalCollectorAgent(val system: ActorSystem, val metrics: Metrics) {
+  implicit private val collectorAgent: ExecutionContext = system.dispatchers.lookup("collectorAgent")
   val labelAgent = Agent[Map[(ResourceType, Origin),SourceStatus]](Map.empty)
 
   def update(label:Label) {

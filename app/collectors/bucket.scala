@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes)) {
+class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource)
   }

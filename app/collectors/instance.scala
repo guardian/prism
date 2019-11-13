@@ -6,10 +6,9 @@ import scala.collection.JavaConversions._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import conf.PrismConfiguration.accounts
 import play.api.libs.json.Json
 import play.api.mvc.Call
-import controllers.routes
+import controllers.{routes, PrismAgents}
 
 import scala.language.postfixOps
 import com.amazonaws.services.ec2.{AmazonEC2Client, AmazonEC2ClientBuilder}
@@ -18,14 +17,18 @@ import agent._
 import scala.concurrent.duration._
 
 
-object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
+class InstanceCollectorSet(accounts: Accounts, prismAgents: PrismAgents) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
+
+  implicit val arnLookup = SecurityGroup.arnLookup(prismAgents)
+
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-    case json:JsonOrigin => JsonInstanceCollector(json, resource)
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
+    case json:JsonOrigin => JsonInstanceCollector(json, resource, prismAgents)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, prismAgents)
   }
 }
 
-case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
+case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType, prismAgents: PrismAgents) extends JsonCollector[Instance] {
+  implicit val arnLookup = SecurityGroup.arnLookup(prismAgents)
   import jsonimplicits.joda.dateTimeReads
   import jsonimplicits.model._
   implicit val addressReads = Json.reads[Address]
@@ -35,7 +38,7 @@ case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) exten
   def crawl: Iterable[Instance] = crawlJson
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType, prismAgents: PrismAgents) extends Collector[Instance] with Logging {
 
   val client = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
@@ -45,6 +48,8 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
   def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
     PaginatedAWSRequest.run(client.describeInstances)(new DescribeInstancesRequest())
   }
+
+  implicit val arnLookup = SecurityGroup.arnLookup(prismAgents)
 
   def crawl:Iterable[Instance] = {
     getInstances.map { case (reservation, instance) =>

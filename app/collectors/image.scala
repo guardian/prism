@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-object ImageCollectorSet extends CollectorSet[Image](ResourceType("images", 15 minutes, 1 minute)) {
+class ImageCollectorSet(accounts: Accounts) extends CollectorSet[Image](ResourceType("images", 15 minutes, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
     case amazon:AmazonOrigin => AWSImageCollector(amazon, resource)
   }

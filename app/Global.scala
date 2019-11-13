@@ -1,22 +1,20 @@
 import collection.mutable
 import conf.PlayRequestMetrics
-import controllers.Prism
+import controllers.PrismAgents
 import play.api.mvc.WithFilters
-import utils.{JsonpFilter, Logging, Lifecycle, ScheduledAgent}
+import utils.{Logging, Lifecycle, ScheduledAgent}
 import play.api.Application
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.filters.gzip.GzipFilter
 
 object Global extends WithFilters(new GzipFilter() :: new JsonpFilter() :: PlayRequestMetrics.asFilters : _*) with Logging {
 
   val lifecycleSingletons = mutable.Buffer[Lifecycle]()
 
-  override def onStart(app: Application) {
+  def onStart(app: Application, prismAgents: PrismAgents) {
     // list of singletons - note these are inside onStart() to ensure logging has fully initialised
     lifecycleSingletons ++= List(
       ScheduledAgent
     )
-    lifecycleSingletons ++= Prism.allAgents
+    lifecycleSingletons ++= prismAgents.allAgents
 
     log.info("Calling init() on Lifecycle singletons: %s" format lifecycleSingletons.map(_.getClass.getName).mkString(", "))
     lifecycleSingletons foreach { singleton =>
@@ -28,7 +26,7 @@ object Global extends WithFilters(new GzipFilter() :: new JsonpFilter() :: PlayR
     }
   }
 
-  override def onStop(app: Application) {
+  def onStop(app: Application) {
     log.info("Calling shutdown() on Lifecycle singletons: %s" format lifecycleSingletons.reverse.map(_.getClass.getName).mkString(", "))
     lifecycleSingletons.reverse.foreach { singleton =>
       try {

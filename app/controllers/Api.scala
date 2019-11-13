@@ -11,10 +11,7 @@ import jsonimplicits.joda._
 import agent._
 import jsonimplicits.RequestWrites
 
-object Api extends Controller with Api
-
-trait Api extends Logging {
-  this: Controller =>
+class Api(prismConfig: conf.PrismConfiguration, prism: PrismAgents) extends Controller with Logging {
 
   implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
@@ -79,7 +76,7 @@ trait Api extends Logging {
   def sources = Action.async { implicit request =>
     ApiResult.filter {
       val filter = ResourceFilter.fromRequest
-      val sources = CollectorAgent.sources
+      val sources = prism.globalCollectorAgent.sources
       Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
     } reduce { collection =>
       toJson(collection.map(_._2).flatten)
@@ -88,7 +85,7 @@ trait Api extends Logging {
 
   def healthCheck = Action.async { implicit request =>
     ApiResult.filter {
-      val sources = CollectorAgent.sources
+      val sources = prism.globalCollectorAgent.sources
       val notInitialisedSources = sources.data.filter(_.state.status != "success")
       if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
     } reduce { notInitialisedSources =>
@@ -112,7 +109,7 @@ trait Api extends Logging {
   def find = Action.async { implicit request =>
     val filter = ResourceFilter.fromRequest
     ApiResult.filter {
-      val sources = Prism.allAgents.map(_.get())
+      val sources = prism.allAgents.map(_.get())
       sources.flatMap{ agent =>
         agent.map{ datum =>
           datum.label -> datum.data.filter(d => filter.isMatch(d.fieldIndex))
@@ -163,103 +160,104 @@ trait Api extends Logging {
     }
 
   def instanceList = Action.async { implicit request =>
-    itemList(Prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
+
+    itemList(prism.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
   }
   def instance(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.instanceAgent, arn)
+    singleItem(prism.instanceAgent, arn)
   }
 
   def securityGroupList = Action.async { implicit request =>
-    itemList(Prism.securityGroupAgent, "security-groups")
+    itemList(prism.securityGroupAgent, "security-groups")
   }
 
   def securityGroup(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.securityGroupAgent, arn)
+    singleItem(prism.securityGroupAgent, arn)
   }
 
   def imageList = Action.async { implicit request =>
-    itemList(Prism.imageAgent, "images")
+    itemList(prism.imageAgent, "images")
   }
   def image(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.imageAgent, arn)
+    singleItem(prism.imageAgent, arn)
   }
 
   def launchConfigurationList = Action.async { implicit request =>
-    itemList(Prism.launchConfigurationAgent, "launch-configurations")
+    itemList(prism.launchConfigurationAgent, "launch-configurations")
   }
   def launchConfiguration(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.launchConfigurationAgent, arn)
+    singleItem(prism.launchConfigurationAgent, arn)
   }
 
   def serverCertificateList = Action.async { implicit request =>
-    itemList(Prism.serverCertificateAgent, "server-certificates")
+    itemList(prism.serverCertificateAgent, "server-certificates")
   }
   def serverCertificate(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.serverCertificateAgent, arn)
+    singleItem(prism.serverCertificateAgent, arn)
   }
 
   def acmCertificateList = Action.async { implicit request =>
-    itemList(Prism.acmCertificateAgent, "acmCertificates")
+    itemList(prism.acmCertificateAgent, "acmCertificates")
   }
   def acmCertificate(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.acmCertificateAgent, arn)
+    singleItem(prism.acmCertificateAgent, arn)
   }
 
   def route53ZoneList = Action.async { implicit request =>
-    itemList(Prism.route53ZoneAgent, "route53Zones")
+    itemList(prism.route53ZoneAgent, "route53Zones")
   }
   def route53Zone(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.route53ZoneAgent, arn)
+    singleItem(prism.route53ZoneAgent, arn)
   }
 
   def elbList = Action.async { implicit request =>
-    itemList(Prism.elbAgent, "elb")
+    itemList(prism.elbAgent, "elb")
   }
   def elb(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.elbAgent, arn)
+    singleItem(prism.elbAgent, arn)
   }
 
   def bucketList = Action.async { implicit request =>
-    itemList(Prism.bucketAgent, "bucket")
+    itemList(prism.bucketAgent, "bucket")
   }
   def bucket(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.bucketAgent, arn)
+    singleItem(prism.bucketAgent, arn)
   }
 
   def reservationList = Action.async { implicit request =>
-    itemList(Prism.reservationAgent, "reservation")
+    itemList(prism.reservationAgent, "reservation")
   }
   def reservation(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.reservationAgent, arn)
+    singleItem(prism.reservationAgent, arn)
   }
 
-  def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
-  def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-  def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
-  def stageList = summary[Instance](Prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(conf.PrismConfiguration.stages.ordering)
-  def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
-  def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
+  def roleList = summary[Instance](prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
+  def mainclassList = summary[Instance](prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
+  def stackList = summary[Instance](prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
+  def stageList = summary[Instance](prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(prismConfig.stages.ordering)
+  def regionList = summary[Instance](prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
+  def vendorList = summary[Instance](prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
   def appList = summary[Instance](
-    Prism.instanceAgent,
+    prism.instanceAgent,
     i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
     "app",
     enableFilter = true
   )
 
   def dataList = Action.async { implicit request =>
-    itemList(Prism.dataAgent, "data")
+    itemList(prism.dataAgent, "data")
   }
   def data(arn:String) = Action.async { implicit request =>
-    singleItem(Prism.dataAgent, arn)
+    singleItem(prism.dataAgent, arn)
   }
-  def dataKeysList = summary[Data](Prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
+  def dataKeysList = summary[Data](prism.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
   def dataLookup(key:String) = Action.async { implicit request =>
     ApiResult.filter{
       val app = request.getQueryString("app")
       val stage = request.getQueryString("stage")
       val stack = request.getQueryString("stack")
-      val validKey = Prism.dataAgent.getTuples.filter(_._2.key == key).toSeq
+      val validKey = prism.dataAgent.getTuples.filter(_._2.key == key).toSeq
 
       val errors:Map[String,String] = Map.empty ++
           (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++

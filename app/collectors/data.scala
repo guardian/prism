@@ -9,7 +9,7 @@ import agent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object DataCollectorSet extends CollectorSet[Data](ResourceType("data", 15 minutes, 1 minute)) {
+class DataCollectorSet(accounts: Accounts) extends CollectorSet[Data](ResourceType("data", 15 minutes, 1 minute), accounts) {
   def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
     case json:JsonOrigin => JsonDataCollector(json, resource)
   }

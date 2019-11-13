@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-object OwnerApi extends Controller {
+class OwnerApi extends Controller {
 
   private def itemsResult[T](key: String, items: => Iterable[T], baseObject: JsObject = Json.obj())(implicit request: RequestHeader, tw: Writes[T]): Future[Result] = {
     ApiResult.filter {

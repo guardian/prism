@@ -19,10 +19,11 @@ import scala.language.postfixOps
 import scala.util.Try
 import scala.util.control.NonFatal
 
-object Accounts extends Logging {
+class Accounts(prismConfig: conf.PrismConfiguration) extends Logging {
+
   val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r
-  import conf.PrismConfiguration.accounts._
-  val all:Seq[Origin] = (aws.list ++ amis.list).map { awsOrigin =>
+
+  val all:Seq[Origin] = (prismConfig.accounts.aws.list ++ prismConfig.accounts.amis.list).map { awsOrigin =>
     Try {
       val iamClient = AmazonIdentityManagementClientBuilder.standard()
         .withCredentials(awsOrigin.credentials.provider)
@@ -37,7 +38,7 @@ object Accounts extends Logging {
           awsOrigin.copy(accountNumber = Some("?????????"))
         }
     } get
-  } ++ json.list ++ googleDoc.list
+  } ++ prismConfig.accounts.json.list ++ prismConfig.accounts.googleDoc.list
 
   def forResource(resource:String) = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
 }

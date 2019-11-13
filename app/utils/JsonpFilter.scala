@@ -1,9 +1,14 @@
 package utils
 
+import akka.util.ByteString
+import akka.stream.scaladsl.Source
+import org.reactivestreams.Publisher
 import scala.concurrent.ExecutionContext
+import play.api.http.HttpEntity
 import play.api.http.HeaderNames.CONTENT_TYPE
 import play.api.http.ContentTypes.{JSON, JAVASCRIPT}
 import play.api.libs.iteratee.Enumerator
+import play.api.libs.streams.Streams
 import play.api.mvc._
 import play.api.http.Status
 
@@ -29,10 +34,15 @@ class JsonpFilter(paramName: String = "callback")(implicit codec: Codec, ex: Exe
   def jsonpify(callback: String)(result: Result): Result = {
     result.header.headers.get(CONTENT_TYPE) match {
       case Some(ct) if ct == JSON =>
+        
+        val bodySrc = Source.single(codec.encode(s"$callback(")) concat result.body.dataStream concat Source.single(codec.encode(");"))
+        //val bodyPublisher: Publisher[ByteString] = Streams.enumeratorToPublisher(bodyEnumerator)
+        //val bodySource: Source[ByteString, _] = Source.fromPublisher(bodyPublisher)
+        val entity: HttpEntity = HttpEntity.Streamed(bodySrc, None, None)
+
         Result(
           header = result.header.copy(status = Status.OK),
-          body = Enumerator(codec.encode(s"$callback(")) >>> result.body >>> Enumerator(codec.encode(");")),
-          connection = result.connection
+          body = entity
         ).as(JAVASCRIPT)
       case _ => result
     }

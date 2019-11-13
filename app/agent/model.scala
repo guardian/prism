@@ -17,12 +17,13 @@ trait IndexedItem {
   def fieldIndex: Map[String, String] = Map("arn" -> arn)
 }
 
-abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
+abstract class CollectorSet[T](val resource: ResourceType, val accounts: agent.Accounts) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
   }
-  lazy val collectors = Accounts.forResource(resource.name).flatMap(collectorFor)
+
+  lazy val collectors = accounts.forResource(resource.name).flatMap(collectorFor)
 }
 
 trait Collector[T] {

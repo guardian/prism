@@ -15,7 +15,7 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes)) {
+class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
     case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
   }
