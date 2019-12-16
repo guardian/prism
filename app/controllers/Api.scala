@@ -170,11 +170,11 @@ trait Api extends Logging {
   }
 
   // for some bizarre compilation reason this can't be called 'lambdaList'
-  def functionList = Action.async { implicit request =>
+  def allLambdas = Action.async { implicit request =>
     itemList(Prism.lambdaAgent, "lambdas")
   }
   // for some bizarre compilation reason this can't be called 'lambda'
-  def function(arn:String) = Action.async { implicit request =>
+  def singleLambda(arn:String) = Action.async { implicit request =>
     singleItem(Prism.lambdaAgent, arn)
   }
 
