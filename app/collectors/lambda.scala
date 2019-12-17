@@ -1,6 +1,7 @@
 package collectors
 
 import agent._
+import com.amazonaws.ClientConfigurationFactory
 import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
 import com.amazonaws.services.lambda.{AWSLambda, AWSLambdaClientBuilder}
 import controllers.routes
@@ -25,13 +26,17 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) exte
     .build()
 
   def crawl: Iterable[Lambda] = {
-    PaginatedAWSRequest.run(client.listFunctions)(new ListFunctionsRequest()).map { lambda =>
+    PaginatedAWSRequest.run(client.listFunctions)(new ListFunctionsRequest()).map { lambda => {
+      val tags = client.listTags(new ListTagsRequest().withResource(lambda.getFunctionArn)).getTags.toMap
+      Thread.sleep(100) // this avoids ThrottlingException back from AWS
       Lambda.fromApiData(
         lambda,
         client,
         origin.region,
-        client.listTags(new ListTagsRequest().withResource(lambda.getFunctionArn)).getTags.toMap
+        tags
       )
+    }
+
     }
   }
 }
