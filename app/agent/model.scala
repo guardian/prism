@@ -85,5 +85,6 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
 
 trait GoogleDocCollector[T] extends Collector[T] {
   def origin:GoogleDocOrigin
-  def csvData:List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl), 1 minute)
+  // FIXME: This seems to be dead code. If it is not dead, then it will need to be refactored to take WsClient
+  // def csvData:List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl), 1 minute)
 }

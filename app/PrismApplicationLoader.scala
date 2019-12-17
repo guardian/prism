@@ -4,6 +4,8 @@ import com.amazonaws.regions.Regions
 import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity}
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext}
 import play.api.ApplicationLoader.Context
+import play.api.libs.ws.WSClient
+import play.api.libs.ws.ahc.AhcWSClient
 import play.api.{Configuration, Mode}
 import play.filters.gzip.GzipFilterComponents
 
@@ -30,6 +32,8 @@ class PrismComponents(context: Context)
     extends BuiltInComponentsFromContext(context)
     with GzipFilterComponents
     with Logging {
+
+  val wsClient: WSClient = AhcWSClient()
 
   val identity = {
       context.environment.mode match {
@@ -62,12 +66,12 @@ class PrismComponents(context: Context)
 
   lazy val prismAgents = new controllers.PrismAgents(actorSystem, prismConfig)
 
-  lazy val appController = new controllers.Application()
+  lazy val appController = new controllers.Application(router, configuration)
   lazy val apiController = new controllers.Api(prismConfig, prismAgents)
   lazy val ownerApiController = new controllers.OwnerApi()
   lazy val assets = new controllers.Assets(httpErrorHandler)
 
-  lazy val router = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
+  lazy val router: Routes = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
 
   val jsonpFilter = new JsonpFilter()
   val metricsFilters = prismAgents.globalCollectorAgent.metrics.PlayRequestMetrics.asFilters

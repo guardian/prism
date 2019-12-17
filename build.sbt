@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
     "com.amazonaws" % "aws-java-sdk-acm" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-route53" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-elasticloadbalancing" % awsVersion,
-
+    ws,
     "com.gu" %% "management-play" % "8.0",
     "com.typesafe.akka" %% "akka-agent" % "2.4.1",
     "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",

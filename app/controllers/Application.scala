@@ -1,17 +1,15 @@
 package controllers
 
+import play.api.Configuration
 import play.api.mvc._
-import play.api.Play
+import router.Routes
 
-class Application extends Controller {
-
+class Application(routes: Routes, configuration: Configuration) extends Controller {
   def index = Action {
-    import play.api.Play.current
-    Ok(views.html.index(Play.routes.documentation))
+    Ok(views.html.index(routes.documentation))
   }
 
   def config = Action {
-    Ok(play.api.Play.current.configuration.underlying.root().render())
+    Ok(configuration.underlying.root().render())
   }
-
 }

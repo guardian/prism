@@ -1,14 +1,13 @@
 package utils
 
 import scala.util.parsing.combinator._
-import java.net.{URLDecoder, URL}
-import play.api.libs.ws.WS
+import java.net.URL
+import play.api.libs.ws.WSClient
 import play.api.http.Status._
 import play.api.http.HeaderNames
 import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.Play.current
 
 // A CSV parser based on RFC4180
 // http://tools.ietf.org/html/rfc4180
@@ -44,7 +43,7 @@ object CSV extends RegexParsers {
   }
 }
 
-object GoogleDoc extends Logging {
+class GoogleDoc(wsClient: WSClient) extends Logging {
   def getCsvForDoc(docUrl:URL): Future[List[List[String]]] = {
     getUrlData(docUrl).map(CSV.parse)
   }
@@ -55,7 +54,7 @@ object GoogleDoc extends Logging {
     val headers:Seq[(String,String)] = if (cookies.isEmpty) Seq.empty else {
       Seq(HeaderNames.COOKIE -> cookies.map{case (name, value) => s"$name=$value"}.mkString("; "))
     }
-    WS.url(url.toString)
+    wsClient.url(url.toString)
       .withFollowRedirects(false)
       .withHeaders(headers:_*)
       .get().flatMap { response =>
