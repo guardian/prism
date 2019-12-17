@@ -65,7 +65,6 @@ class PrismComponents(context: Context)
 
   lazy val prismAgents = new controllers.PrismAgents(actorSystem, prismConfig)
 
-//  lazy val appController = new controllers.Application(router, configuration)
   lazy val appController = new controllers.Application(configuration)
   lazy val apiController = new controllers.Api(prismConfig, prismAgents)
   lazy val ownerApiController = new controllers.OwnerApi()
