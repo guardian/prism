@@ -1,14 +1,14 @@
 import akka.actor.ActorSystem
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.regions.{Regions, Region}
-import conf.{AWS, FileConfiguration, DynamoConfiguration, Identity}
+import com.amazonaws.regions.Regions
+import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity}
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext}
 import play.api.ApplicationLoader.Context
-import play.api.{Mode, Configuration}
-import play.api.mvc.EssentialFilter
-import scala.concurrent.Future
-import utils.Logging
+import play.api.{Configuration, Mode}
+import play.filters.gzip.GzipFilterComponents
 
+import scala.concurrent.Future
+import utils.{JsonpFilter, Logging}
 
 class PrismApplicationLoader extends ApplicationLoader {
 
@@ -26,8 +26,11 @@ class PrismApplicationLoader extends ApplicationLoader {
 
 import router.Routes
   
-class PrismComponents(context: Context) extends BuiltInComponentsFromContext(context) with Logging {
-  
+class PrismComponents(context: Context)
+    extends BuiltInComponentsFromContext(context)
+    with GzipFilterComponents
+    with Logging {
+
   val identity = {
       context.environment.mode match {
         case Mode.Prod => AWS.instance.identity
@@ -66,4 +69,7 @@ class PrismComponents(context: Context) extends BuiltInComponentsFromContext(con
 
   lazy val router = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
 
+  val jsonpFilter = new JsonpFilter()
+  val metricsFilters = prismAgents.globalCollectorAgent.metrics.PlayRequestMetrics.asFilters
+  override lazy val httpFilters = Seq(gzipFilter, jsonpFilter) ++ metricsFilters
 }

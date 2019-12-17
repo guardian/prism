@@ -1,11 +1,9 @@
 import collection.mutable
-import conf.PlayRequestMetrics
 import controllers.PrismAgents
-import play.api.mvc.WithFilters
 import utils.{Logging, Lifecycle, ScheduledAgent}
 import play.api.Application
 
-object Global extends WithFilters(new GzipFilter() :: new JsonpFilter() :: PlayRequestMetrics.asFilters : _*) with Logging {
+object Global extends Logging {
 
   val lifecycleSingletons = mutable.Buffer[Lifecycle]()
 
