@@ -13,6 +13,8 @@ import jsonimplicits.RequestWrites
 
 class Api(prismConfig: conf.PrismConfiguration, prism: PrismAgents) extends Controller with Logging {
 
+  implicit val arnLookup = SecurityGroup.arnLookup(prism)
+
   implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = new Writes[Reference[T]] {
     def writes(o: Reference[T]) = {
       request.getQueryString("_reference") match {
