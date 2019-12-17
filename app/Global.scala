@@ -3,7 +3,7 @@ import controllers.PrismAgents
 import utils.{Logging, Lifecycle, ScheduledAgent}
 import play.api.Application
 
-object Global extends Logging {
+object AgentsLifecycle extends Logging {
 
   val lifecycleSingletons = mutable.Buffer[Lifecycle]()
 

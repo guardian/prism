@@ -4,9 +4,12 @@ import play.api.Configuration
 import play.api.mvc._
 import router.Routes
 
-class Application(routes: Routes, configuration: Configuration) extends Controller {
+//class Application(routes: Routes, configuration: Configuration) extends Controller {
+class Application(configuration: Configuration) extends Controller {
   def index = Action {
-    Ok(views.html.index(routes.documentation))
+    // FIXME: How to inject routes at compile time to get at routes.documentation?
+//    Ok(views.html.index(routes.documentation))
+    Ok("woohoo")
   }
 
   def config = Action {
