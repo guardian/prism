@@ -56,7 +56,6 @@ object ApiSpec extends PlaySpecification with Results {
     }
   }
 
-  class TestApi() extends Controller
 
   "Application" should {
     "return a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
@@ -70,28 +69,24 @@ object ApiSpec extends PlaySpecification with Results {
     }
 
     "filter a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
-      val api = new TestApi()
       val result = route(app, (FakeRequest(GET, "/instances?vendor=aws"))).get
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 8
     }
 
     "invert filter a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
-      val api = new TestApi()
       val result = route(app, FakeRequest(GET, "/instances?vendor!=aws")).get
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 7
     }
 
     "filter a list of instances using a regex" in new WithApplicationLoader(new PrismApplicationLoader()) {
-      val api = new TestApi()
       val result = route(app, FakeRequest(GET, "/instances?mainclasses~=.*db.*")).get
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 6
     }
 
     "filter a list of instances by nested field" in new WithApplicationLoader(new PrismApplicationLoader()) {
-      val api = new TestApi()
       val result = route(app, (FakeRequest(GET, "/instances?tags.App=db"))).get
       //contentAsString(result) mustEqual("")
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
