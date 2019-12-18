@@ -6,9 +6,9 @@ version := "1.0-SNAPSHOT"
 
 scalaVersion in ThisBuild := "2.11.8"
 
-scalacOptions ++= Seq("-unchecked", "-optimise", "-deprecation",
-  "-Xcheckinit", "-encoding", "utf8", "-feature", "-Yinline-warnings",
-  "-Xfatal-warnings", "-Ybackend:GenBCode"
+scalacOptions ++= Seq("-unchecked", "-deprecation",
+  "-Xcheckinit", "-encoding", "utf8", "-feature",
+  "-Yinline-warnings", "-Xfatal-warnings"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")

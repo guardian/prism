@@ -22,8 +22,8 @@ GET        /instances/roles                   controllers.Api.roleList
 GET        /instances/mainclasses             controllers.Api.mainclassList
 GET        /instances/:arn                    controllers.Api.instance(arn)
 
-GET        /lambdas                           controllers.Api.allLambdas
-GET        /lambdas/:arn                      controllers.Api.singleLambda(arn)
+GET        /lambdas                           controllers.Api.lambdaList
+GET        /lambdas/:arn                      controllers.Api.lambda(arn)
 
 GET        /security-groups                   controllers.Api.securityGroupList
 GET        /security-groups/:arn              controllers.Api.securityGroup(arn)
