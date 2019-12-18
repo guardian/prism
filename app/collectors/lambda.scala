@@ -1,7 +1,6 @@
 package collectors
 
 import agent._
-import com.amazonaws.ClientConfigurationFactory
 import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
 import com.amazonaws.services.lambda.{AWSLambda, AWSLambdaClientBuilder}
 import controllers.routes
@@ -46,8 +45,9 @@ object Lambda {
   def fromApiData(lambda: FunctionConfiguration, client: AWSLambda, region: String, tags: Map[String, String]): Lambda = Lambda(
     arn = lambda.getFunctionArn,
     name = lambda.getFunctionName,
-    region = region,
+    region,
     runtime = lambda.getRuntime,
+    tags,
     stage = tags.get("Stage"),
     stack = tags.get("Stack")
   )
@@ -58,6 +58,7 @@ case class Lambda(
   name: String,
   region: String,
   runtime: String,
+  tags: Map[String, String],
   override val stage: Option[String],
   override val stack: Option[String]
 ) extends IndexedItemWithStage with IndexedItemWithStack {
