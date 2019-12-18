@@ -6,6 +6,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext}
 import play.api.ApplicationLoader.Context
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
+import play.api.routing.Router
 import play.api.{Configuration, Mode}
 import play.filters.gzip.GzipFilterComponents
 
@@ -65,12 +66,12 @@ class PrismComponents(context: Context)
 
   lazy val prismAgents = new controllers.PrismAgents(actorSystem, prismConfig)
 
-  lazy val appController = new controllers.Application(configuration)
+  lazy val appController = new controllers.Application(configuration, router)
   lazy val apiController = new controllers.Api(prismConfig, prismAgents)
   lazy val ownerApiController = new controllers.OwnerApi()
   lazy val assets = new controllers.Assets(httpErrorHandler)
 
-  lazy val router = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
+  lazy val router: Router = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
 
   val jsonpFilter = new JsonpFilter()
   val metricsFilters = prismAgents.globalCollectorAgent.metrics.PlayRequestMetrics.asFilters // FIXME: Is this necessary? Why not just use cloudwatch instead of gu.management?
