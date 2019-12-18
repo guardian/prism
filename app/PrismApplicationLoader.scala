@@ -70,7 +70,7 @@ class PrismComponents(context: Context)
   lazy val ownerApiController = new controllers.OwnerApi()
   lazy val assets = new controllers.Assets(httpErrorHandler)
 
-  lazy val router: Routes = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
+  lazy val router = new Routes(httpErrorHandler, appController, apiController, assets, ownerApiController)
 
   val jsonpFilter = new JsonpFilter()
   val metricsFilters = prismAgents.globalCollectorAgent.metrics.PlayRequestMetrics.asFilters // FIXME: Is this necessary? Why not just use cloudwatch instead of gu.management?

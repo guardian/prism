@@ -1,4 +1,4 @@
-import controllers.{Api, ApiCallException, ApiResult}
+import controllers.{ApiCallException, ApiResult}
 
 import play.api.libs.json._
 import play.api.libs.json.JsArray
@@ -60,8 +60,6 @@ object ApiSpec extends PlaySpecification with Results {
 
   "Application" should {
     "return a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
-//      val api = new TestApi()
-//      val result = api.instanceList(FakeRequest())
       val result = route(app, FakeRequest(GET, "/instances")).get
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
@@ -73,7 +71,6 @@ object ApiSpec extends PlaySpecification with Results {
 
     "filter a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
       val api = new TestApi()
-//      val result = api.instanceList(FakeRequest(GET, "/instances?vendor=aws"))
       val result = route(app, (FakeRequest(GET, "/instances?vendor=aws"))).get
       val jsonInstances = (contentAsJson(result) \ "data" \ "instances").get
       jsonInstances.as[JsArray].value.length mustEqual 8
