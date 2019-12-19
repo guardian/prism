@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
+import com.amazonaws.services.lambda.model.{AWSLambdaException, FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
 import com.amazonaws.services.lambda.{AWSLambda, AWSLambdaClientBuilder}
 import controllers.routes
 import play.api.mvc.Call
@@ -24,7 +24,7 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) exte
     .withRegion(origin.awsRegion)
     .build()
 
-  def crawl: Iterable[Lambda] = {
+  def crawl: Iterable[Lambda] = try {
     PaginatedAWSRequest.run(client.listFunctions)(new ListFunctionsRequest()).map { lambda => {
       val tags = client.listTags(new ListTagsRequest().withResource(lambda.getFunctionArn)).getTags.toMap
       Thread.sleep(100) // this avoids ThrottlingException back from AWS
@@ -35,8 +35,12 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) exte
         tags
       )
     }
-
     }
+  }
+  catch {
+    case e: AWSLambdaException if e.getErrorCode == "AccessDeniedException" =>
+      log.warn(s"Could not get lambda information for ${origin.account}", e)
+      Nil
   }
 }
 
