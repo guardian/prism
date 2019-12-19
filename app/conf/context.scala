@@ -140,8 +140,8 @@ object SourceMetrics {
 object DataMetrics extends Logging {
   val resourceNames = Prism.allAgents.flatMap(_.resourceName).distinct
   def countResources(resource:String) = {
-    val filteredAgents = Prism.allAgents.filter{ _.resourceName.contains(resource) }
-    filteredAgents.map(_.size).sum
+    val filteredAgents = Prism.allAgents.filter{ _.resourceName == Some(resource) }
+    filteredAgents.map(_.size).fold(0)(_+_)
   }
   val resourceGauges = resourceNames.map { resource =>
     new GaugeMetric("prism", s"${resource}_entities", s"$resource entities", s"Number of $resource entities", () => countResources(resource))
