@@ -30,7 +30,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStar
   
   def getLabels: Seq[Label] = get().map(_.label).toSeq
 
-  def size = get().map(_.data.size).sum
+  def size = get().map(_.data.size).fold(0)(_+_)
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
       val s = new StopWatch

@@ -1,13 +1,11 @@
 package utils
 
-import collectors.Lambda
 import com.amazonaws.{AmazonWebServiceRequest, AmazonWebServiceResult}
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, DescribeLaunchConfigurationsResult, LaunchConfiguration}
 import com.amazonaws.services.certificatemanager.model.{CertificateSummary, ListCertificatesRequest, ListCertificatesResult}
 import com.amazonaws.services.ec2.model._
 import com.amazonaws.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, DescribeLoadBalancersResult, LoadBalancerDescription}
 import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ListServerCertificatesResult, ServerCertificateMetadata}
-import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListFunctionsResult}
 import com.amazonaws.services.route53.model._
 
 import scala.collection.JavaConverters._
@@ -53,9 +51,6 @@ object Paging {
 
   implicit def describeInstances: Paging[DescribeInstancesRequest, DescribeInstancesResult, String, (Reservation, Instance)] =
     Paging.instance(r => Option(r.getNextToken), r => t => r.withNextToken(t.orNull), r => r.getReservations.asScala.flatMap(r => r.getInstances.asScala.map(r -> _)))
-
-  implicit def describeLambdas: Paging[ListFunctionsRequest, ListFunctionsResult, String, FunctionConfiguration] =
-    Paging.instance(r => Option(r.getNextMarker), r => m => r.withMarker(m.orNull), r => r.getFunctions.asScala)
 
   implicit def describeLaunchConfigs: Paging[DescribeLaunchConfigurationsRequest, DescribeLaunchConfigurationsResult, String, LaunchConfiguration] =
     Paging.instance(r => Option(r.getNextToken), r => t => r.withNextToken(t.orNull), r => r.getLaunchConfigurations.asScala)
