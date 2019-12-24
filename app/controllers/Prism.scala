@@ -6,6 +6,7 @@ import collectors._
 object Prism {
   val lazyStartup = conf.PrismConfiguration.accounts.lazyStartup
   val instanceAgent = new CollectorAgent[Instance](InstanceCollectorSet, lazyStartup)
+  val lambdaAgent = new CollectorAgent[Lambda](LambdaCollectorSet, lazyStartup)
   val dataAgent = new CollectorAgent[Data](DataCollectorSet, lazyStartup)
   val securityGroupAgent = new CollectorAgent[SecurityGroup](SecurityGroupCollectorSet, lazyStartup)
   val imageAgent = new CollectorAgent[Image](ImageCollectorSet, lazyStartup)
@@ -16,6 +17,6 @@ object Prism {
   val elbAgent = new CollectorAgent[LoadBalancer](LoadBalancerCollectorSet, lazyStartup)
   val bucketAgent = new CollectorAgent[Bucket](BucketCollectorSet, lazyStartup)
   val reservationAgent = new CollectorAgent[Reservation](ReservationCollectorSet, lazyStartup)
-  val allAgents = Seq(instanceAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
+  val allAgents = Seq(instanceAgent, lambdaAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
     serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent)
 }
