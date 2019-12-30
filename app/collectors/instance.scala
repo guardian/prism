@@ -1,18 +1,17 @@
 package collectors
 
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import conf.PrismConfiguration.accounts
 import play.api.libs.json.Json
 import play.api.mvc.Call
 import controllers.routes
 
 import scala.language.postfixOps
-import com.amazonaws.services.ec2.{AmazonEC2Client, AmazonEC2ClientBuilder}
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
 import scala.concurrent.duration._
@@ -179,14 +178,14 @@ case class Instance(
                  vendor: String,
                  securityGroups: Seq[Reference[SecurityGroup]],
                  tags: Map[String, String] = Map.empty,
-                 stage: Option[String],
-                 stack: Option[String],
+                 override val stage: Option[String],
+                 override val stack: Option[String],
                  app: List[String],
                  mainclasses: List[String],
                  role: Option[String],
                  management:Option[Seq[ManagementEndpoint]],
                  specification:Option[InstanceSpecification]
-                ) extends IndexedItem {
+                ) extends IndexedItemWithStage with IndexedItemWithStack {
 
   def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
   override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)

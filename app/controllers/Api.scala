@@ -169,6 +169,13 @@ trait Api extends Logging {
     singleItem(Prism.instanceAgent, arn)
   }
 
+  def lambdaList = Action.async { implicit request =>
+    itemList(Prism.lambdaAgent, "lambdas")
+  }
+  def lambda(arn:String) = Action.async { implicit request =>
+    singleItem(Prism.lambdaAgent, arn)
+  }
+
   def securityGroupList = Action.async { implicit request =>
     itemList(Prism.securityGroupAgent, "security-groups")
   }
@@ -233,10 +240,12 @@ trait Api extends Logging {
     singleItem(Prism.reservationAgent, arn)
   }
 
+  private def stackExtractor(i: IndexedItemWithStack) = i.stack.map(Json.toJson(_))
+  private def stageExtractor(i: IndexedItemWithStage) = i.stage.map(Json.toJson(_))
   def roleList = summary[Instance](Prism.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
   def mainclassList = summary[Instance](Prism.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-  def stackList = summary[Instance](Prism.instanceAgent, i => i.stack.map(Json.toJson(_)), "stacks")
-  def stageList = summary[Instance](Prism.instanceAgent, i => i.stage.map(Json.toJson(_)), "stages")(conf.PrismConfiguration.stages.ordering)
+  def stackList = summaryFromTwo[Instance, Lambda](Prism.instanceAgent, stackExtractor, Prism.lambdaAgent, stackExtractor, "stacks")(conf.PrismConfiguration.stages.ordering)
+  def stageList = summaryFromTwo[Instance, Lambda](Prism.instanceAgent, stageExtractor, Prism.lambdaAgent, stageExtractor, "stages")(conf.PrismConfiguration.stages.ordering)
   def regionList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
   def vendorList = summary[Instance](Prism.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
   def appList = summary[Instance](
@@ -265,7 +274,7 @@ trait Api extends Logging {
           (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++
           (if (stage.isEmpty) Some("stage" -> "Must specify stage") else None) ++
           (if (stage.isEmpty) Some("stack" -> "Must specify stack") else None) ++
-          (if (validKey.size == 0) Some("key" -> s"The key name $key was not found") else None) ++
+          (if (validKey.isEmpty) Some("key" -> s"The key name $key was not found") else None) ++
           (if (validKey.size > 1) Some("key" -> s"The key name $key was matched multiple times") else None)
 
       if (!errors.isEmpty) throw ApiCallException(Json.toJson(errors).as[JsObject])

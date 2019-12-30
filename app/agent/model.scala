@@ -17,6 +17,14 @@ trait IndexedItem {
   def fieldIndex: Map[String, String] = Map("arn" -> arn)
 }
 
+trait IndexedItemWithStage extends IndexedItem {
+  val stage: Option[String] = None
+}
+
+trait IndexedItemWithStack extends IndexedItem {
+  val stack: Option[String] = None
+}
+
 abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
