@@ -54,7 +54,7 @@ struct Cli {
     short: bool,
 
     /// Specify the fields to display
-    #[structopt(short, long)]
+    #[structopt(short, long, number_of_values = 1)]
     fields: Option<Vec<String>>,
 
     /// Endpoint (e.g. instances, certificates etc.)
@@ -70,7 +70,7 @@ struct Cli {
 #[serde(rename_all = "camelCase")]
 struct PrismOrigin {
     account_name: String,
-    owner_id: String,
+    owner_id: Option<String>,
     region: String,
     account_number: String,
     vendor: String,
@@ -102,9 +102,12 @@ struct PrismResponse {
 async fn call_prism(path: String, query_params: Vec<(String, String)>) -> Result<PrismResponse> {
     let client = reqwest::Client::new();
     let url = format!("https://prism.gutools.co.uk{}", path);
-    let response = client.get(&url)
-        .query(&query_params) // why borrow here?
-        .send()
+    let request = client.get(&url)
+        .query(&query_params);
+
+    println!("Calling {:?}", request);
+
+    let response = request.send()
         .await
         .context(PrismError { path })?
         .json::<PrismResponse>()
@@ -152,6 +155,7 @@ fn make_table(fields: &[String], contents: Vec<Vec<Option<String>>>) -> Result<T
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Cli::from_args();
+    println!("Arguments are... fields: {:?} query: {:?}", args.fields, args.query);
     let requested_fields = args.fields.unwrap_or(vec![String::from("stack"), String::from("stage"), String::from("app/0"), String::from("arn")]);
     let response = call_prism(format!("/{}", args.endpoint), args.query).await?;
     let contents = get_fields(&response, &args.endpoint, &requested_fields).await?;
