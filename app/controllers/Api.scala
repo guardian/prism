@@ -206,35 +206,35 @@ trait Api extends Logging {
   }
 
   def acmCertificateList = Action.async { implicit request =>
-    itemList(Prism.acmCertificateAgent, "acmCertificates")
+    itemList(Prism.acmCertificateAgent, "acm-certificates")
   }
   def acmCertificate(arn:String) = Action.async { implicit request =>
     singleItem(Prism.acmCertificateAgent, arn)
   }
 
   def route53ZoneList = Action.async { implicit request =>
-    itemList(Prism.route53ZoneAgent, "route53Zones")
+    itemList(Prism.route53ZoneAgent, "route53-zones")
   }
   def route53Zone(arn:String) = Action.async { implicit request =>
     singleItem(Prism.route53ZoneAgent, arn)
   }
 
   def elbList = Action.async { implicit request =>
-    itemList(Prism.elbAgent, "elb")
+    itemList(Prism.elbAgent, "elbs")
   }
   def elb(arn:String) = Action.async { implicit request =>
     singleItem(Prism.elbAgent, arn)
   }
 
   def bucketList = Action.async { implicit request =>
-    itemList(Prism.bucketAgent, "bucket")
+    itemList(Prism.bucketAgent, "buckets")
   }
   def bucket(arn:String) = Action.async { implicit request =>
     singleItem(Prism.bucketAgent, arn)
   }
 
   def reservationList = Action.async { implicit request =>
-    itemList(Prism.reservationAgent, "reservation")
+    itemList(Prism.reservationAgent, "reservations")
   }
   def reservation(arn:String) = Action.async { implicit request =>
     singleItem(Prism.reservationAgent, arn)
