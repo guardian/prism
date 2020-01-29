@@ -16,3 +16,6 @@ dist
 Gemfile.lock
 .rakeTasks
 *.iml
+
+cli-rs/target
+cli-rs/**/*.rs.bk
