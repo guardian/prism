@@ -1,3 +1,4 @@
+use std::error::Error;
 use snafu::{ResultExt, OptionExt, Snafu};
 use structopt::StructOpt;
 use serde_json::Value;
@@ -5,7 +6,7 @@ use serde::Deserialize;
 use prettytable::{Table, format, Row, Cell};
 
 #[derive(Debug, Snafu)]
-enum Error {
+enum CliError {
     #[snafu(display("Could not access prism path {}: {}", path, source))]
     PrismError {
         path: String,
@@ -26,7 +27,21 @@ enum Error {
     }
 }
 
-type Result<T, E = Error> = std::result::Result<T, E>;
+type Result<T, E = CliError> = std::result::Result<T, E>;
+
+/// Parse a single key-value pair
+fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error>>
+where
+    T: std::str::FromStr,
+    T::Err: Error + 'static,
+    U: std::str::FromStr,
+    U::Err: Error + 'static,
+{
+    let pos = s
+        .find('=')
+        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
+    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
 
 #[derive(StructOpt)]
 struct Cli {
@@ -47,7 +62,8 @@ struct Cli {
     endpoint: String,
 
     /// Free form query
-    query: Vec<String>
+    #[structopt(parse(try_from_str = parse_key_val))]
+    query: Vec<(String, String)>
 }
 
 #[derive(Deserialize, Debug)]
@@ -83,11 +99,11 @@ struct PrismResponse {
     sources: Vec<PrismSource>
 }
 
-async fn call_prism(path: String) -> Result<PrismResponse> {
+async fn call_prism(path: String, query_params: Vec<(String, String)>) -> Result<PrismResponse> {
     let client = reqwest::Client::new();
     let url = format!("https://prism.gutools.co.uk{}", path);
     let response = client.get(&url)
-        .query(&[("meta.origin.accountName", "composer")]) // why borrow here?
+        .query(&query_params) // why borrow here?
         .send()
         .await
         .context(PrismError { path })?
@@ -137,7 +153,7 @@ fn make_table(fields: &[String], contents: Vec<Vec<Option<String>>>) -> Result<T
 async fn main() -> Result<()> {
     let args = Cli::from_args();
     let requested_fields = args.fields.unwrap_or(vec![String::from("stack"), String::from("stage"), String::from("app/0"), String::from("arn")]);
-    let response = call_prism(format!("/{}", args.endpoint)).await?;
+    let response = call_prism(format!("/{}", args.endpoint), args.query).await?;
     let contents = get_fields(&response, &args.endpoint, &requested_fields).await?;
     let table = &mut make_table(&requested_fields, contents)?;
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
