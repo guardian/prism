@@ -11,12 +11,6 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LambdaCollectorSet extends CollectorSet[Lambda](ResourceType("lambda", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[Lambda]] = {
-    case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource)
-  }
-}
-
 case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Lambda] with Logging {
 
   val client = AWSLambdaClientBuilder.standard()
@@ -51,6 +45,10 @@ object Lambda {
     stage = tags.get("Stage"),
     stack = tags.get("Stack")
   )
+
+  implicit val fields = new Fields[Lambda] {
+    override def defaultFields: Seq[String] = Seq("stack", "stage", "name")
+  }
 }
 
 case class Lambda(
@@ -63,4 +61,10 @@ case class Lambda(
   override val stack: Option[String]
 ) extends IndexedItemWithStage with IndexedItemWithStack {
   override def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
+}
+
+object LambdaCollectorSet extends CollectorSet[Lambda](ResourceType("lambda", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[Lambda]] = {
+    case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource)
+  }
 }

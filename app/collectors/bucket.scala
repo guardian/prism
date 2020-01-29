@@ -15,12 +15,6 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
-    case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource)
-  }
-}
-
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Bucket] with Logging {
 
   val client = AmazonS3ClientBuilder.standard()
@@ -55,6 +49,10 @@ object Bucket {
         throw new IllegalStateException(s"Failed when building info for bucket $bucketName", t)
     }
   }
+
+  implicit val fields = new Fields[Bucket] {
+    override def defaultFields: Seq[String] = Seq("name", "region", "createdTime")
+  }
 }
 
 case class Bucket(
@@ -64,4 +62,10 @@ case class Bucket(
   createdTime: Option[DateTime]
 ) extends IndexedItem {
   override def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
+}
+
+object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
+    case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource)
+  }
 }

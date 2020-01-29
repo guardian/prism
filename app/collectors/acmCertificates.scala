@@ -13,13 +13,6 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-
-object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
-    case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
-  }
-}
-
 case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[AcmCertificate] with Logging {
 
   val client = AWSCertificateManagerClientBuilder.standard()
@@ -81,6 +74,10 @@ object AcmCertificate {
     domainValidationOptions = cert.getDomainValidationOptions.asScala.toList.map(DomainValidation.fromApiData),
     renewalStatus = Option(cert.getRenewalSummary).map(RenewalInfo.fromApiData)
   )
+
+  implicit val fields = new Fields[AcmCertificate] {
+    override def defaultFields: Seq[String] = Seq("domainName", "status", "notAfter")
+  }
 }
 
 case class AcmCertificate(
@@ -104,4 +101,10 @@ case class AcmCertificate(
                               renewalStatus: Option[RenewalInfo]
                             ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.acmCertificate(arn)
+}
+
+object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acm-certificates", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
+    case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
+  }
 }

@@ -15,12 +15,6 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
-    case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
-  }
-}
-
 case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LaunchConfiguration] with Logging {
 
   val client = AmazonAutoScalingClientBuilder.standard()
@@ -50,6 +44,10 @@ object LaunchConfiguration {
       }
     )
   }
+
+  implicit val fields = new Fields[LaunchConfiguration] {
+    override def defaultFields: Seq[String] = Seq("name", "imageId", "createdTime")
+  }
 }
 
 case class LaunchConfiguration(
@@ -65,4 +63,10 @@ case class LaunchConfiguration(
   securityGroups: List[String]
 ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.launchConfiguration(arn)
+}
+
+object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
+    case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
+  }
 }

@@ -11,12 +11,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
-    case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource)
-  }
-}
-
 case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LoadBalancer] with Logging {
 
   val client = AmazonElasticLoadBalancingClientBuilder.standard()
@@ -41,6 +35,10 @@ object LoadBalancer {
       subnets = loadBalancer.getSubnets.asScala.toList
     )
   }
+
+  implicit val fields = new Fields[LoadBalancer] {
+    override def defaultFields: Seq[String] = Seq("name")
+  }
 }
 
 case class LoadBalancer(
@@ -53,4 +51,10 @@ case class LoadBalancer(
                         subnets: List[String]
                       ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.elb(arn)
+}
+
+object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
+    case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource)
+  }
 }
