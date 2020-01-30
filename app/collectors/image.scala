@@ -13,12 +13,6 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-object ImageCollectorSet extends CollectorSet[Image](ResourceType("images", 15 minutes, 1 minute)) {
-  val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
-    case amazon:AmazonOrigin => AWSImageCollector(amazon, resource)
-  }
-}
-
 case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Image] with Logging {
 
   val client = AmazonEC2ClientBuilder.standard()
@@ -59,6 +53,10 @@ object Image {
       imageType = image.getImageType
     )
   }
+
+  implicit val fields = new Fields[Image] {
+    override def defaultFields: Seq[String] = Seq("name", "imageId", "creationDate")
+  }
 }
 
 case class Image(
@@ -79,4 +77,10 @@ case class Image(
                 imageType: String
                   ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.image(arn)
+}
+
+object ImageCollectorSet extends CollectorSet[Image](ResourceType("images", 15 minutes, 1 minute)) {
+  val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
+    case amazon:AmazonOrigin => AWSImageCollector(amazon, resource)
+  }
 }

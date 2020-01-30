@@ -11,12 +11,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
-    case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
-  }
-}
-
 case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Route53Zone] with Logging {
 
   val client = AmazonRoute53ClientBuilder.standard()
@@ -57,6 +51,10 @@ object Route53Zone {
       records = recordSets
     )
   }
+
+  implicit val fields = new Fields[Route53Zone] {
+    override def defaultFields: Seq[String] = Seq("name", "resourceRecordSetCount")
+  }
 }
 
 case class Route53Alias(dnsName: String, hostedZoneId: String, evaluateHealth: Boolean)
@@ -75,4 +73,10 @@ case class Route53Zone(
                            records: List[Route53Record]
                          ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.route53Zone(arn)
+}
+
+object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("route53-zones", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
+    case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
+  }
 }

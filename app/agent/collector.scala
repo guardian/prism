@@ -2,16 +2,19 @@ package agent
 
 import play.api.libs.concurrent.Akka
 import utils.{LifecycleWithoutApp, Logging, ScheduledAgent}
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import akka.agent.Agent
 import org.joda.time.DateTime
 import akka.actor.ActorSystem
 import play.api.Play.current
+
 import scala.concurrent.ExecutionContext
 import play.api.libs.json.Json.JsValueWrapper
 import conf.SourceMetrics
 import com.gu.management.StopWatch
+import controllers.Prism
 
 class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], lazyStartup:Boolean = true) extends Logging with LifecycleWithoutApp {
 

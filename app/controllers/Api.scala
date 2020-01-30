@@ -2,14 +2,18 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json._
+
 import scala.concurrent.duration.Duration
 import play.api.libs.json.Json._
 import collectors._
+
 import scala.language.postfixOps
-import utils.{ResourceFilter, Matchable, Logging}
+import utils.{Logging, Matchable, ResourceFilter}
 import jsonimplicits.joda._
 import agent._
 import jsonimplicits.RequestWrites
+
+import scala.concurrent.Future
 
 object Api extends Controller with Api
 
@@ -76,13 +80,21 @@ trait Api extends Logging {
       }
     }
 
+  def metadata = Action.async { implicit request =>
+    ApiResult.filter {
+      Map(Metadata.metadata.label -> Metadata.metadata.data.map(toJson(_)))
+    } reduce { collection =>
+      toJson(collection.values.flatten)
+    }
+  }
+
   def sources = Action.async { implicit request =>
     ApiResult.filter {
       val filter = ResourceFilter.fromRequest
       val sources = CollectorAgent.sources
       Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
     } reduce { collection =>
-      toJson(collection.map(_._2).flatten)
+      toJson(collection.values.flatten)
     }
   }
 

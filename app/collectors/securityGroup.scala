@@ -11,12 +11,6 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes)) {
-  def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
-    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource)
-  }
-}
-
 case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     extends Collector[SecurityGroup] {
 
@@ -84,6 +78,16 @@ object SecurityGroup {
     override def item(arn: String): Option[(Label,SecurityGroup)] =
       Prism.securityGroupAgent.getTuples.find(_._2.arn==arn).headOption
   }
+
+  implicit val fields = new Fields[SecurityGroup] {
+    override def defaultFields: Seq[String] = Seq("groupId", "name", "vpcId")
+  }
 }
 
 case class SecurityGroupRef(groupId:String, account:String, arn:Option[String])
+
+object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes)) {
+  def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
+    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource)
+  }
+}

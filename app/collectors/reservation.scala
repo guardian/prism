@@ -14,12 +14,6 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ReservationCollectorSet extends CollectorSet[Reservation](ResourceType("reservation", 15 minutes, 1 minute)) {
-  val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
-    case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource)
-  }
-}
-
 case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Reservation] with Logging {
 
   val client = AmazonEC2ClientBuilder.standard()
@@ -80,6 +74,10 @@ object Reservation {
       endTime = Try(new DateTime(reservationInstance.getEnd)).toOption
     )
   }
+
+  implicit val fields = new Fields[Reservation] {
+    override def defaultFields: Seq[String] = Seq("id", "instanceType", "instanceCount", "meta.origin.accountName")
+  }
 }
 
 case class RecurringCharge(
@@ -93,5 +91,11 @@ object RecurringCharge {
       frequency = recurringCharge.getFrequency,
       amount = recurringCharge.getAmount
     )
+  }
+}
+
+object ReservationCollectorSet extends CollectorSet[Reservation](ResourceType("reservation", 15 minutes, 1 minute)) {
+  val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
+    case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource)
   }
 }

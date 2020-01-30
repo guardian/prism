@@ -2,10 +2,14 @@ package controllers
 
 import agent.CollectorAgent
 import collectors._
+import utils.Logging
 
-object Prism {
+object Prism extends Logging {
   val lazyStartup = conf.PrismConfiguration.accounts.lazyStartup
-  val instanceAgent = new CollectorAgent[Instance](InstanceCollectorSet, lazyStartup)
+  val instanceAgent = try {new CollectorAgent[Instance](InstanceCollectorSet, lazyStartup)} catch {
+    case t: Throwable => log.error("Error", t)
+      throw t
+  }
   val lambdaAgent = new CollectorAgent[Lambda](LambdaCollectorSet, lazyStartup)
   val dataAgent = new CollectorAgent[Data](DataCollectorSet, lazyStartup)
   val securityGroupAgent = new CollectorAgent[SecurityGroup](SecurityGroupCollectorSet, lazyStartup)

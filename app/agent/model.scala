@@ -1,12 +1,14 @@
 package agent
 
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.{DateTime, Duration}
+
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
 import play.api.libs.json._
-import utils.{GoogleDoc, Logging}
+import utils.{CaseClassFieldList, GoogleDoc, Logging}
 import play.api.mvc.Call
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -25,7 +27,9 @@ trait IndexedItemWithStack extends IndexedItem {
   val stack: Option[String] = None
 }
 
-abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
+abstract class CollectorSet[T](val resource:ResourceType)(implicit fields: Fields[T]) extends Logging {
+  def defaultFields = fields.defaultFields
+  val allFields = fields.allFields
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
@@ -93,4 +97,10 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
 trait GoogleDocCollector[T] extends Collector[T] {
   def origin:GoogleDocOrigin
   def csvData:List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl), 1 minute)
+}
+
+import scala.reflect.runtime.universe.TypeTag
+abstract class Fields[T: TypeTag] {
+  def defaultFields: Seq[String]
+  def allFields = CaseClassFieldList.allFields[T]
 }

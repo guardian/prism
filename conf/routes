@@ -4,6 +4,7 @@
 
 GET        /                                  controllers.Application.index
 
+GET        /metadata                          controllers.Api.metadata
 # API V1
 GET        /sources                           controllers.Api.sources
 GET        /management/healthcheck            controllers.Api.healthCheck

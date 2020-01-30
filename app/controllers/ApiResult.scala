@@ -1,16 +1,18 @@
 package controllers
 
 import play.api.libs.concurrent.Execution.Implicits._
+
 import scala.language.postfixOps
-import agent.{Origin, ResourceType, Label}
+import agent.{Fields, Label, Origin, ResourceType}
 import model.DataContainer
 import org.joda.time.DateTime
 import play.api.http.{ContentTypes, Status}
 import play.api.libs.json._
-import play.api.mvc.{Result, Results, RequestHeader}
+import play.api.mvc.{RequestHeader, Result, Results}
+
 import scala.concurrent.Future
 import scala.util.Try
-import utils.{ResourceFilter, Logging}
+import utils.{Logging, ResourceFilter}
 import jsonimplicits.joda._
 
 import scala.concurrent.duration._

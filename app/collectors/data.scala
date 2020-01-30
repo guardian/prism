@@ -9,11 +9,6 @@ import agent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object DataCollectorSet extends CollectorSet[Data](ResourceType("data", 15 minutes, 1 minute)) {
-  def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
-    case json:JsonOrigin => JsonDataCollector(json, resource)
-  }
-}
 
 case class JsonDataCollector(origin:JsonOrigin, resource: ResourceType) extends JsonCollector[Data] {
   implicit val valueReads = Json.reads[Value]
@@ -33,6 +28,12 @@ case class Data( key:String, values:Seq[Value]) extends IndexedItem {
   }
 }
 
+object Data {
+  implicit val fields = new Fields[Data] {
+    override def defaultFields: Seq[String] = Seq("key")
+  }
+}
+
 case class Value( stack: String,
                   app: String,
                  stage: String,
@@ -41,4 +42,10 @@ case class Value( stack: String,
   lazy val stackRegex = s"^$stack$$".r
   lazy val appRegex = s"^$app$$".r
   lazy val stageRegex = s"^$stage$$".r
+}
+
+object DataCollectorSet extends CollectorSet[Data](ResourceType("data", 15 minutes, 1 minute)) {
+  def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
+    case json:JsonOrigin => JsonDataCollector(json, resource)
+  }
 }

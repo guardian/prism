@@ -13,12 +13,6 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ServerCertificateCollectorSet extends CollectorSet[ServerCertificate](ResourceType("server-certificates", 1 hour, 5 minutes)) {
-  val lookupCollector: PartialFunction[Origin, Collector[ServerCertificate]] = {
-    case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource)
-  }
-}
-
 case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[ServerCertificate] with Logging {
 
   val client = AmazonIdentityManagementClientBuilder.standard()
@@ -39,6 +33,10 @@ object ServerCertificate {
     uploadedAt = Try(new DateTime(metadata.getUploadDate)).toOption,
     expiryDate = Try(new DateTime(metadata.getExpiration)).toOption
   )
+
+  implicit val fields = new Fields[ServerCertificate] {
+    override def defaultFields: Seq[String] = Seq("id", "name", "expiryDate")
+  }
 }
 
 case class ServerCertificate(
@@ -50,4 +48,10 @@ case class ServerCertificate(
   expiryDate: Option[DateTime]
 ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.serverCertificate(arn)
+}
+
+object ServerCertificateCollectorSet extends CollectorSet[ServerCertificate](ResourceType("server-certificates", 1 hour, 5 minutes)) {
+  val lookupCollector: PartialFunction[Origin, Collector[ServerCertificate]] = {
+    case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource)
+  }
 }

@@ -16,14 +16,6 @@ import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => A
 import agent._
 import scala.concurrent.duration._
 
-
-object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
-  val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-    case json:JsonOrigin => JsonInstanceCollector(json, resource)
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
-  }
-}
-
 case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
   import jsonimplicits.model._
@@ -113,6 +105,10 @@ object Instance {
       Some(specs)
     )
   }
+
+  implicit val fields = new Fields[Instance] {
+    override def defaultFields: Seq[String] = Seq("stack", "stage", "app", "instanceName")
+  }
 }
 
 case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
@@ -200,5 +196,12 @@ case class Instance(
 
   def prefixStage(prefix:String):Instance = {
     this.copy(stage = stage.map(s => s"$prefix$s"))
+  }
+}
+
+object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
+  val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
+    case json:JsonOrigin => JsonInstanceCollector(json, resource)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
   }
 }
