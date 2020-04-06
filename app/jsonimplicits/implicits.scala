@@ -55,6 +55,7 @@ object model {
     Json.writes[Reservation]
   }
 
+  implicit val domainResourceRecordWriter = Json.writes[DomainResourceRecord]
   implicit val domainValidationWriter = Json.writes[DomainValidation]
   implicit val renewalInfoWriter = Json.writes[RenewalInfo]
   implicit val acmCertificateWriter = Json.writes[AcmCertificate]
