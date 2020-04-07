@@ -2,7 +2,7 @@ package collectors
 
 import agent._
 import com.amazonaws.services.certificatemanager.AWSCertificateManagerClientBuilder
-import com.amazonaws.services.certificatemanager.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, DomainValidation => AwsDomainValidation}
+import com.amazonaws.services.certificatemanager.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
@@ -34,11 +34,29 @@ case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceTy
   }
 }
 
+case class DomainResourceRecord(
+  name: String,
+  resourceType: String,
+  value: String
+)
+
+object DomainResourceRecord {
+  def fromApiData(drr: ResourceRecord): DomainResourceRecord = {
+    DomainResourceRecord(
+      name = drr.getName,
+      resourceType = drr.getType,
+      value = drr.getValue
+    )
+  }
+}
+
 case class DomainValidation(
                              domainName: String,
                              validationEmails: List[String],
                              validationDomain: String,
-                             validationStatus: String
+                             validationStatus: String,
+                             validationMethod: String,
+                             resourceRecord: Option[DomainResourceRecord]
                            )
 
 object DomainValidation {
@@ -47,7 +65,9 @@ object DomainValidation {
       dv.getDomainName,
       Option(dv.getValidationEmails).toList.flatMap(_.asScala.toList),
       dv.getValidationDomain,
-      dv.getValidationStatus
+      dv.getValidationStatus,
+      dv.getValidationMethod,
+      Option(dv.getResourceRecord).map(DomainResourceRecord.fromApiData)
     )
   }
 }
@@ -78,6 +98,7 @@ object AcmCertificate {
     keyAlgorithm = cert.getKeyAlgorithm,
     signatureAlgorithm = cert.getSignatureAlgorithm,
     serial = cert.getSerial,
+    validationMethod = cert.getDomainValidationOptions.asScala.headOption.map(_.getValidationMethod),
     domainValidationOptions = cert.getDomainValidationOptions.asScala.toList.map(DomainValidation.fromApiData),
     renewalStatus = Option(cert.getRenewalSummary).map(RenewalInfo.fromApiData)
   )
@@ -100,6 +121,7 @@ case class AcmCertificate(
                               keyAlgorithm: String,
                               signatureAlgorithm: String,
                               serial: String,
+                              validationMethod: Option[String],
                               domainValidationOptions: List[DomainValidation],
                               renewalStatus: Option[RenewalInfo]
                             ) extends IndexedItem {
