@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 5 minutes)) {
+object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 1 minute)) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
     case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
   }
