@@ -30,7 +30,7 @@ object Owners extends Owners {
   override def default = Owner("dig.dev.tooling")
 
   override def stacks: Set[(String, SSA)] = Set(
-    "adam.fisher" -> SSA("security"),
+    "security.dev" -> SSA("security"),
     "dotcom.platform" -> SSA("frontend"),
     "dotcom.platform" -> SSA("frontend-elk"),
     "identitydev" -> SSA(stack = "discussion"),
