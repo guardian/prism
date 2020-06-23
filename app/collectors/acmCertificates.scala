@@ -76,7 +76,7 @@ case class RenewalInfo(renewalStatus: String, domainValidationOptions: List[Doma
 
 object RenewalInfo {
   def fromApiData(ri: RenewalSummary): RenewalInfo = {
-    RenewalInfo(ri.getRenewalStatus, ri.getDomainValidationOptions.asScala.map(DomainValidation.fromApiData).toList)
+    RenewalInfo(ri.getRenewalStatus, Option(ri.getDomainValidationOptions).map(_.asScala).getOrElse(Nil).map(DomainValidation.fromApiData).toList)
   }
 }
 
