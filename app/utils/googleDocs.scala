@@ -1,14 +1,17 @@
 package utils
 
 import scala.util.parsing.combinator._
-import java.net.{URLDecoder, URL}
-import play.api.libs.ws.WS
+import java.net.{URL, URLDecoder}
+
+import play.api.libs.ws._
 import play.api.http.Status._
 import play.api.http.HeaderNames
+
 import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.Play.current
+import play.api.libs.ws
+
 
 // A CSV parser based on RFC4180
 // http://tools.ietf.org/html/rfc4180
@@ -55,30 +58,31 @@ object GoogleDoc extends Logging {
     val headers:Seq[(String,String)] = if (cookies.isEmpty) Seq.empty else {
       Seq(HeaderNames.COOKIE -> cookies.map{case (name, value) => s"$name=$value"}.mkString("; "))
     }
-    WS.url(url.toString)
-      .withFollowRedirects(false)
-      .withHeaders(headers:_*)
-      .get().flatMap { response =>
-      if (redirectStatus.contains(response.status)) {
-        // follow redirect
-        val redirectURL = response.header(HeaderNames.LOCATION).map { location =>
-          //val decodedLocation = URLDecoder.decode(location ,"utf-8")
-          val target = new URL(url, location)
-          target
-        }
-        assert(redirectURL.isDefined, s"Bad location redirect from ${url.toString}")
-        assert(Set("http","https").contains(redirectURL.get.getProtocol), "Illegal redirect protocol")
-
-        val newCookies = response.cookies.flatMap { cookie =>
-          if (cookie.name.isDefined && cookie.value.isDefined) {
-            Some(cookie.name.get -> cookie.value.get)
-          } else None
-        }.toMap
-
-        getUrlData(redirectURL.get, cookies ++ newCookies, redirects+1)
-      } else {
-        Future.successful(response.body)
-      }
+//    ws.url(url.toString)
+//      .withFollowRedirects(false)
+//      .withHeaders(headers:_*)
+//      .get().flatMap { response =>
+//      if (redirectStatus.contains(response.status)) {
+//        // follow redirect
+//        val redirectURL = response.header(HeaderNames.LOCATION).map { location =>
+//          //val decodedLocation = URLDecoder.decode(location ,"utf-8")
+//          val target = new URL(url, location)
+//          target
+//        }
+//        assert(redirectURL.isDefined, s"Bad location redirect from ${url.toString}")
+//        assert(Set("http","https").contains(redirectURL.get.getProtocol), "Illegal redirect protocol")
+//
+//        val newCookies = response.cookies.flatMap { cookie =>
+//          if (cookie.name.isDefined && cookie.value.isDefined) {
+//            Some(cookie.name.get -> cookie.value.get)
+//          } else None
+//        }.toMap
+//
+//        getUrlData(redirectURL.get, cookies ++ newCookies, redirects+1)
+//      } else {
+//        Future.successful(response.body)
+//      }
+    Future.successful("yay")
     }
-  }
+//  }
 }

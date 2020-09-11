@@ -6,12 +6,11 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
 import com.amazonaws.util.EC2MetadataUtils
-import com.gu.management.Loggable
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-object AWS extends Loggable {
+object AWS /*extends Loggable*/ {
 
   // This is to detect if we are running in AWS or on GC2. The 169.254.169.254
   // thing works on both but this DNS entry seems peculiar to AWS.
@@ -41,7 +40,7 @@ object AWS extends Loggable {
       }.toMap
     lazy val customTags = allTags.filterKeys(!_.startsWith("aws:"))
     lazy val identity = (customTags.get("Stack"), customTags.get("App"), customTags.get("Stage")) match {
-      case (Some(stack), Some(app), Some(stage)) => Some(Identity(stack, app, stage))
+      case (Some(stack), Some(app), Some(stage)) => None //Some(Identity(stack, app, stage))
       case _ => None
     }
   }
@@ -50,7 +49,7 @@ object AWS extends Loggable {
 
     def addressesFromTags(tags: List[Tag]): List[String] = {
 
-      logger.info(s"Looking up instances with tags: $tags")
+//      logger.info(s"Looking up instances with tags: $tags")
       val tagsAsFilters = tags.map{
         case(name, value) => new Filter("tag:" + name).withValues(value)
       }.asJavaCollection
@@ -60,7 +59,7 @@ object AWS extends Loggable {
       val reservation = describeInstancesResult.getReservations.asScala.toList
       val instances = reservation.flatMap(r => r.getInstances.asScala)
       val addresses = instances.flatMap(i => Option(i.getPrivateIpAddress))
-      logger.info(s"Instances with tags $tags: $addresses")
+//      logger.info(s"Instances with tags $tags: $addresses")
       addresses
     }
   }

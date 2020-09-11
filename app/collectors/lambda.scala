@@ -7,7 +7,7 @@ import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import scala.collection.JavaConversions._
+import collection.convert.ImplicitConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -62,5 +62,5 @@ case class Lambda(
   override val stage: Option[String],
   override val stack: Option[String]
 ) extends IndexedItemWithStage with IndexedItemWithStack {
-  override def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
+  override def callFromArn: (String) => Call = arn => routes.Application.index() // routes.Api.instance(arn)
 }

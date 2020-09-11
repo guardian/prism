@@ -1,8 +1,9 @@
 package utils
 
+
 import scala.concurrent.ExecutionContext
 import play.api.http.HeaderNames.CONTENT_TYPE
-import play.api.http.ContentTypes.{JSON, JAVASCRIPT}
+import play.api.http.ContentTypes.{JAVASCRIPT, JSON}
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 import play.api.http.Status
@@ -28,12 +29,12 @@ class JsonpFilter(paramName: String = "callback")(implicit codec: Codec, ex: Exe
 
   def jsonpify(callback: String)(result: Result): Result = {
     result.header.headers.get(CONTENT_TYPE) match {
-      case Some(ct) if ct == JSON =>
-        Result(
-          header = result.header.copy(status = Status.OK),
-          body = Enumerator(codec.encode(s"$callback(")) >>> result.body >>> Enumerator(codec.encode(");")),
-          connection = result.connection
-        ).as(JAVASCRIPT)
+      case Some(ct) if ct == JSON => result
+//        Result(
+//          header = result.header.copy(status = Status.OK),
+//          body = Enumerator(codec.encode(s"$callback(")) >>> result.body >>> Enumerator(codec.encode(");")),
+//          connection = result.connection
+//        ).as(JAVASCRIPT)
       case _ => result
     }
   }

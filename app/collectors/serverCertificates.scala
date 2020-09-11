@@ -49,5 +49,5 @@ case class ServerCertificate(
   uploadedAt: Option[DateTime],
   expiryDate: Option[DateTime]
 ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Api.serverCertificate(arn)
+  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.serverCertificate(arn)
 }

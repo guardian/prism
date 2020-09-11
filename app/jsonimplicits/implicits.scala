@@ -91,17 +91,17 @@ object model {
     }
   }
 
-  implicit val sourceStatusWriter = new Writes[SourceStatus] {
-    implicit val labelWriter = basicLabelWriter
-    implicit val writes = Json.writes[SourceStatus]
-    def writes(o: SourceStatus): JsValue = {
-      Json.obj(
-        "resource" -> o.state.resource.name,
-        "origin" -> o.state.origin,
-        "status" -> o.latest.status
-      ) ++ Json.toJson(o).as[JsObject]
-    }
-  }
+//  implicit val sourceStatusWriter = new Writes[SourceStatus] {
+//    implicit val labelWriter = basicLabelWriter
+//    implicit val writes = Json.writes[SourceStatus]
+//    def writes(o: SourceStatus): JsValue = {
+//      Json.obj(
+//        "resource" -> o.state.resource.name,
+//        "origin" -> o.state.origin,
+//        "status" -> o.latest.status
+//      ) ++ Json.toJson(o).as[JsObject]
+//    }
+//  }
 
   implicit def referenceReads[T](implicit idLookup:ArnLookup[T]): Reads[Reference[T]] = new Reads[Reference[T]] {
     override def reads(json: JsValue): JsResult[Reference[T]] = JsSuccess(Reference[T](json.as[String]))

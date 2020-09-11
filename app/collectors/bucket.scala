@@ -70,5 +70,5 @@ case class Bucket(
   region: String,
   createdTime: Option[DateTime]
 ) extends IndexedItem {
-  override def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
+  override def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.data(arn)
 }

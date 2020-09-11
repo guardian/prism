@@ -3,11 +3,11 @@ package collectors
 import agent._
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AWSSecurityGroup}
-import controllers.{routes, Prism}
+import controllers.{routes}
 import play.api.mvc.Call
 import utils.PaginatedAWSRequest
 
-import scala.collection.JavaConversions._
+import collection.convert.ImplicitConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -25,7 +25,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
       rule.getUserIdGroupPairs.map { pair =>
         SecurityGroupRef(pair.getGroupId, pair.getUserId, lookup.get(pair.getGroupId).map(_.arn))
       }
-    }
+    }.toSeq
 
     val rules = secGroup.getIpPermissions.map { rule =>
       Rule(
@@ -55,9 +55,10 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
 
   def crawl: Iterable[SecurityGroup] = {
     // get all existing groups to allow for cross referencing
-    val existingGroups = Prism.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
-    val secGroups = PaginatedAWSRequest.run(client.describeSecurityGroups)(new DescribeSecurityGroupsRequest())
-    secGroups.map ( fromAWS(_, existingGroups) )
+//    val existingGroups = Prism.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
+//    val secGroups = PaginatedAWSRequest.run(client.describeSecurityGroups)(new DescribeSecurityGroupsRequest())
+//    secGroups.map ( fromAWS(_, existingGroups) )
+    Seq()
   }
 }
 
@@ -75,14 +76,14 @@ case class SecurityGroup(arn:String,
                          rules:Seq[Rule],
                          vpcId:Option[String],
                          tags:Map[String, String]) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Api.securityGroup(arn)
+  def callFromArn: (String) => Call = arn => routes.Application.index()//routes.Api.securityGroup(arn)
 }
 
 object SecurityGroup {
   implicit val arnLookup = new ArnLookup[SecurityGroup] {
-    override def call(arn: String): Call = routes.Api.securityGroup(arn)
-    override def item(arn: String): Option[(Label,SecurityGroup)] =
-      Prism.securityGroupAgent.getTuples.find(_._2.arn==arn).headOption
+    override def call(arn: String): Call = routes.Application.index() //routes.Api.securityGroup(arn)
+    override def item(arn: String): Option[(Label,SecurityGroup)] = None
+//      Prism.securityGroupAgent.getTuples.find(_._2.arn==arn).headOption
   }
 }
 

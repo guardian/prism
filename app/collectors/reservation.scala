@@ -52,7 +52,7 @@ case class Reservation(
   startTime: Option[DateTime],
   endTime: Option[DateTime]
 ) extends IndexedItem {
-  override def callFromArn: (String) => Call = arn => routes.Api.reservation(arn)
+  override def callFromArn: (String) => Call = arn => routes.Application.index() // routes.Api.reservation(arn)
 
 }
 

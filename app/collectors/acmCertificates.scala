@@ -125,5 +125,5 @@ case class AcmCertificate(
                               domainValidationOptions: List[DomainValidation],
                               renewalStatus: Option[RenewalInfo]
                             ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Api.acmCertificate(arn)
+  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.acmCertificate(arn)
 }

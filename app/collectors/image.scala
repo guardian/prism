@@ -78,5 +78,5 @@ case class Image(
                 rootDeviceType: String,
                 imageType: String
                   ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Api.image(arn)
+  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.image(arn)
 }

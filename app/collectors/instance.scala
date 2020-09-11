@@ -1,8 +1,7 @@
 package collectors
 
 import org.joda.time.DateTime
-
-import scala.collection.JavaConversions._
+import collection.convert.ImplicitConversions._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
@@ -67,7 +66,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
               "groupName" -> sg.getGroupName
             )
           )
-        },
+        }.toSeq,
         tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
         specs = InstanceSpecification(instance.getImageId, Image.arn(origin.region, instance.getImageId), instance.getInstanceType, Option(instance.getVpcId))
       )
