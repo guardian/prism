@@ -4,6 +4,10 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
+// Added to fix "Unknown artefact" warning for play-json and play-json-joda
+// https://stackoverflow.com/questions/41372978/unknown-artifact-not-resolved-or-indexed-error-for-scalatest
+ThisBuild / useCoursier := false
+
 scalaVersion in ThisBuild := "2.13.1"
 
 //scalacOptions ++= Seq("-unchecked", "-deprecation",
@@ -42,6 +46,8 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-acm" % awsVersion,
       "com.amazonaws" % "aws-java-sdk-route53" % awsVersion,
       "com.amazonaws" % "aws-java-sdk-elasticloadbalancing" % awsVersion,
+      "com.typesafe.play" %% "play-json" % "2.9.1",
+      "com.typesafe.play" %% "play-json-joda" % "2.9.1",
       ws,
 
 //      "com.gu" %% "management-play" % "9.0",

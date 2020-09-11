@@ -21,7 +21,7 @@ object joda {
   implicit object dateTimeWrites extends Writes[org.joda.time.DateTime] {
     def writes(d: org.joda.time.DateTime): JsValue = JsString(ISODateTimeFormat.dateTime.print(d))
   }
-  implicit val dateTimeReads = Reads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+  implicit val dateTimeReads = JodaReads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
 }
 
 object model {

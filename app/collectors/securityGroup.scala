@@ -7,7 +7,10 @@ import controllers.{routes}
 import play.api.mvc.Call
 import utils.PaginatedAWSRequest
 
-import collection.convert.ImplicitConversions._
+//import collection.convert.ImplicitConversions._
+// Implicit conversion wasn't working so we've added asScala where there were errors
+// TODO: Verify this is the best approach
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -22,18 +25,18 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
 
   def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
-      rule.getUserIdGroupPairs.map { pair =>
+      rule.getUserIdGroupPairs.asScala.map { pair =>
         SecurityGroupRef(pair.getGroupId, pair.getUserId, lookup.get(pair.getGroupId).map(_.arn))
       }
     }.toSeq
 
-    val rules = secGroup.getIpPermissions.map { rule =>
+    val rules = secGroup.getIpPermissions.asScala.map { rule =>
       Rule(
         rule.getIpProtocol.replace("-1","all"),
         Option(rule.getFromPort).map(_.toInt),
         Option(rule.getToPort).map(_.toInt),
-        rule.getIpv4Ranges.toSeq.map(_.toString).sorted.wrap,
-        rule.getIpv6Ranges.toSeq.map(_.toString).sorted.wrap,
+        rule.getIpv4Ranges.asScala.toSeq.map(_.toString).sorted.wrap,
+        rule.getIpv6Ranges.asScala.toSeq.map(_.toString).sorted.wrap,
         groupRefs(rule).wrap
       )
     }
@@ -44,7 +47,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
       origin.region,
       rules.toSeq,
       Option(secGroup.getVpcId),
-      secGroup.getTags.map(t => t.getKey -> t.getValue).toMap
+      secGroup.getTags.asScala.map(t => t.getKey -> t.getValue).toMap
     )
   }
 

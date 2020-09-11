@@ -64,10 +64,10 @@ object ResourceFilter {
   def fromRequest(implicit request: RequestHeader): ResourceFilter = fromRequestWithDefaults()
 
   def fromRequestWithDefaults(defaults: (String,String)*)(implicit request: RequestHeader): ResourceFilter = {
-    val defaultKeys = defaults.flatMap{ d => matcher(d._1,d._2) }.groupBy(_._1).mapValues(_.map(_._2))
-    val filterKeys = request.queryString.filterKeys(key => !Blacklist.contains(key)).toSeq.flatMap { case (key, values) =>
+    val defaultKeys = defaults.flatMap{ d => matcher(d._1,d._2) }.groupBy(_._1).view.mapValues(_.map(_._2))
+    val filterKeys = request.queryString.view.filterKeys(key => !Blacklist.contains(key)).toSeq.flatMap { case (key, values) =>
       values.flatMap(matcher(key,_))
-    }.groupBy(_._1).mapValues(_.map(_._2))
+    }.groupBy(_._1).view.mapValues(_.map(_._2))
     ResourceFilter(Map())// defaultKeys ++ filterKeys)
   }
 

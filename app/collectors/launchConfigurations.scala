@@ -7,7 +7,7 @@ import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
 
 import scala.util.Try

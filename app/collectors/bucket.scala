@@ -8,7 +8,7 @@ import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.Logging
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._

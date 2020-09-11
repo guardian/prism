@@ -7,7 +7,7 @@ import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 

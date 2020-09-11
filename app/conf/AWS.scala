@@ -7,7 +7,7 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
 import com.amazonaws.util.EC2MetadataUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 object AWS /*extends Loggable*/ {
@@ -38,7 +38,7 @@ object AWS /*extends Loggable*/ {
         )
         tagsResult.getTags.asScala.map{td => td.getKey -> td.getValue }
       }.toMap
-    lazy val customTags = allTags.filterKeys(!_.startsWith("aws:"))
+    lazy val customTags = allTags.view.filterKeys(!_.startsWith("aws:"))
     lazy val identity = (customTags.get("Stack"), customTags.get("App"), customTags.get("Stage")) match {
       case (Some(stack), Some(app), Some(stage)) => None //Some(Identity(stack, app, stage))
       case _ => None

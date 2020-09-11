@@ -10,7 +10,7 @@ import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRe
 import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListFunctionsResult}
 import com.amazonaws.services.route53.model._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait Paging[Request, Result, A, Item] {
   def getPageMarker(result: Result): Option[A]

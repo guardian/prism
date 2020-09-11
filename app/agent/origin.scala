@@ -50,7 +50,7 @@ trait Origin {
   def transformInstance(input: Instance): Instance = input
   def standardFields: Map[String, String] = Map("vendor" -> vendor, "accountName" -> account)
   def jsonFields: Map[String, String]
-  def toJson: JsObject = JsObject((standardFields ++ jsonFields).mapValues(Json.toJson(_)).toSeq)
+  def toJson: JsObject = JsObject((standardFields ++ jsonFields).view.mapValues(Json.toJson(_)).toSeq)
 }
 
 case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], region: String)(secretKey: Option[String]) {

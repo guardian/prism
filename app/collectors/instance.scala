@@ -1,7 +1,7 @@
 package collectors
 
 import org.joda.time.DateTime
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
@@ -121,7 +121,7 @@ object ManagementEndpoint {
     tag match {
       case Some("none") => None
       case Some(tagContent) =>
-        Some(tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
+        Some(tagContent.split(";").filterNot(_.isEmpty).toIndexedSeq.map{ endpoint =>
           val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
             case KeyValue(key,value) => Some(key -> value)
             case _ => None
