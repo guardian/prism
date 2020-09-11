@@ -68,7 +68,7 @@ object ResourceFilter {
     val filterKeys = request.queryString.filterKeys(key => !Blacklist.contains(key)).toSeq.flatMap { case (key, values) =>
       values.flatMap(matcher(key,_))
     }.groupBy(_._1).mapValues(_.map(_._2))
-    ResourceFilter(defaultKeys ++ filterKeys)
+    ResourceFilter(Map())// defaultKeys ++ filterKeys)
   }
 
   lazy val all = new Matchable[JsValue] {

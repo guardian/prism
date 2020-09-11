@@ -46,7 +46,7 @@ lazy val root = (project in file("."))
 
 //      "com.gu" %% "management-play" % "9.0",
 //      "com.typesafe.akka" %% "akka-agent" % "2.4.1",
-      "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
+     // "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
       filters,
       specs2 % "test"
     ),

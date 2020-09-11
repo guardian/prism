@@ -1,7 +1,7 @@
 package collectors
 
 import org.joda.time.DateTime
-import collection.convert.ImplicitConversions._
+import collection.JavaConverters._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
@@ -58,7 +58,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         instanceName = instance.getInstanceId,
         region = origin.region,
         vendor = "aws",
-        securityGroups = instance.getSecurityGroups.map{ sg =>
+        securityGroups = instance.getSecurityGroups.asScala.map{ sg =>
           Reference[SecurityGroup](
             s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.getGroupId}",
             Map(
@@ -67,7 +67,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
             )
           )
         }.toSeq,
-        tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
+        tags = instance.getTags.asScala.map(t => t.getKey -> t.getValue).toMap,
         specs = InstanceSpecification(instance.getImageId, Image.arn(origin.region, instance.getImageId), instance.getInstanceType, Option(instance.getVpcId))
       )
     }.map(origin.transformInstance)
@@ -186,8 +186,8 @@ case class Instance(
                  specification:Option[InstanceSpecification]
                 ) extends IndexedItemWithStage with IndexedItemWithStack {
 
-  def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
-  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
+  def callFromArn: (String) => Call = arn => routes.Application.index() // routes.Api.instance(arn)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) // ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {
     this.copy(

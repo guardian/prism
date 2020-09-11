@@ -7,7 +7,7 @@ import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import collection.convert.ImplicitConversions._
+import collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -26,7 +26,7 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) exte
 
   def crawl: Iterable[Lambda] = {
     PaginatedAWSRequest.run(client.listFunctions)(new ListFunctionsRequest()).map { lambda => {
-      val tags = client.listTags(new ListTagsRequest().withResource(lambda.getFunctionArn)).getTags.toMap
+      val tags = client.listTags(new ListTagsRequest().withResource(lambda.getFunctionArn)).getTags.asScala.toMap
       Thread.sleep(100) // this avoids ThrottlingException back from AWS
       Lambda.fromApiData(
         lambda,
