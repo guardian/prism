@@ -1,29 +1,27 @@
-//package conf
-//
+package conf
+
 //import com.gu.management.{ManifestPage, CountMetric, TimingMetric, GaugeMetric, Switchboard, HealthcheckManagementPage, StatusPage, PropertiesPage}
-//import utils.{UnnaturalOrdering, Logging}
-//import scala.language.postfixOps
-//import play.api.{Configuration, Mode, Play}
+import utils.{UnnaturalOrdering, Logging}
+import scala.language.postfixOps
+import play.api.{Configuration, Mode, Play}
 //import com.gu.management.play.{RequestMetrics, Management => GuManagement}
 //import com.gu.management.logback.LogbackLevelPage
-//import agent._
-//import java.net.URL
+import agent._
+import java.net.URL
 //import controllers.Prism
-//
-//import scala.util.Try
-//import scala.util.control.NonFatal
-//
+
+import scala.util.Try
+import scala.util.control.NonFatal
+
 //object App {
 //  val name: String = if (Play.current.mode == Mode.Test) "prism-test" else "prism"
 //}
-//
-//trait ConfigurationSource {
-//  def configuration(mode: Mode.Mode): Configuration
-//}
-//
-//class PrismConfiguration() extends Logging {
-//  val configuration = Play.current.configuration
-//
+
+trait ConfigurationSource {
+  def configuration(mode: Mode): Configuration
+}
+
+//class PrismConfiguration(configuration: Configuration) extends Logging {
 //  implicit class option2getOrException[T](option: Option[T]) {
 //    def getOrException(exceptionMessage: String): T = {
 //      option.getOrElse {
@@ -33,7 +31,8 @@
 //  }
 //
 //  def subConfigurations(prefix:String): Map[String,Configuration] = {
-//    val config = configuration.getConfig(prefix).getOrElse(Configuration.empty)
+//
+//    val config = configuration.underlying.getConfig(prefix)
 //    config.subKeys.flatMap{ subKey =>
 //      Try(config.getConfig(subKey)).getOrElse(None).map(subKey ->)
 //    }.toMap
@@ -122,9 +121,9 @@
 //}
 //
 //object PrismConfiguration extends PrismConfiguration()
-//
+
 //object PlayRequestMetrics extends RequestMetrics.Standard
-//
+
 //object SourceMetrics {
 //  def sources = CollectorAgent.sources.data
 //  object TotalGauge extends GaugeMetric("prism", "sources", "Sources", "Number of sources in Prism", () => sources.size)
@@ -136,7 +135,7 @@
 //  object CrawlFailureCounter extends CountMetric("prism", "crawl_error", "Failed crawls", "Number of crawls that failed")
 //  val all = Seq(TotalGauge, SuccessGauge, ErrorGauge, CrawlTimer, CrawlSuccessCounter, CrawlFailureCounter)
 //}
-//
+
 //object DataMetrics extends Logging {
 //  val resourceNames = Prism.allAgents.flatMap(_.resourceName).distinct
 //  def countResources(resource:String) = {
@@ -147,7 +146,7 @@
 //    new GaugeMetric("prism", s"${resource}_entities", s"$resource entities", s"Number of $resource entities", () => countResources(resource))
 //  }
 //}
-//
+
 //object Management extends GuManagement {
 //  val applicationName = App.name
 //

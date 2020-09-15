@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.certificatemanager.AWSCertificateManagerClientBuilder
+import com.amazonaws.services.certificatemanager.{AWSCertificateManager, AWSCertificateManagerClientBuilder}
 import com.amazonaws.services.certificatemanager.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
@@ -22,7 +22,7 @@ object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](Resour
 
 case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[AcmCertificate] with Logging {
 
-  val client = AWSCertificateManagerClientBuilder.standard()
+  val client: AWSCertificateManager = AWSCertificateManagerClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -81,7 +81,7 @@ object RenewalInfo {
 }
 
 object AcmCertificate {
-  def fromApiData(cert: CertificateDetail, origin: AmazonOrigin) = AcmCertificate(
+  def fromApiData(cert: CertificateDetail, origin: AmazonOrigin): AcmCertificate = AcmCertificate(
     arn = cert.getCertificateArn,
     domainName = cert.getDomainName,
     subjectAlternativeNames = cert.getSubjectAlternativeNames.asScala.toList,

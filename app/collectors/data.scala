@@ -1,13 +1,14 @@
 package collectors
 
 import org.joda.time.Duration
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
 import controllers.routes
 import agent._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.matching.Regex
 
 object DataCollectorSet extends CollectorSet[Data](ResourceType("data", 15 minutes, 1 minute)) {
   def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
@@ -16,8 +17,8 @@ object DataCollectorSet extends CollectorSet[Data](ResourceType("data", 15 minut
 }
 
 case class JsonDataCollector(origin:JsonOrigin, resource: ResourceType) extends JsonCollector[Data] {
-  implicit val valueReads = Json.reads[Value]
-  implicit val dataReads = Json.reads[Data]
+  implicit val valueReads: Reads[Value] = Json.reads[Value]
+  implicit val dataReads: Reads[Data] = Json.reads[Data]
   def crawl: Iterable[Data] = crawlJson
 }
 
@@ -38,7 +39,7 @@ case class Value( stack: String,
                  stage: String,
                  value: String,
                  comment: Option[String] ) {
-  lazy val stackRegex = s"^$stack$$".r
-  lazy val appRegex = s"^$app$$".r
-  lazy val stageRegex = s"^$stage$$".r
+  lazy val stackRegex: Regex = s"^$stack$$".r
+  lazy val appRegex: Regex = s"^$app$$".r
+  lazy val stageRegex: Regex = s"^$stage$$".r
 }

@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
+import com.amazonaws.services.identitymanagement.{AmazonIdentityManagement, AmazonIdentityManagementClientBuilder}
 import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ServerCertificateMetadata}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
@@ -21,7 +21,7 @@ object ServerCertificateCollectorSet extends CollectorSet[ServerCertificate](Res
 
 case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[ServerCertificate] with Logging {
 
-  val client = AmazonIdentityManagementClientBuilder.standard()
+  val client: AmazonIdentityManagement = AmazonIdentityManagementClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -31,7 +31,7 @@ case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: Resourc
 }
 
 object ServerCertificate {
-  def fromApiData(metadata: ServerCertificateMetadata, origin: AmazonOrigin) = ServerCertificate(
+  def fromApiData(metadata: ServerCertificateMetadata, origin: AmazonOrigin): ServerCertificate = ServerCertificate(
     arn = metadata.getArn,
     id = metadata.getServerCertificateId,
     name = metadata.getServerCertificateName,

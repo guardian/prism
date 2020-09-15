@@ -3,23 +3,25 @@ package conf
 import java.net.InetAddress
 
 import com.amazonaws.regions.Regions
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
 import com.amazonaws.util.EC2MetadataUtils
+import play.api.Logging
 
+import scala.collection.MapView
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-object AWS /*extends Loggable*/ {
+object AWS extends Logging {
 
   // This is to detect if we are running in AWS or on GC2. The 169.254.169.254
   // thing works on both but this DNS entry seems peculiar to AWS.
-  lazy val isAWS = Try(InetAddress.getByName("instance-data")).isSuccess
+  lazy val isAWS: Boolean = Try(InetAddress.getByName("instance-data")).isSuccess
   def awsOption[T](f: => T): Option[T] = if (isAWS) Option(f) else None
 
   lazy val connectionRegion: Regions = instance.region.getOrElse(Regions.EU_WEST_1)
 
-  lazy val EC2Client = AmazonEC2ClientBuilder.standard().withRegion(connectionRegion).build()
+  lazy val EC2Client: AmazonEC2 = AmazonEC2ClientBuilder.standard().withRegion(connectionRegion).build()
 
   type Tag = (String, String)
 
@@ -38,9 +40,9 @@ object AWS /*extends Loggable*/ {
         )
         tagsResult.getTags.asScala.map{td => td.getKey -> td.getValue }
       }.toMap
-    lazy val customTags = allTags.view.filterKeys(!_.startsWith("aws:"))
-    lazy val identity = (customTags.get("Stack"), customTags.get("App"), customTags.get("Stage")) match {
-      case (Some(stack), Some(app), Some(stage)) => None //Some(Identity(stack, app, stage))
+    lazy val customTags: MapView[String, String] = allTags.view.filterKeys(!_.startsWith("aws:"))
+    lazy val identity: Option[Identity] = (customTags.get("Stack"), customTags.get("App"), customTags.get("Stage")) match {
+      case (Some(stack), Some(app), Some(stage)) => Some(Identity(stack, app, stage))
       case _ => None
     }
   }
@@ -49,7 +51,7 @@ object AWS /*extends Loggable*/ {
 
     def addressesFromTags(tags: List[Tag]): List[String] = {
 
-//      logger.info(s"Looking up instances with tags: $tags")
+      logger.info(s"Looking up instances with tags: $tags")
       val tagsAsFilters = tags.map{
         case(name, value) => new Filter("tag:" + name).withValues(value)
       }.asJavaCollection
@@ -59,7 +61,7 @@ object AWS /*extends Loggable*/ {
       val reservation = describeInstancesResult.getReservations.asScala.toList
       val instances = reservation.flatMap(r => r.getInstances.asScala)
       val addresses = instances.flatMap(i => Option(i.getPrivateIpAddress))
-//      logger.info(s"Instances with tags $tags: $addresses")
+      logger.info(s"Instances with tags $tags: $addresses")
       addresses
     }
   }

@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.route53.AmazonRoute53ClientBuilder
+import com.amazonaws.services.route53.{AmazonRoute53, AmazonRoute53ClientBuilder}
 import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
 import controllers.routes
 import play.api.mvc.Call
@@ -19,7 +19,7 @@ object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("r
 
 case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Route53Zone] with Logging {
 
-  val client = AmazonRoute53ClientBuilder.standard()
+  val client: AmazonRoute53 = AmazonRoute53ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -31,7 +31,7 @@ case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) ex
 }
 
 object Route53Zone {
-  def fromApiData(zone: HostedZone, awsRecordSets: Iterable[ResourceRecordSet], origin: AmazonOrigin) = {
+  def fromApiData(zone: HostedZone, awsRecordSets: Iterable[ResourceRecordSet], origin: AmazonOrigin): Route53Zone = {
     val recordSets: List[Route53Record] = awsRecordSets.map { record =>
       val alias = Option(record.getAliasTarget).map(at => Route53Alias(at.getDNSName, at.getHostedZoneId, at.getEvaluateTargetHealth))
       val maybeTtl: Option[Long] = Option(record.getTTL).map(_.longValue)

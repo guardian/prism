@@ -1,12 +1,15 @@
 package agent
 
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.{DateTime, Duration}
+
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
 import play.api.libs.json._
+import play.api.libs.ws.WSClient
 import utils.{GoogleDoc, Logging}
 import play.api.mvc.Call
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -30,7 +33,7 @@ abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
   }
-  lazy val collectors = Accounts.forResource(resource.name).flatMap(collectorFor)
+  lazy val collectors: Seq[Collector[T]] = Accounts.forResource(resource.name).flatMap(collectorFor)
 }
 
 trait Collector[T] {
@@ -58,9 +61,9 @@ object Label {
   def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, 0, error = Some(error))
 }
 case class Label(resource:ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
-  lazy val isError = error.isDefined
-  lazy val status = if (isError) "error" else "success"
-  lazy val bestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)
+  lazy val isError: Boolean = error.isDefined
+  lazy val status: String = if (isError) "error" else "success"
+  lazy val bestBefore: BestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)
 }
 
 case class ResourceType( name: String, shelfLife: FiniteDuration, refreshPeriod: FiniteDuration )
@@ -72,7 +75,7 @@ case class BestBefore(created:DateTime, shelfLife:FiniteDuration, error:Boolean)
 }
 
 trait JsonCollector[T] extends JsonCollectorTranslator[T,T] with Logging {
-  def translate(input: T) = input
+  def translate(input: T): T = input
 }
 
 trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
@@ -92,5 +95,5 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
 
 trait GoogleDocCollector[T] extends Collector[T] {
   def origin:GoogleDocOrigin
-  def csvData:List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl), 1 minute)
+  def csvData(ws: WSClient):List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl, ws), 1 minute)
 }

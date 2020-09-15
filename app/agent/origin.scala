@@ -11,16 +11,17 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientB
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import conf.AWS
-import play.api.libs.json.{JsObject, Json, JsValue}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import utils.Logging
 
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.Try
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
 
 object Accounts extends Logging {
-  val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r
+  val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):user.*""".r
 //  import conf.PrismConfiguration.accounts._
   val all:Seq[Origin] = Seq()/*(aws.list ++ amis.list).map { awsOrigin =>
     Try {
@@ -136,6 +137,6 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
 }
 case class GoogleDocOrigin(name: String, docUrl:URL, resources:Set[String]) extends Origin {
   lazy val vendor = "google-doc"
-  lazy val account = name
+  lazy val account: String = name
   val jsonFields = Map("name" -> name, "docUrl" -> docUrl.toString)
 }

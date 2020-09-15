@@ -1,53 +1,18 @@
-//import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-//import com.amazonaws.regions.{Regions, Region}
-//import conf.{AWS, FileConfiguration, DynamoConfiguration, Identity}
-//import play.api.ApplicationLoader.Context
-//import play.api.{Mode, Configuration}
-//import play.api.inject.guice.{GuiceApplicationBuilder, GuiceApplicationLoader}
-//import utils.Logging
-//
-//class PrismApplicationLoader extends GuiceApplicationLoader() with Logging {
-//
-//  override protected def builder(context: Context): GuiceApplicationBuilder = {
-//    val identity = {
-//      context.environment.mode match {
-//        case Mode.Prod => AWS.instance.identity
-//        case _ => None
-//      }
-//    }.getOrElse(Identity("deploy", "prism", "DEV"))
-//
-//    log.info(s"Getting config for $identity")
-//
-//    val extraConfigs = List(
-//      DynamoConfiguration(
-//        new DefaultAWSCredentialsProviderChain(),
-//        Regions.EU_WEST_1,
-//        identity
-//      ),
-//      FileConfiguration(identity)
-//    )
-//
-//    val extraConfig = extraConfigs.foldLeft(Configuration.empty)(_ ++ _.configuration(context.environment.mode))
-//
-//    val combinedConfig = context.initialConfiguration ++ extraConfig
-//
-//    log.info(s"Loaded config $extraConfig")
-//
-//    new GuiceApplicationBuilder()
-//      .in(context.environment)
-//      .loadConfig(combinedConfig)
-//      .overrides(overrides(context): _*)
-//  }
-//}
-
-
 import play.api._
+import play.api.{Mode, Configuration}
 import play.api.routing.Router
+import conf.{AWS, FileConfiguration, DynamoConfiguration, Identity}
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.regions.Regions
 
 class PrismApplicationLoader extends ApplicationLoader {
   private var components: PrismComponents = _
 
   def load(context: ApplicationLoader.Context): Application = {
+    LoggerConfigurator(context.environment.classLoader).foreach {
+      _.configure(context.environment)
+    }
+
     components = new PrismComponents(context)
     components.application
   }
@@ -56,9 +21,40 @@ class PrismApplicationLoader extends ApplicationLoader {
 class PrismComponents(context: ApplicationLoader.Context)
   extends BuiltInComponentsFromContext(context)
     with play.filters.HttpFiltersComponents
-    with _root_.controllers.AssetsComponents {
+    with _root_.controllers.AssetsComponents
+    with Logging {
 
-  lazy val homeController = new _root_.controllers.Application(controllerComponents)
+  val identity: Identity = {
+    context.environment.mode match {
+      case Mode.Prod => AWS.instance.identity
+      case _ => None
+    }
+  }.getOrElse(Identity("deploy", "prism", "DEV"))
 
-  lazy val router: Router = new _root_.router.Routes(httpErrorHandler, homeController, assets)
+  logger.info(s"Getting config for $identity")
+
+  val extraConfigs = List(
+    DynamoConfiguration(
+      new DefaultAWSCredentialsProviderChain(),
+      Regions.EU_WEST_1,
+      identity
+    ),
+    FileConfiguration(identity)
+  )
+
+  // TODO: Is this okay?
+  // val extraConfig: Configuration = extraConfigs.foldLeft(Configuration.empty)(_ ++ _.configuration(context.environment.mode))
+  val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
+
+  val combinedConfig: Configuration = extraConfig.withFallback(context.initialConfiguration)
+
+  logger.info(s"Loaded config $extraConfig")
+
+  lazy val homeController = new _root_.controllers.Application(controllerComponents, combinedConfig.underlying)
+
+  lazy val ownerController = new _root_.controllers.OwnerApi(controllerComponents, executionContext)
+
+  lazy val router: Router = new _root_.router.Routes(httpErrorHandler, homeController, assets, ownerController)
+
+  homeController.documentation = router.documentation
 }

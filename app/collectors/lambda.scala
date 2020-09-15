@@ -19,7 +19,7 @@ object LambdaCollectorSet extends CollectorSet[Lambda](ResourceType("lambda", 1 
 
 case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Lambda] with Logging {
 
-  val client = AWSLambdaClientBuilder.standard()
+  val client: AWSLambda = AWSLambdaClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()

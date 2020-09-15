@@ -46,10 +46,10 @@ object ResourceFilter {
   // blacklist of request keys that should be ignored
   val Blacklist = Set("callback")
 
-  val InverseRegexMatch = """^([a-zA-Z0-9.]*)(?:!~|~!)$""".r
-  val InverseMatch = """^([a-zA-Z0-9.]*)!$""".r
-  val RegexMatch = """^([a-zA-Z0-9.]*)~$""".r
-  val SimpleMatch = """^([a-zA-Z0-9.]*)$""".r
+  val InverseRegexMatch: Regex = """^([a-zA-Z0-9.]*)(?:!~|~!)$""".r
+  val InverseMatch: Regex = """^([a-zA-Z0-9.]*)!$""".r
+  val RegexMatch: Regex = """^([a-zA-Z0-9.]*)~$""".r
+  val SimpleMatch: Regex = """^([a-zA-Z0-9.]*)$""".r
 
   def matcher(key:String, value:String): Option[(String, Matchable[String])] = {
     key match {
@@ -68,10 +68,8 @@ object ResourceFilter {
     val filterKeys = request.queryString.view.filterKeys(key => !Blacklist.contains(key)).toSeq.flatMap { case (key, values) =>
       values.flatMap(matcher(key,_))
     }.groupBy(_._1).view.mapValues(_.map(_._2))
-    ResourceFilter(Map())// defaultKeys ++ filterKeys)
+    ResourceFilter((defaultKeys ++ filterKeys).toMap)
   }
 
-  lazy val all = new Matchable[JsValue] {
-    def isMatch(value: JsValue): Boolean = true
-  }
+  lazy val all: Matchable[JsValue] = (_: JsValue) => true
 }

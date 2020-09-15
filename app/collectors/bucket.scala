@@ -23,7 +23,7 @@ object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Bucket] with Logging {
 
-  val client = AmazonS3ClientBuilder.standard()
+  val client: AmazonS3 = AmazonS3ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()

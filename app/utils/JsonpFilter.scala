@@ -27,6 +27,8 @@ class JsonpFilter(paramName: String = "callback")(implicit codec: Codec, ex: Exe
     }
   }
 
+  // TODO: Migrate to sources instead of Enumerator
+  //       (https://www.playframework.com/documentation/2.8.x/StreamsMigration25#Migrating-Enumerators-to-Sources)
   def jsonpify(callback: String)(result: Result): Result = {
     result.header.headers.get(CONTENT_TYPE) match {
       case Some(ct) if ct == JSON => result
@@ -39,4 +41,14 @@ class JsonpFilter(paramName: String = "callback")(implicit codec: Codec, ex: Exe
     }
   }
 
+//  def jsonpify(callback: String)(result: Result): Result = {
+//    result.header.headers.get(CONTENT_TYPE) match {
+//      case Some(ct) if ct == JSON => result
+//        Result(
+//          header = result.header.copy(status = Status.OK),
+//          body = Source.single(codec.encode(s"$callback(")).a >>> result.body >>> Source(codec.encode(");")),
+//        ).as(JAVASCRIPT)
+//      case _ => result
+//    }
+//  }
 }

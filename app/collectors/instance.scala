@@ -1,19 +1,22 @@
 package collectors
 
 import org.joda.time.DateTime
+
 import scala.jdk.CollectionConverters._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
 import controllers.routes
 
 import scala.language.postfixOps
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
+
 import scala.concurrent.duration._
+import scala.util.matching.Regex
 
 
 object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
@@ -26,16 +29,16 @@ object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instanc
 case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
   import jsonimplicits.joda.dateTimeReads
   import jsonimplicits.model._
-  implicit val addressReads = Json.reads[Address]
-  implicit val instanceSpecificationReads = Json.reads[InstanceSpecification]
-  implicit val managementEndpointReads = Json.reads[ManagementEndpoint]
-  implicit val instanceReads = Json.reads[Instance]
+  implicit val addressReads: Reads[Address] = Json.reads[Address]
+  implicit val instanceSpecificationReads: Reads[InstanceSpecification] = Json.reads[InstanceSpecification]
+  implicit val managementEndpointReads: Reads[ManagementEndpoint] = Json.reads[ManagementEndpoint]
+  implicit val instanceReads: Reads[Instance] = Json.reads[Instance]
   def crawl: Iterable[Instance] = crawlJson
 }
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
 
-  val client = AmazonEC2ClientBuilder.standard()
+  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -116,7 +119,7 @@ object Instance {
 
 case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
 object ManagementEndpoint {
-  val KeyValue = """([^=]*)=(.*)""".r
+  val KeyValue: Regex = """([^=]*)=(.*)""".r
   def fromTag(dnsName:String, tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
     tag match {
       case Some("none") => None
@@ -187,7 +190,7 @@ case class Instance(
                 ) extends IndexedItemWithStage with IndexedItemWithStack {
 
   def callFromArn: (String) => Call = arn => routes.Application.index() // routes.Api.instance(arn)
-  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) // ++ stage.map("stage" ->)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {
     this.copy(

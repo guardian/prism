@@ -1,15 +1,12 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AWSSecurityGroup}
-import controllers.{routes}
+import controllers.routes
 import play.api.mvc.Call
 import utils.PaginatedAWSRequest
 
-//import collection.convert.ImplicitConversions._
-// Implicit conversion wasn't working so we've added asScala where there were errors
-// TODO: Verify this is the best approach
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -51,7 +48,7 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType)
     )
   }
 
-  val client = AmazonEC2ClientBuilder.standard()
+  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
