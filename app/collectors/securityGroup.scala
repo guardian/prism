@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object SecurityGroupCollectorSet extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes)) {
+class SecurityGroupCollectorSet(accounts: Accounts) extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes), accounts) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
     case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource)
   }

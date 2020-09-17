@@ -14,16 +14,16 @@
 
     <p>For the sake of everyones sanity, this page lists the endpoints that are available to experiment with.</p>
 
-@*    <ul>*@
-@*        <li><a href="@routes.Api.instanceList">Instances</a> - filter using any key as a query param e.g.*@
-@*            <a href="@routes.Api.instanceList?vendor=Faws">vendor=aws</a> or a more complex example*@
-@*            <a href="@routes.Api.instanceList?mainclasses~=soulmates.*&stage!=PROD">mainclasses~=soulmates.*&stage!=PROD</a>*@
-@*        </li>*@
-@*        <li><a href="@routes.Api.securityGroupList">Security Groups</a></li>*@
-@*        <li><a href="@routes.Api.roleList">Roles</a></li>*@
-@*        <li><a href="@routes.Api.stackList">Stacks</a></li>*@
-@*        <li><a href="@routes.Api.appList">Apps</a> - again, filters work with either key</li>*@
-@*    </ul>*@
+    <ul>
+        <li><a href="@routes.Api.instanceList">Instances</a> - filter using any key as a query param e.g.
+            <a href="@routes.Api.instanceList?vendor=Faws">vendor=aws</a> or a more complex example
+            <a href="@routes.Api.instanceList?mainclasses~=soulmates.*&stage!=PROD">mainclasses~=soulmates.*&stage!=PROD</a>
+        </li>
+        <li><a href="@routes.Api.securityGroupList">Security Groups</a></li>
+        <li><a href="@routes.Api.roleList">Roles</a></li>
+        <li><a href="@routes.Api.stackList">Stacks</a></li>
+        <li><a href="@routes.Api.appList">Apps</a> - again, filters work with either key</li>
+    </ul>
 
     <h2>Query parameters</h2>
     <p>Fields that are prefixed with an _ control the query format in some way - they are meta paramters. Fields that

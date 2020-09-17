@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LambdaCollectorSet extends CollectorSet[Lambda](ResourceType("lambda", 1 hour, 5 minutes)) {
+class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](ResourceType("lambda", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Lambda]] = {
     case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource)
   }

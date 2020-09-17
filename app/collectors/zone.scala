@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes)) {
+class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
     case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
   }

@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 import scala.util.matching.Regex
 
 
-object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
+class InstanceCollectorSet(accounts: Accounts) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
     case json:JsonOrigin => JsonInstanceCollector(json, resource)
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)

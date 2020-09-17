@@ -4,7 +4,7 @@ package utils
  * Class to help ordering things in a mandated order, rather than the natural ordering of a given type
  * @param order The seq of objects in the order they should be returned in
  * @param aliensAtEnd If true, the compare function will sort unknown items to the end, false will sort them to the start
- * @tparam A
+ * @tparam A The type of the list of items to order
  */
 class UnnaturalOrdering[A](val order: List[A], val aliensAtEnd: Boolean = true, val oldOrdering: Ordering[A]) extends Ordering[A] {
   val alienValue: Int = if (aliensAtEnd) order.size+1 else -1

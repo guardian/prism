@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes)) {
+class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
     case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource)
   }

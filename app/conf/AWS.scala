@@ -6,7 +6,7 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
 import com.amazonaws.util.EC2MetadataUtils
-import play.api.Logging
+import utils.Logging
 
 import scala.collection.MapView
 import scala.jdk.CollectionConverters._
@@ -51,7 +51,7 @@ object AWS extends Logging {
 
     def addressesFromTags(tags: List[Tag]): List[String] = {
 
-      logger.info(s"Looking up instances with tags: $tags")
+      log.info(s"Looking up instances with tags: $tags")
       val tagsAsFilters = tags.map{
         case(name, value) => new Filter("tag:" + name).withValues(value)
       }.asJavaCollection
@@ -61,7 +61,7 @@ object AWS extends Logging {
       val reservation = describeInstancesResult.getReservations.asScala.toList
       val instances = reservation.flatMap(r => r.getInstances.asScala)
       val addresses = instances.flatMap(i => Option(i.getPrivateIpAddress))
-      logger.info(s"Instances with tags $tags: $addresses")
+      log.info(s"Instances with tags $tags: $addresses")
       addresses
     }
   }

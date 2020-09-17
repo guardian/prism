@@ -16,7 +16,7 @@ class Application @Inject()(cc: ControllerComponents, underlyingConfig: Config) 
     Ok(views.html.index(_documentation))
   }
 
-    def config: Action[AnyContent] = Action {
-      Ok(underlyingConfig.root().render())
-    }
+  def config: Action[AnyContent] = Action {
+    Ok(underlyingConfig.root().render())
+  }
 }

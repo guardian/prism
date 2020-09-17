@@ -5,57 +5,57 @@
 GET        /                                  controllers.Application.index
 #
 ## API V1
-#GET        /sources                           controllers.Api.sources
-#GET        /management/healthcheck            controllers.Api.healthCheck
+GET        /sources                           controllers.Api.sources
+GET        /management/healthcheck            controllers.Api.healthCheck
 GET        /management/config                 controllers.Application.config
 #
-#GET        /apps                              controllers.Api.appList
-#GET        /stacks                            controllers.Api.stackList
-#GET        /stages                            controllers.Api.stageList
+GET        /apps                              controllers.Api.appList
+GET        /stacks                            controllers.Api.stackList
+GET        /stages                            controllers.Api.stageList
 #
-#GET        /find                              controllers.Api.find
+GET        /find                              controllers.Api.find
 #
-#GET        /instances                         controllers.Api.instanceList
-#GET        /instances/regions                 controllers.Api.regionList
-#GET        /instances/vendors                 controllers.Api.vendorList
-#GET        /instances/roles                   controllers.Api.roleList
-#GET        /instances/mainclasses             controllers.Api.mainclassList
-#GET        /instances/:arn                    controllers.Api.instance(arn)
+GET        /instances                         controllers.Api.instanceList
+GET        /instances/regions                 controllers.Api.regionList
+GET        /instances/vendors                 controllers.Api.vendorList
+GET        /instances/roles                   controllers.Api.roleList
+GET        /instances/mainclasses             controllers.Api.mainclassList
+GET        /instances/:arn                    controllers.Api.instance(arn)
 #
-#GET        /lambdas                           controllers.Api.lambdaList
-#GET        /lambdas/:arn                      controllers.Api.lambda(arn)
+GET        /lambdas                           controllers.Api.lambdaList
+GET        /lambdas/:arn                      controllers.Api.lambda(arn)
 #
-#GET        /security-groups                   controllers.Api.securityGroupList
-#GET        /security-groups/:arn              controllers.Api.securityGroup(arn)
+GET        /security-groups                   controllers.Api.securityGroupList
+GET        /security-groups/:arn              controllers.Api.securityGroup(arn)
 #
-#GET        /images                            controllers.Api.imageList
-#GET        /images/:arn                       controllers.Api.image(arn)
+GET        /images                            controllers.Api.imageList
+GET        /images/:arn                       controllers.Api.image(arn)
 #
-#GET        /launch-configurations             controllers.Api.launchConfigurationList
-#GET        /launch-configurations/:arn        controllers.Api.launchConfiguration(arn)
+GET        /launch-configurations             controllers.Api.launchConfigurationList
+GET        /launch-configurations/:arn        controllers.Api.launchConfiguration(arn)
 #
-#GET        /server-certificates               controllers.Api.serverCertificateList
-#GET        /server-certificates/:arn          controllers.Api.serverCertificate(arn)
+GET        /server-certificates               controllers.Api.serverCertificateList
+GET        /server-certificates/:arn          controllers.Api.serverCertificate(arn)
 #
-#GET        /acm-certificates                  controllers.Api.acmCertificateList
-#GET        /acm-certificates/:arn             controllers.Api.acmCertificate(arn)
+GET        /acm-certificates                  controllers.Api.acmCertificateList
+GET        /acm-certificates/:arn             controllers.Api.acmCertificate(arn)
 #
-#GET        /route53-zones                     controllers.Api.route53ZoneList
-#GET        /route53-zones/:arn                controllers.Api.route53Zone(arn)
+GET        /route53-zones                     controllers.Api.route53ZoneList
+GET        /route53-zones/:arn                controllers.Api.route53Zone(arn)
 #
-#GET        /elbs                              controllers.Api.elbList
-#GET        /elbs/:arn                         controllers.Api.elb(arn)
+GET        /elbs                              controllers.Api.elbList
+GET        /elbs/:arn                         controllers.Api.elb(arn)
 #
-#GET        /buckets                           controllers.Api.bucketList
-#GET        /buckets/:arn                      controllers.Api.bucket(arn)
+GET        /buckets                           controllers.Api.bucketList
+GET        /buckets/:arn                      controllers.Api.bucket(arn)
 #
-#GET        /reservations                      controllers.Api.reservationList
-#GET        /reservations/:arn                 controllers.Api.reservation(arn)
+GET        /reservations                      controllers.Api.reservationList
+GET        /reservations/:arn                 controllers.Api.reservation(arn)
 #
-#GET        /data                              controllers.Api.dataList
-#GET        /data/keys                         controllers.Api.dataKeysList
-#GET        /data/lookup/:key                  controllers.Api.dataLookup(key)
-#GET        /data/:arn                         controllers.Api.data(arn)
+GET        /data                              controllers.Api.dataList
+GET        /data/keys                         controllers.Api.dataKeysList
+GET        /data/lookup/:key                  controllers.Api.dataLookup(key)
+GET        /data/:arn                         controllers.Api.data(arn)
 #
 ## Map static resources from the /public folder to the /assets URL path
 #

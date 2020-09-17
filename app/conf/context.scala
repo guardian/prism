@@ -1,5 +1,6 @@
 package conf
 
+// TODO: Figure out what to do about com.gu.management
 //import com.gu.management.{ManifestPage, CountMetric, TimingMetric, GaugeMetric, Switchboard, HealthcheckManagementPage, StatusPage, PropertiesPage}
 import utils.{UnnaturalOrdering, Logging}
 import scala.language.postfixOps
@@ -21,105 +22,106 @@ trait ConfigurationSource {
   def configuration(mode: Mode): Configuration
 }
 
-//class PrismConfiguration(configuration: Configuration) extends Logging {
-//  implicit class option2getOrException[T](option: Option[T]) {
-//    def getOrException(exceptionMessage: String): T = {
-//      option.getOrElse {
-//        throw new IllegalStateException(exceptionMessage)
-//      }
-//    }
-//  }
-//
-//  def subConfigurations(prefix:String): Map[String,Configuration] = {
-//
-//    val config = configuration.underlying.getConfig(prefix)
-//    config.subKeys.flatMap{ subKey =>
-//      Try(config.getConfig(subKey)).getOrElse(None).map(subKey ->)
-//    }.toMap
-//  }
-//
-//  object accounts {
-//    lazy val lazyStartup = configuration.getString("accounts.lazyStartup").exists("true" ==)
-//
-//    object aws {
-//      lazy val defaultRegions = configuration.getStringSeq("accounts.aws.defaultRegions").getOrElse(Seq("eu-west-1"))
-//      lazy val defaultOwnerId = configuration.getString("accounts.aws.defaultOwnerId")
-//      val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
-//        val regions = subConfig.getStringSeq("regions").getOrElse(defaultRegions)
-//        val accessKey = subConfig.getString("accessKey")
-//        val secretKey = subConfig.getString("secretKey")
-//        val role = subConfig.getString("role")
-//        val ownerId = subConfig.getString("ownerId").orElse(defaultOwnerId)
-//        val profile = subConfig.getString("profile")
-//        val resources:Seq[String] = subConfig.getStringSeq("resources").getOrElse(Nil)
-//        val stagePrefix = subConfig.getString("stagePrefix")
-//        regions.map { region =>
-//          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
-//          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId)
-//        }
-//      }.toList
-//    }
-//
-//    object amis {
-//      lazy val defaultRegions = configuration.getStringSeq("accounts.amis.defaultRegions").getOrElse(aws.defaultRegions)
-//      val list: Seq[AmazonOrigin] = subConfigurations("accounts.amis").flatMap{ case (name, subConfig) =>
-//        val regions = subConfig.getStringSeq("regions").getOrElse(defaultRegions)
-//        val accessKey = subConfig.getString("accessKey")
-//        val secretKey = subConfig.getString("secretKey")
-//        val role = subConfig.getString("role")
-//        val profile = subConfig.getString("profile")
-//        val accountNumber = subConfig.getString("accountNumber")
-//        regions.map { region =>
-//          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
-//          AmazonOrigin.amis(name, region, accountNumber, credentials, ownerId = None)
-//        }
-//      }.toList
-//    }
-//
-//    object json {
-//      lazy val list = subConfigurations("accounts.json").map { case (name, config) =>
-//        log.info(s"processing $name")
-//        try {
-//          val vendor = config.getString("vendor").getOrElse("file")
-//          val account = config.getString("account").getOrException("Account must be specified")
-//          val resources = config.getStringSeq("resources").getOrElse(Nil)
-//          val url = config.getString("url").getOrException("URL must be specified")
-//
-//          val o = JsonOrigin(vendor, account, url, resources.toSet)
-//          log.info(s"Parsed $name, got $o")
-//          o
-//        } catch {
-//          case NonFatal(e) =>
-//            log.warn(s"Failed to process $name", e)
-//            throw e
-//        }
-//      }.toList
-//    }
-//    object googleDoc {
-//      lazy val list = subConfigurations("accounts.googleDoc").map { case(name, config) =>
-//        val url = config.getString("url").getOrException("URL must be specified")
-//        val resources = config.getStringSeq("resources").getOrElse(Nil)
-//        GoogleDocOrigin(name, new URL(url), resources.toSet)
-//      }.toList
-//    }
-//  }
-//
-//  object logging {
-//    lazy val verbose = configuration.getString("logging").exists(_.equalsIgnoreCase("VERBOSE"))
-//  }
-//
-//  object stages {
-//    lazy val order = configuration.getStringSeq("stages.order").getOrElse(Nil).toList.filterNot(""==)
-//    lazy val ordering = UnnaturalOrdering(order, aliensAtEnd = true)
-//  }
-//
-//  object urls {
-//    lazy val publicPrefix: String = configuration.getString("urls.publicPrefix").getOrElse("http://localhost:9000")
-//  }
-//
-//  override def toString: String = configuration.toString
-//}
-//
+class PrismConfiguration(configuration: Configuration) extends Logging {
+  implicit class option2getOrException[T](option: Option[T]) {
+    def getOrException(exceptionMessage: String): T = {
+      option.getOrElse {
+        throw new IllegalStateException(exceptionMessage)
+      }
+    }
+  }
+
+  // TODO: I'm not completely sure that this will work but worth a try
+  def subConfigurations(prefix:String): Map[String,Configuration] = {
+    val config = configuration.getOptional[Configuration](prefix).getOrElse(Configuration.empty)
+    config.subKeys.flatMap{ subKey =>
+      Try(config.getOptional[Configuration](subKey)).getOrElse(None).map(subKey ->)
+    }.toMap
+  }
+
+  object accounts {
+    lazy val lazyStartup: Boolean = configuration.getOptional[String]("accounts.lazyStartup").exists("true" ==)
+
+    // TODO: Should the values which are Option[String] here actually just be Strings
+    object aws {
+      lazy val defaultRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.defaultRegions").getOrElse(Seq("eu-west-1"))
+      lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
+      val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
+        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(defaultRegions)
+        val accessKey = subConfig.getOptional[String]("accessKey")
+        val secretKey = subConfig.getOptional[String]("secretKey")
+        val role = subConfig.getOptional[String]("role")
+        val ownerId: Option[String] = subConfig.getOptional[String]("ownerId").orElse(defaultOwnerId)
+        val profile: Option[String] = subConfig.getOptional[String]("profile")
+        val resources:Seq[String] = subConfig.getOptional[Seq[String]]("resources").getOrElse(Nil)
+        val stagePrefix: Option[String] = subConfig.getOptional[String]("stagePrefix")
+        regions.map { region =>
+          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
+          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId)
+        }
+      }.toList
+    }
+
+    object amis {
+      lazy val defaultRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.amis.defaultRegions").getOrElse(aws.defaultRegions)
+      val list: Seq[AmazonOrigin] = subConfigurations("accounts.amis").flatMap{ case (name, subConfig) =>
+        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(defaultRegions)
+        val accessKey = subConfig.getOptional[String]("accessKey")
+        val secretKey = subConfig.getOptional[String]("secretKey")
+        val role = subConfig.getOptional[String]("role")
+        val profile = subConfig.getOptional[String]("profile")
+        val accountNumber = subConfig.getOptional[String]("accountNumber")
+        regions.map { region =>
+          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
+          AmazonOrigin.amis(name, region, accountNumber, credentials, ownerId = None)
+        }
+      }.toList
+    }
+
+    object json {
+      lazy val list: Seq[JsonOrigin] = subConfigurations("accounts.json").map { case (name, config) =>
+        log.info(s"processing $name")
+        try {
+          val vendor = config.getOptional[String]("vendor").getOrElse("file")
+          val account = config.getOptional[String]("account").getOrException("Account must be specified")
+          val resources = config.getOptional[Seq[String]]("resources").getOrElse(Nil)
+          val url = config.getOptional[String]("url").getOrException("URL must be specified")
+
+          val o = JsonOrigin(vendor, account, url, resources.toSet)
+          log.info(s"Parsed $name, got $o")
+          o
+        } catch {
+          case NonFatal(e) =>
+            log.warn(s"Failed to process $name", e)
+            throw e
+        }
+      }.toList
+    }
+    object googleDoc {
+      lazy val list: Seq[GoogleDocOrigin] = subConfigurations("accounts.googleDoc").map { case(name, config) =>
+        val url = config.getOptional[String]("url").getOrException("URL must be specified")
+        val resources = config.getOptional[Seq[String]]("resources").getOrElse(Nil)
+        GoogleDocOrigin(name, new URL(url), resources.toSet)
+      }.toList
+    }
+  }
+
+  object logging {
+    lazy val verbose: Boolean = configuration.getOptional[String]("logging").exists(_.equalsIgnoreCase("VERBOSE"))
+  }
+
+  object stages {
+    lazy val order: List[String] = configuration.getOptional[Seq[String]]("stages.order").getOrElse(Nil).toList.filterNot(""==)
+    lazy val ordering: UnnaturalOrdering[String] = UnnaturalOrdering(order)
+  }
+
+  object urls {
+    lazy val publicPrefix: String = configuration.getOptional[String]("urls.publicPrefix").getOrElse("http://localhost:9000")
+  }
+
+  override def toString: String = configuration.toString
+}
+
 //object PrismConfiguration extends PrismConfiguration()
 
 //object PlayRequestMetrics extends RequestMetrics.Standard

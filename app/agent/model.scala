@@ -28,12 +28,12 @@ trait IndexedItemWithStack extends IndexedItem {
   val stack: Option[String] = None
 }
 
-abstract class CollectorSet[T](val resource:ResourceType) extends Logging {
+abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
   }
-  lazy val collectors: Seq[Collector[T]] = Accounts.forResource(resource.name).flatMap(collectorFor)
+  lazy val collectors: Seq[Collector[T]] = accounts.forResource(resource.name).flatMap(collectorFor)
 }
 
 trait Collector[T] {
