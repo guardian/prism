@@ -50,10 +50,6 @@ lazy val root = (project in file("."))
       "com.typesafe.play" %% "play-json-joda" % "2.9.1",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.9.1",
-
-//      "com.gu" %% "management-play" % "5.42-SNAPSHOT",
-//      "com.typesafe.akka" %% "akka-agent" % "2.4.1",
-     // "com.typesafe.akka" %% "akka-slf4j" % "2.4.1",
       filters,
       specs2 % "test"
     ),

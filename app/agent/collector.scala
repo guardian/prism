@@ -1,6 +1,6 @@
 package agent
 
-import utils.{LifecycleWithoutApp, ScheduledAgent, Logging}
+import utils.{LifecycleWithoutApp, Logging, ScheduledAgent, StopWatch}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -9,9 +9,6 @@ import org.joda.time.DateTime
 import akka.actor.ActorSystem
 
 import scala.concurrent.ExecutionContext
-//import play.api.libs.json.Json.JsValueWrapper
-//import conf.SourceMetrics
-//import com.gu.management.StopWatch
 
 class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAgent: LabelAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends Logging with LifecycleWithoutApp {
 
@@ -35,17 +32,13 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAge
   def size: Int = get().map(_.data.size).sum
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
-      // val s = new StopWatch
+       val s = new StopWatch
       val datum = Datum[T](collector)
-      // val timeSpent = s.elapsed
-      // TODO: Remove this and make stopwatch work
-      val timeSpent = 0
-      // SourceMetrics.CrawlTimer.recordTimeSpent(timeSpent)
+       val timeSpent = s.elapsed
       labelAgent.update(datum.label)
       datum.label match {
         case l@Label(product, origin, size, _, None) =>
           log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
-          // SourceMetrics.CrawlSuccessCounter.increment()
           datum
         case Label(product, origin, _, _, Some(error)) =>
           previous.label match {
@@ -56,7 +49,6 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAge
             case notYetStale if !notYetStale.bestBefore.isStale =>
               log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
           }
-          // SourceMetrics.CrawlFailureCounter.increment()
           previous
       }
   }
