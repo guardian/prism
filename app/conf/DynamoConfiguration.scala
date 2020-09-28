@@ -42,8 +42,6 @@ class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
         configSegmentsFromIdentity(identity)
       )
 
-      // TODO: Is this okay?
-      // val finalConfig = configs.flatMap{ case (_, config) => config }.foldLeft[Configuration](Configuration.empty){ _ ++ _ }
       val finalConfig = configs.flatMap{ case (_, config) => config }.foldRight[Configuration](Configuration.empty){ _.withFallback(_) }
 
       finalConfig

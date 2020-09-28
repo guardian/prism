@@ -52,8 +52,6 @@ class PrismComponents(context: ApplicationLoader.Context)
     FileConfiguration(identity)
   )
 
-  // TODO: Is this okay?
-  // val extraConfig: Configuration = extraConfigs.foldLeft(Configuration.empty)(_ ++ _.configuration(context.environment.mode))
   val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
 
   val combinedConfig: Configuration = extraConfig.withFallback(context.initialConfiguration)

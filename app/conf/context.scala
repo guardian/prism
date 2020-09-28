@@ -22,7 +22,6 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     }
   }
 
-  // TODO: I'm not completely sure that this will work but worth a try
   def subConfigurations(prefix:String): Map[String,Configuration] = {
     val config = configuration.getOptional[Configuration](prefix).getOrElse(Configuration.empty)
     config.subKeys.flatMap{ subKey =>
@@ -33,7 +32,6 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
   object accounts {
     lazy val lazyStartup: Boolean = configuration.getOptional[String]("accounts.lazyStartup").exists("true" ==)
 
-    // TODO: Should the values which are Option[String] here actually just be Strings
     object aws {
       lazy val defaultRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.defaultRegions").getOrElse(Seq("eu-west-1"))
       lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
@@ -42,10 +40,10 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
         val accessKey = subConfig.getOptional[String]("accessKey")
         val secretKey = subConfig.getOptional[String]("secretKey")
         val role = subConfig.getOptional[String]("role")
-        val ownerId: Option[String] = subConfig.getOptional[String]("ownerId").orElse(defaultOwnerId)
-        val profile: Option[String] = subConfig.getOptional[String]("profile")
-        val resources:Seq[String] = subConfig.getOptional[Seq[String]]("resources").getOrElse(Nil)
-        val stagePrefix: Option[String] = subConfig.getOptional[String]("stagePrefix")
+        val ownerId = subConfig.getOptional[String]("ownerId").orElse(defaultOwnerId)
+        val profile = subConfig.getOptional[String]("profile")
+        val resources = subConfig.getOptional[Seq[String]]("resources").getOrElse(Nil)
+        val stagePrefix = subConfig.getOptional[String]("stagePrefix")
         regions.map { region =>
           val credentials = Credentials(accessKey, role, profile, region)(secretKey)
           AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId)
