@@ -5,11 +5,14 @@ import akka.actor.ActorSystem
 import collectors._
 import conf.PrismConfiguration
 
+// TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
 class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
   val labelAgent = new LabelAgent(actorSystem)
   val accounts = new Accounts(prismConfiguration)
 
   val lazyStartup: Boolean = prismConfiguration.accounts.lazyStartup
+
+  // TODO: Maybe we should refactor this to not require a circular reference / pass in this
   val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts, this), labelAgent, lazyStartup)(actorSystem)
   val lambdaAgent = new CollectorAgent[Lambda](new LambdaCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
   val dataAgent = new CollectorAgent[Data](new DataCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
