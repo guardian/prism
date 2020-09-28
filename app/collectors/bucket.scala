@@ -4,7 +4,7 @@ import agent._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.amazonaws.services.s3.model.{AmazonS3Exception, ListBucketsRequest, Bucket => AWSBucket}
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 import play.api.mvc.Call
 import utils.Logging
 
@@ -70,5 +70,5 @@ case class Bucket(
   region: String,
   createdTime: Option[DateTime]
 ) extends IndexedItem {
-  override def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.data(arn)
+  override def callFromArn: (String) => Call = arn => routes.Api.data(arn)
 }

@@ -1,17 +1,17 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.certificatemanager.{AWSCertificateManager, AWSCertificateManagerClientBuilder}
 import com.amazonaws.services.certificatemanager.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
+import com.amazonaws.services.certificatemanager.{AWSCertificateManager, AWSCertificateManagerClientBuilder}
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import scala.jdk.CollectionConverters._
-import scala.util.Try
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
+import scala.util.Try
 
 
 class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 1 minute), accounts) {
@@ -125,5 +125,5 @@ case class AcmCertificate(
                               domainValidationOptions: List[DomainValidation],
                               renewalStatus: Option[RenewalInfo]
                             ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.acmCertificate(arn)
+  def callFromArn: (String) => Call = arn => routes.Api.acmCertificate(arn)
 }

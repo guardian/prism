@@ -1,6 +1,5 @@
 package collectors
 
-import org.joda.time.Duration
 import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
 import controllers.routes
@@ -24,7 +23,7 @@ case class JsonDataCollector(origin:JsonOrigin, resource: ResourceType) extends 
 
 case class Data( key:String, values:Seq[Value]) extends IndexedItem {
   def arn: String = s"arn:gu:data:key/$key"
-  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.data(arn)
+  def callFromArn: String => Call = arn => routes.Api.data(arn)
   def firstMatchingData(stack:String, app:String, stage:String): Option[Value] = {
     values.find { data =>
       data.appRegex.findFirstMatchIn(app).isDefined &&

@@ -63,5 +63,5 @@ case class LaunchConfiguration(
   placementTenancy: Option[String],
   securityGroups: List[String]
 ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.launchConfiguration(arn)
+  def callFromArn: (String) => Call = arn => routes.Api.launchConfiguration(arn)
 }

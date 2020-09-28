@@ -8,7 +8,7 @@ import java.net.InetAddress
 
 import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
-import controllers.routes
+import controllers.{Prism, routes}
 
 import scala.language.postfixOps
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
@@ -19,10 +19,10 @@ import scala.concurrent.duration._
 import scala.util.matching.Regex
 
 
-class InstanceCollectorSet(accounts: Accounts) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
+class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
     case json:JsonOrigin => JsonInstanceCollector(json, resource)
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, prism)
   }
 }
 
@@ -36,7 +36,7 @@ case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) exten
   def crawl: Iterable[Instance] = crawlJson
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType, prism: Prism) extends Collector[Instance] with Logging {
 
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
@@ -67,7 +67,8 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
             Map(
               "groupId" -> sg.getGroupId,
               "groupName" -> sg.getGroupName
-            )
+            ),
+            prism
           )
         }.toSeq,
         tags = instance.getTags.asScala.map(t => t.getKey -> t.getValue).toMap,
@@ -147,7 +148,7 @@ object ManagementEndpoint {
 case class AddressList(primary: Address, mapOfAddresses:Map[String,Address])
 object AddressList {
   def apply(addresses:(String, Address)*): AddressList = {
-    val filteredAddresses = addresses.filterNot { case (addressName, address) =>
+    val filteredAddresses = addresses.filterNot { case (_, address) =>
       address.dnsName == null || address.ip == null || address.dnsName.isEmpty || address.ip.isEmpty
     }
     AddressList(
@@ -189,7 +190,7 @@ case class Instance(
                  specification:Option[InstanceSpecification]
                 ) extends IndexedItemWithStage with IndexedItemWithStack {
 
-  def callFromArn: (String) => Call = arn => routes.Application.index() // routes.Api.instance(arn)
+  def callFromArn: String => Call = arn => routes.Api.instance(arn)
   override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {

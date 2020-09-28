@@ -10,10 +10,12 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
   val accounts = new Accounts(prismConfiguration)
 
   val lazyStartup: Boolean = prismConfiguration.accounts.lazyStartup
-  val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
+  val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts, this), labelAgent, lazyStartup)(actorSystem)
   val lambdaAgent = new CollectorAgent[Lambda](new LambdaCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
   val dataAgent = new CollectorAgent[Data](new DataCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
-  val securityGroupAgent = new CollectorAgent[SecurityGroup](new SecurityGroupCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
+
+  val securityGroupAgent = new CollectorAgent[SecurityGroup](new SecurityGroupCollectorSet(accounts, this), labelAgent, lazyStartup)(actorSystem)
+
   val imageAgent = new CollectorAgent[Image](new ImageCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
   val launchConfigurationAgent = new CollectorAgent[LaunchConfiguration](new LaunchConfigurationCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)
   val serverCertificateAgent = new CollectorAgent[ServerCertificate](new ServerCertificateCollectorSet(accounts), labelAgent, lazyStartup)(actorSystem)

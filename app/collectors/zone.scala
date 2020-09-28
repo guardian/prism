@@ -74,5 +74,5 @@ case class Route53Zone(
                            nameServers: List[String],
                            records: List[Route53Record]
                          ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Application.index() //routes.Api.route53Zone(arn)
+  def callFromArn: (String) => Call = arn => routes.Api.route53Zone(arn)
 }

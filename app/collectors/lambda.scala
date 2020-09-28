@@ -62,5 +62,5 @@ case class Lambda(
   override val stage: Option[String],
   override val stack: Option[String]
 ) extends IndexedItemWithStage with IndexedItemWithStack {
-  override def callFromArn: (String) => Call = arn => routes.Application.index() // routes.Api.instance(arn)
+  override def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
 }

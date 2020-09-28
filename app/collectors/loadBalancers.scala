@@ -52,5 +52,5 @@ case class LoadBalancer(
                         availabilityZones: List[String],
                         subnets: List[String]
                       ) extends IndexedItem {
-  def callFromArn: (String) => Call = arn => routes.Application.index()//routes.Api.elb(arn)
+  def callFromArn: (String) => Call = arn => routes.Api.elb(arn)
 }
