@@ -19,7 +19,7 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
     implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = (o: Reference[T]) => {
       request.getQueryString("_reference") match {
         case Some("inline") =>
-          arnLookup.item(o.arn).flatMap { case (label, t) =>
+          arnLookup.item(o.arn, prismController).flatMap { case (label, t) =>
             itemJson(item = t, label = Some(label), expand = true)
           }.getOrElse(JsString(o.arn))
         case Some("uri") =>

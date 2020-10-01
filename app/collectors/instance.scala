@@ -21,20 +21,20 @@ import scala.util.matching.Regex
 
 class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-    case json:JsonOrigin => JsonInstanceCollector(json, resource)
+//    case json:JsonOrigin => JsonInstanceCollector(json, resource)
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, prism)
   }
 }
 
-case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
-  import jsonimplicits.joda.dateTimeReads
-  import jsonimplicits.model._
-  implicit val addressReads: Reads[Address] = Json.reads[Address]
-  implicit val instanceSpecificationReads: Reads[InstanceSpecification] = Json.reads[InstanceSpecification]
-  implicit val managementEndpointReads: Reads[ManagementEndpoint] = Json.reads[ManagementEndpoint]
-  implicit val instanceReads: Reads[Instance] = Json.reads[Instance]
-  def crawl: Iterable[Instance] = crawlJson
-}
+//case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
+//  import jsonimplicits.joda.dateTimeReads
+//  import jsonimplicits.model._
+//  implicit val addressReads: Reads[Address] = Json.reads[Address]
+//  implicit val instanceSpecificationReads: Reads[InstanceSpecification] = Json.reads[InstanceSpecification]
+//  implicit val managementEndpointReads: Reads[ManagementEndpoint] = Json.reads[ManagementEndpoint]
+//  implicit val instanceReads: Reads[Instance] = Json.reads[Instance]
+//  def crawl: Iterable[Instance] = crawlJson
+//}
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType, prism: Prism) extends Collector[Instance] with Logging {
 
