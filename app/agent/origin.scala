@@ -24,8 +24,6 @@ class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
   val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):user.*""".r
   val all:Seq[Origin] = (prismConfiguration.accounts.aws.list ++ prismConfiguration.accounts.amis.list).map { awsOrigin =>
     Try {
-      // TODO: This isn't working locally - and it didn't with the code on main/master for me before I changed anything
-      //       Do we need to fix this here?
       val iamClient = AmazonIdentityManagementClientBuilder.standard()
         .withCredentials(awsOrigin.credentials.provider)
         .withRegion(AWS.connectionRegion)
