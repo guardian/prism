@@ -2,6 +2,12 @@
  * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
  */
 
+/*
+ * This file is copied from the Akka project <https://github.com/akka/akka>. It has been included here as Agents
+ * are now deprecated within Akka. It contains modifications from the original source. License information can be
+ * seen in the project LICENSE file.
+ */
+
 package akka.agent
 
 import akka.util.SerializedSuspendableExecutionContext
