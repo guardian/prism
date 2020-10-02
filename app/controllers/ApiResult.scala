@@ -48,8 +48,11 @@ object ApiResult extends Logging {
     import jsonimplicits.model.labelWriter
 
     case class SourceData[D](sourceData: Try[Map[Label, Seq[D]]]) {
-      def reduce(reduce: Map[Label, Seq[D]] => JsValue, ec: ExecutionContext)(implicit request: RequestHeader): Future[Result] =
-        reduceAsync(input => Future.successful(reduce(input)), ec)(request)
+      def reduce(reduce: Map[Label, Seq[D]] => JsValue, ec: ExecutionContext)(implicit request: RequestHeader): Future[Result] = {
+        val async = reduceAsync(input => Future.successful(reduce(input)), ec)(request)
+        async.foreach(i => println(s"reduceAsync $i"))(ec)
+        async
+      }
 
       def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue], ec: ExecutionContext)(implicit request: RequestHeader): Future[Result] = {
         sourceData.map { mapSources =>
@@ -60,6 +63,7 @@ object ApiResult extends Logging {
           filteredSources.get(false).foreach(falseMap => if (falseMap.values.exists(_.isEmpty)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
 
           val sources: Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
+          println(s"Sources: ${sources} and FilteredSources ${filteredSources}")
 
           val usedLabels = sources.filter {
             case (_, data) => data.nonEmpty
@@ -78,7 +82,7 @@ object ApiResult extends Logging {
 
           val stale = sources.keys.exists(_.bestBefore.isStale)
 
-          reduce(sources).map {
+          val reduceSources = reduce(sources).map {
             data =>
               val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
               val json = Json.obj(
@@ -89,11 +93,16 @@ object ApiResult extends Logging {
                 "data" -> dataWithMods,
                 "sources" -> usedLabels
               )
-              request.getQueryString("_pretty") match {
+              println(s"JSON: $json")
+              val prettyPrint = request.getQueryString("_pretty") match {
                 case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
                 case None => Results.Ok(json)
               }
+              println(s"QueryStringPrettyPrint: $prettyPrint")
+              prettyPrint
           }(ec)
+          reduceSources.foreach(r => println(s"reduceSources: ${r}"))(ec)
+          reduceSources
         } recover {
           case ApiCallException(failure, status) =>
             Future.successful(Results.Status(status)(Json.obj(

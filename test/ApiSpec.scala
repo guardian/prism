@@ -13,6 +13,7 @@ import play.mvc.Controller
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
+import ExecutionContext.Implicits.global
 
 /**
  * Add your spec here.
@@ -75,6 +76,10 @@ object ApiSpec extends PlaySpecification with Results {
     def callFromArn: String => Call = arn => Call("GET", "localhost")
   }
 
+  object TestItem {
+    implicit val testItemWrites = Json.writes[TestItem]
+  }
+
   class TestOrigin extends Origin {
     def vendor: String = "vendor"
     def account: String = "account"
@@ -83,7 +88,7 @@ object ApiSpec extends PlaySpecification with Results {
   }
 
 
-  class TestCollectorAgent[T:TestItem] extends CollectorAgentTrait[TestItem] {
+  class TestCollectorAgent extends CollectorAgentTrait[TestItem] {
     private val duration = FiniteDuration(1, "s")
     private val resourceType = ResourceType("test", duration, duration)
     private val label = Label(resourceType, new TestOrigin, 1)
@@ -107,12 +112,17 @@ object ApiSpec extends PlaySpecification with Results {
 
   "Application" should {
     "return a list of instances" in {
-      val result: Future[Result] = Api.itemList(new TestCollectorAgent[TestItem]())(FakeRequest())
+      implicit val testItem = TestItem("arn", "name", "region")
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(),
+        "objectKey",
+        ExecutionContext.global
+      )(FakeRequest(), TestItem.testItemWrites)
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
-      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "instances").get
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
       jsonInstances must beLike { case JsArray(_) => ok }
-      jsonInstances.as[JsArray].value.length mustEqual 15
+      jsonInstances.as[JsArray].value.length mustEqual 1
     }
 
 //    "return a list of instances" in new WithApplicationLoader(new PrismApplicationLoader()) {
