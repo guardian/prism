@@ -10,7 +10,7 @@ import akka.actor.ActorSystem
 
 import scala.concurrent.ExecutionContext
 
-class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAgent: LabelAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAgent: LabelAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with LifecycleWithoutApp {
 
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
   val collectors: Seq[Collector[T]] = collectorSet.collectors
@@ -80,6 +80,24 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAge
     datumAgents.values.foreach(_.shutdown())
     datumAgents = Map.empty
   }
+}
+
+trait CollectorAgentTrait[T<:IndexedItem] {
+  def get(collector: Collector[T]): Datum[T]
+
+  def get(): Iterable[Datum[T]]
+
+  def getTuples: Iterable[(Label, T)]
+
+  def getLabels: Seq[Label]
+
+  def size: Int
+
+  def update(collector: Collector[T], previous:Datum[T]):Datum[T]
+
+  def init():Unit
+
+  def shutdown():Unit
 }
 
 case class SourceStatus(state: Label, error: Option[Label] = None) {
