@@ -1,5 +1,6 @@
-import agent.{Collector, CollectorAgent, CollectorAgentTrait, Datum, IndexedItem, Label, ResourceType}
+import agent.{Collector, CollectorAgent, CollectorAgentTrait, Datum, IndexedItem, Label, Origin, ResourceType}
 import akka.actor.ActorSystem
+import collectors.Instance
 import conf.PrismConfiguration
 import controllers.{Api, ApiCallException, ApiResult, Prism}
 import play.api.Configuration
@@ -70,29 +71,34 @@ object ApiSpec extends PlaySpecification with Results {
 
 //  class TestApi() extends Controller with Api
 
-  class TestItem extends IndexedItem {
-    val arn = "test"
-    def callFromArn(arn: String): Call = {
-      Call("GET", "localhost")
-    }
+  case class TestItem(arn: String, name: String, region: String) extends IndexedItem {
+    def callFromArn: String => Call = arn => Call("GET", "localhost")
   }
 
-  class TestCollectorAgent[T<:IndexedItem] extends CollectorAgentTrait[T]
+  class TestOrigin extends Origin {
+    def vendor: String = "vendor"
+    def account: String = "account"
+    def resources: Set[String] = Set("resources")
+    def jsonFields: Map[String, String] = Map("key" -> "value")
+  }
+
+
+  class TestCollectorAgent[T:TestItem] extends CollectorAgentTrait[TestItem] {
     private val duration = FiniteDuration(1, "s")
     private val resourceType = ResourceType("test", duration, duration)
-    private val label = Label(resourceType)
+    private val label = Label(resourceType, new TestOrigin, 1)
 
-    def get(collector: Collector[T]): Datum[T]
+    def get(collector: Collector[TestItem]): Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
 
-    def get(): Iterable[Datum[T]]
+    def get(): Iterable[Datum[TestItem]] = Seq(Datum(label, Seq(TestItem("arn", "name", "region"))))
 
-    def getTuples: Iterable[(Label, T)]
+    def getTuples: Iterable[(Label, TestItem)] = Seq((label, TestItem("arn", "name", "region") ))
 
     def getLabels: Seq[Label] = Seq(label)
 
     def size: Int = 1
 
-    def update(collector: Collector[T], previous:Datum[T]):Datum[T]
+    def update(collector: Collector[TestItem], previous:Datum[TestItem]):Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
 
     def init():Unit = {}
 
@@ -101,7 +107,7 @@ object ApiSpec extends PlaySpecification with Results {
 
   "Application" should {
     "return a list of instances" in {
-      val result: Future[Result] = Api.itemList()(FakeRequest())
+      val result: Future[Result] = Api.itemList(new TestCollectorAgent[TestItem]())(FakeRequest())
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
       val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "instances").get
