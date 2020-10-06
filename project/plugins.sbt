@@ -7,3 +7,5 @@ resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releas
 addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "1.1.9")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.2")
+
+libraryDependencies += "org.vafer" % "jdeb" % "1.7" artifacts Artifact("jdeb", "jar", "jar")

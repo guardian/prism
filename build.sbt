@@ -1,5 +1,3 @@
-//import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
-
 name := "prism"
 
 version := "1.0-SNAPSHOT"
@@ -10,13 +8,6 @@ ThisBuild / useCoursier := false
 
 scalaVersion in ThisBuild := "2.13.1"
 
-//scalacOptions ++= Seq("-unchecked", "-deprecation",
-//  "-Xcheckinit", "-encoding", "utf8", "-feature",
-//  "-Yinline-warnings", "-Xfatal-warnings"
-//)
-
-//scalacOptions in Test ++= Seq("-Yrangepos")
-
 resolvers ++= Seq(
   "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
   "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
@@ -25,15 +16,16 @@ resolvers ++= Seq(
 val awsVersion = "1.11.759"
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayScala, UniversalPlugin)
+  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, UniversalPlugin)
   .settings(
-    name := """play-scala-compile-di-example""",
     packageName in Universal := normalizedName.value,
     maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
     topLevelDirectory in Universal := Some(normalizedName.value),
-//    serverLoading in Debian := Systemd,
-    version := "1.0-SNAPSHOT",
-    scalaVersion := "2.13.1",
+    riffRaffPackageType := (packageBin in Debian).value,
+    riffRaffArtifactResources  := Seq(
+      riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
+      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml"
+    ),
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "2.0.0",
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
@@ -58,10 +50,11 @@ lazy val root = (project in file("."))
       "-deprecation",
       "-feature",
       "-unchecked",
-      "-Xfatal-warnings"
-    )
+      "-Xfatal-warnings",
+      "-Xcheckinit"
+    ),
+    scalacOptions in Test ++= Seq("-Yrangepos")
   )
-
 
 javaOptions in Universal ++= Seq(
   s"-Dpidfile.path=/dev/null",
@@ -73,19 +66,3 @@ javaOptions in Universal ++= Seq(
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
 )
 
-//lazy val root = (project in file("."))
-//  .enablePlugins(PlayScala, RiffRaffArtifact, UniversalPlugin)
-//  .settings(
-//    packageName in Universal := normalizedName.value,
-//    maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
-//    topLevelDirectory in Universal := Some(normalizedName.value),
-//    serverLoading in Debian := Systemd,
-////    riffRaffPackageType := (packageBin in Debian).value,
-////    riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
-////    riffRaffUploadManifestBucket := Option("riffraff-builds"),
-////    riffRaffArtifactResources  := Seq(
-////      riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
-////      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml"
-////    )
-//  )
-//
