@@ -57,6 +57,7 @@ lazy val root = (project in file("."))
   )
 
 javaOptions in Universal ++= Seq(
+  "-Dconfig.file=conf/application.conf",
   s"-Dpidfile.path=/dev/null",
   "-J-XX:MaxRAMFraction=2",
   "-J-XX:InitialRAMFraction=2",
