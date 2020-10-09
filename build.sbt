@@ -61,7 +61,7 @@ javaOptions in Universal ++= Seq(
   s"-Dpidfile.path=/dev/null",
   "-J-XX:MaxRAMFraction=2",
   "-J-XX:InitialRAMFraction=2",
-  "-J-XX:MaxMetaspaceSize=300m",
+  "-J-XX:MaxMetaspaceSize=1g",
   "-J-XX:+PrintGCDetails",
   "-J-XX:+PrintGCDateStamps",
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
