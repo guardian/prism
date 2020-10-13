@@ -19,6 +19,7 @@ lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, UniversalPlugin)
   .settings(
     packageName in Universal := normalizedName.value,
+    fileDescriptorLimit := Some("16384"),
     maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
     topLevelDirectory in Universal := Some(normalizedName.value),
     riffRaffPackageType := (packageBin in Debian).value,
