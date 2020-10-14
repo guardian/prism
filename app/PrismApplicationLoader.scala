@@ -11,15 +11,12 @@ import scala.collection.mutable
 import scala.concurrent.Future
 
 class PrismApplicationLoader extends ApplicationLoader {
-  private var components: PrismComponents = _
-
   def load(context: ApplicationLoader.Context): Application = {
     LoggerConfigurator(context.environment.classLoader).foreach {
       _.configure(context.environment)
     }
 
-    components = new PrismComponents(context)
-    components.application
+    new PrismComponents(context).application
   }
 }
 
