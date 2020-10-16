@@ -77,7 +77,7 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
     def sources = Action.async { implicit request =>
       ApiResult.filter {
         val filter = ResourceFilter.fromRequest
-        val sources = prismController.labelAgent.sources
+        val sources = prismController.sourceStatusAgent.sources
         Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
       } reduce({ collection =>
         toJson(collection.flatMap(_._2))
@@ -86,7 +86,7 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
 
     def healthCheck = Action.async { implicit request =>
       ApiResult.filter {
-        val sources = prismController.labelAgent.sources
+        val sources = prismController.sourceStatusAgent.sources
         val notInitialisedSources = sources.data.filter(_.state.status != "success")
         if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
       } reduce({ notInitialisedSources =>

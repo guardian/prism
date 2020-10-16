@@ -10,7 +10,7 @@ import akka.actor.ActorSystem
 
 import scala.concurrent.ExecutionContext
 
-class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAgent: LabelAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with LifecycleWithoutApp {
 
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
   val collectors: Seq[Collector[T]] = collectorSet.collectors
@@ -35,7 +35,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAge
     val s = new StopWatch
     val datum = Datum[T](collector)
     val timeSpent = s.elapsed
-    labelAgent.update(datum.label)
+    sourceStatusAgent.update(datum.label)
     datum.label match {
       case l@Label(product, origin, size, _, None) =>
         log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
@@ -59,7 +59,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAge
     datumAgents = collectors.map { collector =>
       val initial = if (lazyStartup) {
         val startupData = Datum.empty[T](collector)
-        labelAgent.update(startupData.label)
+        sourceStatusAgent.update(startupData.label)
         startupData
       } else {
         val startupData = update(collector, Datum.empty[T](collector))
@@ -104,12 +104,12 @@ case class SourceStatus(state: Label, error: Option[Label] = None) {
   lazy val latest: Label = error.getOrElse(state)
 }
 
-class LabelAgent(actorSystem: ActorSystem) {
+class SourceStatusAgent(actorSystem: ActorSystem) {
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
-  val labelAgent: Agent[Map[(ResourceType, Origin), SourceStatus]] = Agent(Map.empty)
+  val sourceStatusAgent: Agent[Map[(ResourceType, Origin), SourceStatus]] = Agent(Map.empty)
 
   def update(label:Label):Unit = {
-    labelAgent.send { previousMap =>
+    sourceStatusAgent.send { previousMap =>
       val key = (label.resource, label.origin)
       val previous = previousMap.get(key)
       val next = label match {
@@ -121,7 +121,7 @@ class LabelAgent(actorSystem: ActorSystem) {
   }
 
   def sources:Datum[SourceStatus] = {
-    val statusList = labelAgent().values
+    val statusList = sourceStatusAgent().values
     val statusDates = statusList.map(_.latest.createdAt)
     val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
     val smallestDuration = statusList.map(_.latest.resource.shelfLife).minBy(_.toSeconds)
