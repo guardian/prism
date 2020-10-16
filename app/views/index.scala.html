@@ -16,7 +16,7 @@
 
     <ul>
         <li><a href="@routes.Api.instanceList()">Instances</a> - filter using any key as a query param e.g.
-            <a href="@(s"${routes.Api.instanceList()}?vendor=Faws")">vendor=aws</a> or a more complex example
+            <a href="@(s"${routes.Api.instanceList()}?vendor=aws")">vendor=aws</a> or a more complex example
             <a href="@(s"${routes.Api.instanceList()}?mainclasses~=soulmates.*&stage!=PROD")">mainclasses~=soulmates.*&stage!=PROD</a>
         </li>
         <li><a href="@routes.Api.securityGroupList()">Security Groups</a></li>

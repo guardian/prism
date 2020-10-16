@@ -12,7 +12,7 @@ resolvers ++= Seq(
 val awsVersion = "1.11.759"
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, UniversalPlugin)
+  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin)
   .settings(
     packageName in Universal := normalizedName.value,
     fileDescriptorLimit := Some("16384"),
@@ -58,7 +58,7 @@ javaOptions in Universal ++= Seq(
   s"-Dpidfile.path=/dev/null",
   "-J-XX:MaxRAMFraction=2",
   "-J-XX:InitialRAMFraction=2",
-  "-J-XX:MaxMetaspaceSize=1g",
+  "-J-XX:MaxMetaspaceSize=300m",
   "-J-XX:+PrintGCDetails",
   "-J-XX:+PrintGCDateStamps",
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
