@@ -28,39 +28,39 @@ object model {
 
   implicit val originWriter: Writes[Origin] = (o: Origin) => o.toJson
 
-  implicit val securityGroupRefWriter: OWrites[SecurityGroupRef] = Json.writes[SecurityGroupRef]
-  implicit val securityGroupRuleWriter: OWrites[Rule] = Json.writes[Rule]
-  implicit val securityGroupWriter: OWrites[SecurityGroup] = Json.writes[SecurityGroup]
+  implicit val securityGroupRefWriter: Writes[SecurityGroupRef] = Json.writes[SecurityGroupRef]
+  implicit val securityGroupRuleWriter: Writes[Rule] = Json.writes[Rule]
+  implicit val securityGroupWriter: Writes[SecurityGroup] = Json.writes[SecurityGroup]
 
   implicit def instanceRequestWriter(implicit refWriter: Writes[Reference[SecurityGroup]]): Writes[Instance] = {
-    implicit val addressWriter: OWrites[Address] = Json.writes[Address]
-    implicit val instanceSpecificationWriter: OWrites[InstanceSpecification] = Json.writes[InstanceSpecification]
-    implicit val managementEndpointWriter: OWrites[ManagementEndpoint] = Json.writes[ManagementEndpoint]
+    implicit val addressWriter: Writes[Address] = Json.writes[Address]
+    implicit val instanceSpecificationWriter: Writes[InstanceSpecification] = Json.writes[InstanceSpecification]
+    implicit val managementEndpointWriter: Writes[ManagementEndpoint] = Json.writes[ManagementEndpoint]
 
     Json.writes[Instance]
   }
-  implicit val valueWriter: OWrites[Value] = Json.writes[Value]
-  implicit val dataWriter: OWrites[Data] = Json.writes[Data]
+  implicit val valueWriter: Writes[Value] = Json.writes[Value]
+  implicit val dataWriter: Writes[Data] = Json.writes[Data]
 
-  implicit val imageWriter: OWrites[Image] = Json.writes[Image]
-  implicit val launchConfigurationWriter: OWrites[LaunchConfiguration] = Json.writes[LaunchConfiguration]
-  implicit val serverCertificateWriter: OWrites[ServerCertificate] = Json.writes[ServerCertificate]
-  implicit val bucketWriter: OWrites[Bucket] = Json.writes[Bucket]
-  implicit val lambdaWriter: OWrites[Lambda] = Json.writes[Lambda]
+  implicit val imageWriter: Writes[Image] = Json.writes[Image]
+  implicit val launchConfigurationWriter: Writes[LaunchConfiguration] = Json.writes[LaunchConfiguration]
+  implicit val serverCertificateWriter: Writes[ServerCertificate] = Json.writes[ServerCertificate]
+  implicit val bucketWriter: Writes[Bucket] = Json.writes[Bucket]
+  implicit val lambdaWriter: Writes[Lambda] = Json.writes[Lambda]
   implicit val reservationWriter: Writes[Reservation] = {
-    implicit val recurringCharge: OWrites[RecurringCharge] = Json.writes[RecurringCharge]
+    implicit val recurringCharge: Writes[RecurringCharge] = Json.writes[RecurringCharge]
     Json.writes[Reservation]
   }
 
-  implicit val domainResourceRecordWriter: OWrites[DomainResourceRecord] = Json.writes[DomainResourceRecord]
-  implicit val domainValidationWriter: OWrites[DomainValidation] = Json.writes[DomainValidation]
-  implicit val renewalInfoWriter: OWrites[RenewalInfo] = Json.writes[RenewalInfo]
-  implicit val acmCertificateWriter: OWrites[AcmCertificate] = Json.writes[AcmCertificate]
-  implicit val route53AliasWriter: OWrites[Route53Alias] = Json.writes[Route53Alias]
-  implicit val route53RecordWriter: OWrites[Route53Record] = Json.writes[Route53Record]
-  implicit val route53ZoneWriter: OWrites[Route53Zone] = Json.writes[Route53Zone]
+  implicit val domainResourceRecordWriter: Writes[DomainResourceRecord] = Json.writes[DomainResourceRecord]
+  implicit val domainValidationWriter: Writes[DomainValidation] = Json.writes[DomainValidation]
+  implicit val renewalInfoWriter: Writes[RenewalInfo] = Json.writes[RenewalInfo]
+  implicit val acmCertificateWriter: Writes[AcmCertificate] = Json.writes[AcmCertificate]
+  implicit val route53AliasWriter: Writes[Route53Alias] = Json.writes[Route53Alias]
+  implicit val route53RecordWriter: Writes[Route53Record] = Json.writes[Route53Record]
+  implicit val route53ZoneWriter: Writes[Route53Zone] = Json.writes[Route53Zone]
 
-  implicit val loadBalancerWriter: OWrites[LoadBalancer] = Json.writes[LoadBalancer]
+  implicit val loadBalancerWriter: Writes[LoadBalancer] = Json.writes[LoadBalancer]
 
   implicit val labelWriter:Writes[Label] = (l: Label) => {
     Json.obj(
