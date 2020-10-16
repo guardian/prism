@@ -1,26 +1,17 @@
-import play.api._
-import play.api.{Configuration, Mode}
-import play.api.routing.Router
-import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity, PrismConfiguration}
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.Regions
+import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity, PrismConfiguration}
+import controllers.{Api, Application, OwnerApi, Prism}
+import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Configuration, Mode}
 import play.api.mvc.EssentialFilter
+import play.api.routing.Router
+import router.Routes
 import utils.{Lifecycle, Logging, ScheduledAgent}
 
 import scala.collection.mutable
 import scala.concurrent.Future
 
-class PrismApplicationLoader extends ApplicationLoader {
-  def load(context: ApplicationLoader.Context): Application = {
-    LoggerConfigurator(context.environment.classLoader).foreach {
-      _.configure(context.environment)
-    }
-
-    new PrismComponents(context).application
-  }
-}
-
-class PrismComponents(context: ApplicationLoader.Context)
+class AppComponents(context: ApplicationLoader.Context)
   extends BuiltInComponentsFromContext(context)
     with play.filters.HttpFiltersComponents
     with play.filters.gzip.GzipFilterComponents
@@ -57,7 +48,7 @@ class PrismComponents(context: ApplicationLoader.Context)
 
   log.info(s"Loaded config $extraConfig")
 
-  val prismController = new _root_.controllers.Prism(prismConfig)(actorSystem)
+  val prismController = new Prism(prismConfig)(actorSystem)
 
   /* Initialise agents */
   val lifecycleSingletons: mutable.Buffer[Lifecycle] = mutable.Buffer[Lifecycle]()
@@ -88,11 +79,11 @@ class PrismComponents(context: ApplicationLoader.Context)
     lifecycleSingletons.clear()
   })
 
-  lazy val homeController = new _root_.controllers.Application(controllerComponents, combinedConfig.underlying, () => router.documentation)
+  lazy val homeController = new Application(controllerComponents, combinedConfig.underlying, () => router.documentation)
 
-  lazy val apiController = new _root_.controllers.Api(controllerComponents, prismController, prismConfig)
+  lazy val apiController = new Api(controllerComponents, prismController, prismConfig)
 
-  lazy val ownerController = new _root_.controllers.OwnerApi(controllerComponents)
+  lazy val ownerController = new OwnerApi(controllerComponents)
 
-  lazy val router: Router = new _root_.router.Routes(httpErrorHandler, homeController, apiController, assets, ownerController)
+  lazy val router: Router = new Routes(httpErrorHandler, homeController, apiController, assets, ownerController)
 }
