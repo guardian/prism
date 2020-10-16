@@ -15,14 +15,14 @@
     <p>For the sake of everyones sanity, this page lists the endpoints that are available to experiment with.</p>
 
     <ul>
-        <li><a href="@routes.Api.instanceList">Instances</a> - filter using any key as a query param e.g.
-            <a href="@routes.Api.instanceList?vendor=Faws">vendor=aws</a> or a more complex example
-            <a href="@routes.Api.instanceList?mainclasses~=soulmates.*&stage!=PROD">mainclasses~=soulmates.*&stage!=PROD</a>
+        <li><a href="@routes.Api.instanceList()">Instances</a> - filter using any key as a query param e.g.
+            <a href="@(s"${routes.Api.instanceList()}?vendor=Faws")">vendor=aws</a> or a more complex example
+            <a href="@(s"${routes.Api.instanceList()}?mainclasses~=soulmates.*&stage!=PROD")">mainclasses~=soulmates.*&stage!=PROD</a>
         </li>
-        <li><a href="@routes.Api.securityGroupList">Security Groups</a></li>
-        <li><a href="@routes.Api.roleList">Roles</a></li>
-        <li><a href="@routes.Api.stackList">Stacks</a></li>
-        <li><a href="@routes.Api.appList">Apps</a> - again, filters work with either key</li>
+        <li><a href="@routes.Api.securityGroupList()">Security Groups</a></li>
+        <li><a href="@routes.Api.roleList()">Roles</a></li>
+        <li><a href="@routes.Api.stackList()">Stacks</a></li>
+        <li><a href="@routes.Api.appList()">Apps</a> - again, filters work with either key</li>
     </ul>
 
     <h2>Query parameters</h2>
@@ -34,19 +34,19 @@
     <p>Some simple examples:</p>
     <table>
         <tbody>
-            <tr><td><tt>_brief</tt> or <tt>_brief=true</tt></td><td>return only the id of objects</td></tr>
-            <tr><td><tt>_length</tt> or <tt>_length=true</tt></td><td>add companion fields to objects detailing the size of any arrays that are members of the object</td></tr>
-            <tr><td><tt>_pretty</tt> or <tt>_pretty=true</tt></td><td>output json results in prettified format</td></tr>
-            <tr><td><tt>_reference=uri</tt></td><td>output references to objects as Prism object URI (default is Prism ARN ID)</td></tr>
-            <tr><td><tt>_reference=inline</tt></td><td>expand references with inline objects</td></tr>
-            <tr><td><tt>stage=TEST</tt></td><td>return objects whose stage field has the value of TEST</td></tr>
-            <tr><td><tt>stage!=TEST</tt></td><td>invert - return objects whose stage field does not have the value of TEST</td></tr>
-            <tr><td><tt>role~=id.*</tt></td><td>regexs - return objects whose role field matches the regular expression id.* (i.e. starts with id)</td></tr>
-            <tr><td><tt>role!~=id.*</tt></td><td>inverted regex - return objects whose role field does not match the regular expression</td></tr>
-            <tr><td><tt>stage=TEST&role~=id.*</tt></td><td>multiple fields - an exact match of stage and a regex match of role; this returns objects whose stage field has value of TEST <strong>AND</strong> whose role field matches the regular expression</strong></td></tr>
-            <tr><td><tt>stage=TEST&stage=CODE&nbsp;&nbsp;</tt></td><td>fields can be specified twice - here we return objects whose stage field has the value of TEST <strong>OR</strong> CODE</td></tr>
-            <tr><td><tt>stage!=TEST&stage!=CODE&nbsp;&nbsp;</tt></td><td><strong>this makes no sense</strong> - here we return objects whose stage field has a value that is not TEST <strong>OR</strong> not CODE (i.e. all objects)</td></tr>
-            <tr><td><tt>tag.MongoReplSet=prodprv1</tt></td><td>Nested fields can be filtered using periods to separate the fields</td></tr>
+            <tr><td><code>_brief</code> or <code>_brief=true</code></td><td>return only the id of objects</td></tr>
+            <tr><td><code>_length</code> or <code>_length=true</code></td><td>add companion fields to objects detailing the size of any arrays that are members of the object</td></tr>
+            <tr><td><code>_precodey</code> or <code>_precodey=true</code></td><td>output json results in precodeified format</td></tr>
+            <tr><td><code>_reference=uri</code></td><td>output references to objects as Prism object URI (default is Prism ARN ID)</td></tr>
+            <tr><td><code>_reference=inline</code></td><td>expand references with inline objects</td></tr>
+            <tr><td><code>stage=TEST</code></td><td>return objects whose stage field has the value of TEST</td></tr>
+            <tr><td><code>stage!=TEST</code></td><td>invert - return objects whose stage field does not have the value of TEST</td></tr>
+            <tr><td><code>role~=id.*</code></td><td>regexs - return objects whose role field matches the regular expression id.* (i.e. starts with id)</td></tr>
+            <tr><td><code>role!~=id.*</code></td><td>inverted regex - return objects whose role field does not match the regular expression</td></tr>
+            <tr><td><code>stage=TEST&role~=id.*</code></td><td>multiple fields - an exact match of stage and a regex match of role; this returns objects whose stage field has value of TEST <strong>AND</strong> whose role field matches the regular expression</td></tr>
+            <tr><td><code>stage=TEST&stage=CODE&nbsp;&nbsp;</code></td><td>fields can be specified twice - here we return objects whose stage field has the value of TEST <strong>OR</strong> CODE</td></tr>
+            <tr><td><code>stage!=TEST&stage!=CODE&nbsp;&nbsp;</code></td><td><strong>this makes no sense</strong> - here we return objects whose stage field has a value that is not TEST <strong>OR</strong> not CODE (i.e. all objects)</td></tr>
+            <tr><td><code>tag.MongoReplSet=prodprv1</code></td><td>Nested fields can be filtered using periods to separate the fields</td></tr>
         </tbody>
     </table>
 

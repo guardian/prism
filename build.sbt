@@ -2,11 +2,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-// Added to fix "Unknown artefact" warning for play-json and play-json-joda
-// https://stackoverflow.com/questions/41372978/unknown-artifact-not-resolved-or-indexed-error-for-scalatest
-// ThisBuild / useCoursier := false
-
-scalaVersion in ThisBuild := "2.13.1"
+scalaVersion in ThisBuild := "2.13.3"
 
 resolvers ++= Seq(
   "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
