@@ -1,10 +1,12 @@
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.Regions
 import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity, PrismConfiguration}
-import controllers.{Api, Application, OwnerApi, Prism}
+import controllers.{Api, Application, AssetsComponents, OwnerApi, Prism}
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Configuration, Mode}
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
+import play.filters.HttpFiltersComponents
+import play.filters.gzip.GzipFilterComponents
 import router.Routes
 import utils.{Lifecycle, Logging, ScheduledAgent}
 
@@ -13,40 +15,16 @@ import scala.concurrent.Future
 
 class AppComponents(context: ApplicationLoader.Context)
   extends BuiltInComponentsFromContext(context)
-    with play.filters.HttpFiltersComponents
-    with play.filters.gzip.GzipFilterComponents
-    with _root_.controllers.AssetsComponents
+    with HttpFiltersComponents
+    with GzipFilterComponents
+    with AssetsComponents
     with Logging {
 
   override def httpFilters: Seq[EssentialFilter] = {
     super.httpFilters :+ gzipFilter
   }
 
-  val identity: Identity = {
-    context.environment.mode match {
-      case Mode.Prod => AWS.instance.identity
-      case _ => None
-    }
-  }.getOrElse(Identity("deploy", "prism", "DEV"))
-
-  log.info(s"Getting config for $identity")
-
-  val extraConfigs = List(
-    DynamoConfiguration(
-      new DefaultAWSCredentialsProviderChain(),
-      Regions.EU_WEST_1,
-      identity
-    ),
-    FileConfiguration(identity)
-  )
-
-  val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
-
-  val combinedConfig: Configuration = extraConfig.withFallback(context.initialConfiguration)
-
-  val prismConfig = new PrismConfiguration(combinedConfig)
-
-  log.info(s"Loaded config $extraConfig")
+  val prismConfig = new PrismConfiguration(configuration)
 
   val prismController = new Prism(prismConfig)(actorSystem)
 
@@ -79,7 +57,7 @@ class AppComponents(context: ApplicationLoader.Context)
     lifecycleSingletons.clear()
   })
 
-  lazy val homeController = new Application(controllerComponents, combinedConfig.underlying, () => router.documentation)
+  lazy val homeController = new Application(controllerComponents, configuration, () => router.documentation)
 
   lazy val apiController = new Api(controllerComponents, prismController, prismConfig)
 

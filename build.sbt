@@ -54,8 +54,7 @@ lazy val root = (project in file("."))
   )
 
 javaOptions in Universal ++= Seq(
-  "-Dconfig.file=/etc/gu/production.conf",
-  s"-Dpidfile.path=/dev/null",
+  "-Dpidfile.path=/dev/null",
   "-J-XX:MaxRAMFraction=2",
   "-J-XX:InitialRAMFraction=2",
   "-J-XX:MaxMetaspaceSize=300m",
