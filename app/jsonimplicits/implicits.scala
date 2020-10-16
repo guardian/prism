@@ -97,10 +97,6 @@ object model {
     }
   }
 
-//  implicit def referenceReads[T](implicit idLookup:ArnLookup[T]): Reads[Reference[T]] = (json: JsValue) => {
-//    JsSuccess(Reference[T](json.as[String], Map.empty, prism))
-//  }
-
   implicit val ssaWriter: Writes[SSA] = (ssa: SSA) => {
     JsObject(
       Seq("stack" -> JsString(ssa.stack)) ++

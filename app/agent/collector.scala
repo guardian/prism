@@ -32,25 +32,25 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], labelAge
   def size: Int = get().map(_.data.size).sum
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
-       val s = new StopWatch
-      val datum = Datum[T](collector)
-       val timeSpent = s.elapsed
-      labelAgent.update(datum.label)
-      datum.label match {
-        case l@Label(product, origin, size, _, None) =>
-          log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
-          datum
-        case Label(product, origin, _, _, Some(error)) =>
-          previous.label match {
-            case bad if bad.isError =>
-              log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)
-            case stale if stale.bestBefore.isStale =>
-              log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
-            case notYetStale if !notYetStale.bestBefore.isStale =>
-              log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
-          }
-          previous
-      }
+    val s = new StopWatch
+    val datum = Datum[T](collector)
+    val timeSpent = s.elapsed
+    labelAgent.update(datum.label)
+    datum.label match {
+      case l@Label(product, origin, size, _, None) =>
+        log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
+        datum
+      case Label(product, origin, _, _, Some(error)) =>
+        previous.label match {
+          case bad if bad.isError =>
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)
+          case stale if stale.bestBefore.isStale =>
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
+          case notYetStale if !notYetStale.bestBefore.isStale =>
+            log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
+        }
+        previous
+    }
   }
 
   def init():Unit = {
@@ -106,7 +106,7 @@ case class SourceStatus(state: Label, error: Option[Label] = None) {
 
 class LabelAgent(actorSystem: ActorSystem) {
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
-  val labelAgent: Agent[Map[(ResourceType, Origin), SourceStatus]] = Agent[Map[(ResourceType, Origin),SourceStatus]](Map.empty)
+  val labelAgent: Agent[Map[(ResourceType, Origin), SourceStatus]] = Agent(Map.empty)
 
   def update(label:Label):Unit = {
     labelAgent.send { previousMap =>

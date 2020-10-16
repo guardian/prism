@@ -3,19 +3,20 @@ package controllers
 import agent._
 import collectors._
 import conf.PrismConfiguration
-import javax.inject.Inject
 import play.api.Logging
 import play.api.mvc._
 import play.api.mvc.{Action, RequestHeader, Result}
 import play.api.libs.json._
 import play.api.libs.json.Json._
+import play.api.http.Status
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.postfixOps
 import utils.{Matchable, ResourceFilter}
 
-class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionContext: ExecutionContext, prismConfiguration: PrismConfiguration) extends AbstractController(cc) with Logging {
+//noinspection TypeAnnotation
+class Api (cc: ControllerComponents, prismController: Prism, executionContext: ExecutionContext, prismConfiguration: PrismConfiguration) extends AbstractController(cc) with Logging {
     implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = (o: Reference[T]) => {
       request.getQueryString("_reference") match {
         case Some("inline") =>
@@ -58,7 +59,7 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
                                                        transformU: U => Iterable[JsValue],
                                                        key: String,
                                                        enableFilter: Boolean = false
-                                                        )(implicit ordering:Ordering[String]): Action[AnyContent] =
+                                                        )(implicit ordering:Ordering[String]) =
       Action.async { implicit request =>
         ApiResult.filter[JsValue] {
           sourceTAgent.get().map { datum => datum.label -> datum.data.flatMap(transformT)}.toMap ++
@@ -73,7 +74,7 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
         }, executionContext)
       }
 
-    def sources: Action[AnyContent] = Action.async { implicit request =>
+    def sources = Action.async { implicit request =>
       ApiResult.filter {
         val filter = ResourceFilter.fromRequest
         val sources = prismController.labelAgent.sources
@@ -83,7 +84,7 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
       }, executionContext)
     }
 
-    def healthCheck: Action[AnyContent] = Action.async { implicit request =>
+    def healthCheck = Action.async { implicit request =>
       ApiResult.filter {
         val sources = prismController.labelAgent.sources
         val notInitialisedSources = sources.data.filter(_.state.status != "success")
@@ -96,7 +97,7 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
       }, executionContext)
     }
 
-    def find: Action[AnyContent] = Action.async { implicit request =>
+    def find = Action.async { implicit request =>
       val filter = ResourceFilter.fromRequest
       ApiResult.filter {
         val sources = prismController.allAgents.map(_.get())
@@ -118,124 +119,108 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
       }, executionContext)
     }
 
-    def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String)
-                                  (implicit request: RequestHeader, writes: Writes[T]): Future[Result] =
-      ApiResult.filter {
-        val sources = agent.get()
-        sources.flatMap{ datum =>
-          datum.data.find(_.arn == arn).map(datum.label -> Seq(_))
-        }.toMap
-      } reduce({ sources =>
-        sources.headOption.map {
-          case (label, items) =>
-            Api.itemJson(items.head, expand = true, label=Some(label)).get
-        } getOrElse {
-          throw ApiCallException(Json.obj("arn" -> s"Item with arn $arn doesn't exist"), NOT_FOUND)
-        }
-      }, executionContext)
-
-    def instanceList: Action[AnyContent] = Action.async { implicit request =>
+    def instanceList = Action.async { implicit request =>
       Api.itemList(prismController.instanceAgent, "instances", executionContext, "vendorState" -> "running", "vendorState" -> "ACTIVE")
     }
-    def instance(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.instanceAgent, arn)
+    def instance(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.instanceAgent, arn, executionContext)
     }
 
-    def lambdaList: Action[AnyContent] = Action.async { implicit request =>
+    def lambdaList = Action.async { implicit request =>
       Api.itemList(prismController.lambdaAgent, "lambdas", executionContext)
     }
-    def lambda(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.lambdaAgent, arn)
+    def lambda(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.lambdaAgent, arn, executionContext)
     }
 
-    def securityGroupList: Action[AnyContent] = Action.async { implicit request =>
+    def securityGroupList = Action.async { implicit request =>
       Api.itemList(prismController.securityGroupAgent, "security-groups", executionContext)
     }
 
-    def securityGroup(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.securityGroupAgent, arn)
+    def securityGroup(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.securityGroupAgent, arn, executionContext)
     }
 
-    def imageList: Action[AnyContent] = Action.async { implicit request =>
+    def imageList = Action.async { implicit request =>
       Api.itemList(prismController.imageAgent, "images", executionContext)
     }
-    def image(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.imageAgent, arn)
+    def image(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.imageAgent, arn, executionContext)
     }
 
-    def launchConfigurationList: Action[AnyContent] = Action.async { implicit request =>
+    def launchConfigurationList = Action.async { implicit request =>
       Api.itemList(prismController.launchConfigurationAgent, "launch-configurations", executionContext)
     }
-    def launchConfiguration(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.launchConfigurationAgent, arn)
+    def launchConfiguration(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.launchConfigurationAgent, arn, executionContext)
     }
 
-    def serverCertificateList: Action[AnyContent] = Action.async { implicit request =>
+    def serverCertificateList = Action.async { implicit request =>
       Api.itemList(prismController.serverCertificateAgent, "server-certificates", executionContext)
     }
-    def serverCertificate(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.serverCertificateAgent, arn)
+    def serverCertificate(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.serverCertificateAgent, arn, executionContext)
     }
 
-    def acmCertificateList: Action[AnyContent] = Action.async { implicit request =>
+    def acmCertificateList = Action.async { implicit request =>
       Api.itemList(prismController.acmCertificateAgent, "acm-certificates", executionContext)
     }
-    def acmCertificate(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.acmCertificateAgent, arn)
+    def acmCertificate(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.acmCertificateAgent, arn, executionContext)
     }
 
-    def route53ZoneList: Action[AnyContent] = Action.async { implicit request =>
+    def route53ZoneList = Action.async { implicit request =>
       Api.itemList(prismController.route53ZoneAgent, "route53-zones", executionContext)
     }
-    def route53Zone(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.route53ZoneAgent, arn)
+    def route53Zone(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.route53ZoneAgent, arn, executionContext)
     }
 
-    def elbList: Action[AnyContent] = Action.async { implicit request =>
+    def elbList = Action.async { implicit request =>
       Api.itemList(prismController.elbAgent, "elbs", executionContext)
     }
-    def elb(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.elbAgent, arn)
+    def elb(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.elbAgent, arn, executionContext)
     }
 
-    def bucketList: Action[AnyContent] = Action.async { implicit request =>
+    def bucketList = Action.async { implicit request =>
       Api.itemList(prismController.bucketAgent, "buckets", executionContext)
     }
-    def bucket(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.bucketAgent, arn)
+    def bucket(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.bucketAgent, arn, executionContext)
     }
 
-    def reservationList: Action[AnyContent] = Action.async { implicit request =>
+    def reservationList = Action.async { implicit request =>
       Api.itemList(prismController.reservationAgent, "reservations", executionContext)
     }
-    def reservation(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.reservationAgent, arn)
+    def reservation(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.reservationAgent, arn, executionContext)
     }
 
     private def stackExtractor(i: IndexedItemWithStack) = i.stack.map(Json.toJson(_))
     private def stageExtractor(i: IndexedItemWithStage) = i.stage.map(Json.toJson(_))
-    def roleList: Action[AnyContent] = summary[Instance](prismController.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
-    def mainclassList: Action[AnyContent] = summary[Instance](prismController.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-    def stackList: Action[AnyContent] = summaryFromTwo[Instance, Lambda](prismController.instanceAgent, stackExtractor, prismController.lambdaAgent, stackExtractor, "stacks")(prismConfiguration.stages.ordering)
-    def stageList: Action[AnyContent] = summaryFromTwo[Instance, Lambda](prismController.instanceAgent, stageExtractor, prismController.lambdaAgent, stageExtractor, "stages")(prismConfiguration.stages.ordering)
-    def regionList: Action[AnyContent] = summary[Instance](prismController.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
-    def vendorList: Action[AnyContent] = summary[Instance](prismController.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
-    def appList: Action[AnyContent] = summary[Instance](
+    def roleList = summary[Instance](prismController.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
+    def mainclassList = summary[Instance](prismController.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
+    def stackList = summaryFromTwo[Instance, Lambda](prismController.instanceAgent, stackExtractor, prismController.lambdaAgent, stackExtractor, "stacks")(prismConfiguration.stages.ordering)
+    def stageList = summaryFromTwo[Instance, Lambda](prismController.instanceAgent, stageExtractor, prismController.lambdaAgent, stageExtractor, "stages")(prismConfiguration.stages.ordering)
+    def regionList = summary[Instance](prismController.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
+    def vendorList = summary[Instance](prismController.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
+    def appList = summary[Instance](
       prismController.instanceAgent,
       i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
       "app",
       enableFilter = true
     )
 
-    def dataList: Action[AnyContent] = Action.async { implicit request =>
+    def dataList = Action.async { implicit request =>
       Api.itemList(prismController.dataAgent, "data", executionContext)
     }
-    def data(arn:String): Action[AnyContent] = Action.async { implicit request =>
-      singleItem(prismController.dataAgent, arn)
+    def data(arn:String) = Action.async { implicit request =>
+      Api.singleItem(prismController.dataAgent, arn, executionContext)
     }
-    def dataKeysList: Action[AnyContent] = summary[Data](prismController.dataAgent, d => Some(Json.toJson(d.key)), "keys")
+    def dataKeysList = summary[Data](prismController.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
-    def dataLookup(key:String): Action[AnyContent] = Action.async { implicit request =>
+    def dataLookup(key:String) = Action.async { implicit request =>
       ApiResult.filter{
         val app = request.getQueryString("app")
         val stage = request.getQueryString("stage")
@@ -263,8 +248,24 @@ class Api @Inject()(cc: ControllerComponents, prismController: Prism, executionC
     }
 }
 
-object Api {
+object Api extends Status {
   import jsonimplicits.model._
+
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String, executionContext: ExecutionContext)
+                                (implicit request: RequestHeader, writes: Writes[T]): Future[Result] =
+    ApiResult.filter {
+      val sources = agent.get()
+      sources.flatMap{ datum =>
+        datum.data.find(_.arn == arn).map(datum.label -> Seq(_))
+      }.toMap
+    } reduce({ sources =>
+      sources.headOption.map {
+        case (label, items) =>
+          Api.itemJson(items.head, expand = true, label=Some(label)).get
+      } getOrElse {
+        throw ApiCallException(Json.obj("arn" -> s"Item with arn $arn doesn't exist"), NOT_FOUND)
+      }
+    }, executionContext)
 
   def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, label: Option[Label] = None, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
     val json = Json.toJson(item).as[JsObject] ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin)))
