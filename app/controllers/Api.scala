@@ -16,11 +16,11 @@ import scala.language.postfixOps
 import utils.{Matchable, ResourceFilter}
 
 //noinspection TypeAnnotation
-class Api (cc: ControllerComponents, prismController: Prism, prismConfiguration: PrismConfiguration)(implicit executionContext: ExecutionContext) extends AbstractController(cc) with Logging {
+class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: PrismConfiguration)(implicit executionContext: ExecutionContext) extends AbstractController(cc) with Logging {
     implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = (o: Reference[T]) => {
       request.getQueryString("_reference") match {
         case Some("inline") =>
-          arnLookup.item(o.arn, prismController).flatMap { case (label, t) =>
+          arnLookup.item(o.arn, prismDataStore).flatMap { case (label, t) =>
             Api.itemJson(item = t, label = Some(label), expand = true)
           }.getOrElse(JsString(o.arn))
         case Some("uri") =>
@@ -77,7 +77,7 @@ class Api (cc: ControllerComponents, prismController: Prism, prismConfiguration:
     def sources = Action.async { implicit request =>
       ApiResult.filter {
         val filter = ResourceFilter.fromRequest
-        val sources = prismController.sourceStatusAgent.sources
+        val sources = prismDataStore.sourceStatusAgent.sources
         Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
       } reduce { collection =>
         toJson(collection.flatMap(_._2))
@@ -86,7 +86,7 @@ class Api (cc: ControllerComponents, prismController: Prism, prismConfiguration:
 
     def healthCheck = Action.async { implicit request =>
       ApiResult.filter {
-        val sources = prismController.sourceStatusAgent.sources
+        val sources = prismDataStore.sourceStatusAgent.sources
         val notInitialisedSources = sources.data.filter(_.state.status != "success")
         if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
       } reduce { notInitialisedSources =>
@@ -100,7 +100,7 @@ class Api (cc: ControllerComponents, prismController: Prism, prismConfiguration:
     def find = Action.async { implicit request =>
       val filter = ResourceFilter.fromRequest
       ApiResult.filter {
-        val sources = prismController.allAgents.map(_.get())
+        val sources = prismDataStore.allAgents.map(_.get())
         sources.flatMap{ agent =>
           agent.map{ datum =>
             datum.label -> datum.data.filter(d => filter.isMatch(d.fieldIndex))
@@ -120,112 +120,112 @@ class Api (cc: ControllerComponents, prismController: Prism, prismConfiguration:
     }
 
     def instanceList = Action.async { implicit request =>
-      Api.itemList(prismController.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
+      Api.itemList(prismDataStore.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
     }
     def instance(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.instanceAgent, arn)
+      Api.singleItem(prismDataStore.instanceAgent, arn)
     }
 
     def lambdaList = Action.async { implicit request =>
-      Api.itemList(prismController.lambdaAgent, "lambdas")
+      Api.itemList(prismDataStore.lambdaAgent, "lambdas")
     }
     def lambda(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.lambdaAgent, arn)
+      Api.singleItem(prismDataStore.lambdaAgent, arn)
     }
 
     def securityGroupList = Action.async { implicit request =>
-      Api.itemList(prismController.securityGroupAgent, "security-groups")
+      Api.itemList(prismDataStore.securityGroupAgent, "security-groups")
     }
 
     def securityGroup(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.securityGroupAgent, arn)
+      Api.singleItem(prismDataStore.securityGroupAgent, arn)
     }
 
     def imageList = Action.async { implicit request =>
-      Api.itemList(prismController.imageAgent, "images")
+      Api.itemList(prismDataStore.imageAgent, "images")
     }
     def image(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.imageAgent, arn)
+      Api.singleItem(prismDataStore.imageAgent, arn)
     }
 
     def launchConfigurationList = Action.async { implicit request =>
-      Api.itemList(prismController.launchConfigurationAgent, "launch-configurations")
+      Api.itemList(prismDataStore.launchConfigurationAgent, "launch-configurations")
     }
     def launchConfiguration(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.launchConfigurationAgent, arn)
+      Api.singleItem(prismDataStore.launchConfigurationAgent, arn)
     }
 
     def serverCertificateList = Action.async { implicit request =>
-      Api.itemList(prismController.serverCertificateAgent, "server-certificates")
+      Api.itemList(prismDataStore.serverCertificateAgent, "server-certificates")
     }
     def serverCertificate(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.serverCertificateAgent, arn)
+      Api.singleItem(prismDataStore.serverCertificateAgent, arn)
     }
 
     def acmCertificateList = Action.async { implicit request =>
-      Api.itemList(prismController.acmCertificateAgent, "acm-certificates")
+      Api.itemList(prismDataStore.acmCertificateAgent, "acm-certificates")
     }
     def acmCertificate(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.acmCertificateAgent, arn)
+      Api.singleItem(prismDataStore.acmCertificateAgent, arn)
     }
 
     def route53ZoneList = Action.async { implicit request =>
-      Api.itemList(prismController.route53ZoneAgent, "route53-zones")
+      Api.itemList(prismDataStore.route53ZoneAgent, "route53-zones")
     }
     def route53Zone(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.route53ZoneAgent, arn)
+      Api.singleItem(prismDataStore.route53ZoneAgent, arn)
     }
 
     def elbList = Action.async { implicit request =>
-      Api.itemList(prismController.elbAgent, "elbs")
+      Api.itemList(prismDataStore.elbAgent, "elbs")
     }
     def elb(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.elbAgent, arn)
+      Api.singleItem(prismDataStore.elbAgent, arn)
     }
 
     def bucketList = Action.async { implicit request =>
-      Api.itemList(prismController.bucketAgent, "buckets")
+      Api.itemList(prismDataStore.bucketAgent, "buckets")
     }
     def bucket(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.bucketAgent, arn)
+      Api.singleItem(prismDataStore.bucketAgent, arn)
     }
 
     def reservationList = Action.async { implicit request =>
-      Api.itemList(prismController.reservationAgent, "reservations")
+      Api.itemList(prismDataStore.reservationAgent, "reservations")
     }
     def reservation(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.reservationAgent, arn)
+      Api.singleItem(prismDataStore.reservationAgent, arn)
     }
 
     private def stackExtractor(i: IndexedItemWithStack) = i.stack.map(Json.toJson(_))
     private def stageExtractor(i: IndexedItemWithStage) = i.stage.map(Json.toJson(_))
-    def roleList = summary[Instance](prismController.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
-    def mainclassList = summary[Instance](prismController.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
-    def stackList = summaryFromTwo[Instance, Lambda](prismController.instanceAgent, stackExtractor, prismController.lambdaAgent, stackExtractor, "stacks")(prismConfiguration.stages.ordering)
-    def stageList = summaryFromTwo[Instance, Lambda](prismController.instanceAgent, stageExtractor, prismController.lambdaAgent, stageExtractor, "stages")(prismConfiguration.stages.ordering)
-    def regionList = summary[Instance](prismController.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
-    def vendorList = summary[Instance](prismController.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
+    def roleList = summary[Instance](prismDataStore.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
+    def mainclassList = summary[Instance](prismDataStore.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
+    def stackList = summaryFromTwo[Instance, Lambda](prismDataStore.instanceAgent, stackExtractor, prismDataStore.lambdaAgent, stackExtractor, "stacks")(prismConfiguration.stages.ordering)
+    def stageList = summaryFromTwo[Instance, Lambda](prismDataStore.instanceAgent, stageExtractor, prismDataStore.lambdaAgent, stageExtractor, "stages")(prismConfiguration.stages.ordering)
+    def regionList = summary[Instance](prismDataStore.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
+    def vendorList = summary[Instance](prismDataStore.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
     def appList = summary[Instance](
-      prismController.instanceAgent,
+      prismDataStore.instanceAgent,
       i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
       "app",
       enableFilter = true
     )
 
     def dataList = Action.async { implicit request =>
-      Api.itemList(prismController.dataAgent, "data")
+      Api.itemList(prismDataStore.dataAgent, "data")
     }
     def data(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.dataAgent, arn)
+      Api.singleItem(prismDataStore.dataAgent, arn)
     }
-    def dataKeysList = summary[Data](prismController.dataAgent, d => Some(Json.toJson(d.key)), "keys")
+    def dataKeysList = summary[Data](prismDataStore.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
     def dataLookup(key:String) = Action.async { implicit request =>
       ApiResult.filter{
         val app = request.getQueryString("app")
         val stage = request.getQueryString("stage")
         val stack = request.getQueryString("stack")
-        val validKey = prismController.dataAgent.getTuples.filter(_._2.key == key).toSeq
+        val validKey = prismDataStore.dataAgent.getTuples.filter(_._2.key == key).toSeq
 
         val errors:Map[String,String] = Map.empty ++
             (if (app.isEmpty) Some("app" -> "Must specify app") else None) ++
