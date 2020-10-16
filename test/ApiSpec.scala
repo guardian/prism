@@ -18,9 +18,11 @@ object ApiSpec extends PlaySpecification with Results {
       implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/test")
 
       val components = Helpers.stubControllerComponents()
+      implicit val executionContext: ExecutionContext = components.executionContext
+
       val success = ApiResult.noSource({
         Json.obj("test" -> "value")
-      })(components.executionContext)
+      })
 
       contentType(success) must beSome("application/json")
       status(success) must equalTo(OK)
@@ -28,12 +30,13 @@ object ApiSpec extends PlaySpecification with Results {
     }
 
     "wrap data with fail when an Api exception is thrown" in {
-      implicit val request = FakeRequest(GET, "/test")
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/test")
       val components = Helpers.stubControllerComponents()
+      implicit val executionContext: ExecutionContext = components.executionContext
       val fail = ApiResult.noSource({
         if (true) throw ApiCallException(Json.obj("test" -> "just testing the fail state"))
         Json.obj("never" -> "reached")
-      })(components.executionContext)
+      })
       contentType(fail) must beSome("application/json")
       status(fail) must equalTo(BAD_REQUEST)
       (contentAsJson(fail) \ "status").get mustEqual JsString("fail")
@@ -41,11 +44,12 @@ object ApiSpec extends PlaySpecification with Results {
     }
 
     "return an error when something else goes wrong" in {
-      implicit val request = FakeRequest(GET, "/test")
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/test")
       val components = Helpers.stubControllerComponents()
+      implicit val executionContext: ExecutionContext = components.executionContext
       val error = ApiResult.noSource({
         Json.obj("infinity" -> (1 / 0))
-      })(components.executionContext)
+      })
       contentType(error) must beSome("application/json")
       status(error) must equalTo(INTERNAL_SERVER_ERROR)
       (contentAsJson(error) \ "status").get mustEqual JsString("error")
@@ -53,21 +57,22 @@ object ApiSpec extends PlaySpecification with Results {
     }
 
     "add a length companion field to arrays contained in objects when requested" in {
-      implicit val request = FakeRequest(GET, "/test?_length=true")
+      implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/test?_length=true")
       val components = Helpers.stubControllerComponents()
+      implicit val executionContext: ExecutionContext = components.executionContext
       val success = ApiResult.noSource({
         Json.obj("test" -> List("first", "second", "third"))
-      })(components.executionContext)
+      })
       (contentAsJson(success) \ "data" \ "test.length").get mustEqual JsNumber(3)
     }
   }
 
   case class TestItem(arn: String, name: String, region: String, tags: Map[String, String] = Map.empty) extends IndexedItem {
-    def callFromArn: String => Call = arn => Call("GET", "localhost")
+    def callFromArn: String => Call = _ => Call("GET", "localhost")
   }
 
   object TestItem {
-    implicit val testItemWrites = Json.writes[TestItem]
+    implicit val testItemWrites: OWrites[TestItem] = Json.writes[TestItem]
   }
 
   class TestOrigin extends Origin {
@@ -104,9 +109,8 @@ object ApiSpec extends PlaySpecification with Results {
     "return a list of instances" in {
       val result: Future[Result] = Api.itemList(
         new TestCollectorAgent(),
-        "objectKey",
-        ExecutionContext.global
-      )(FakeRequest(), TestItem.testItemWrites)
+        "objectKey"
+      )(FakeRequest(), TestItem.testItemWrites, ExecutionContext.global)
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
       val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
@@ -118,8 +122,7 @@ object ApiSpec extends PlaySpecification with Results {
       val result: Future[Result] = Api.itemList(
         new TestCollectorAgent(),
         "objectKey",
-        ExecutionContext.global
-      )(FakeRequest(GET, "/objectKey?region=eu-west-1"), TestItem.testItemWrites)
+      )(FakeRequest(GET, "/objectKey?region=eu-west-1"), TestItem.testItemWrites, ExecutionContext.global)
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
       val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
@@ -131,8 +134,7 @@ object ApiSpec extends PlaySpecification with Results {
       val result: Future[Result] = Api.itemList(
         new TestCollectorAgent(),
         "objectKey",
-        ExecutionContext.global
-      )(FakeRequest(GET, "/objectKey?region!=eu-west-1"), TestItem.testItemWrites)
+      )(FakeRequest(GET, "/objectKey?region!=eu-west-1"), TestItem.testItemWrites, ExecutionContext.global)
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
       val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
@@ -144,8 +146,7 @@ object ApiSpec extends PlaySpecification with Results {
       val result: Future[Result] = Api.itemList(
         new TestCollectorAgent(),
         "objectKey",
-        ExecutionContext.global
-      )(FakeRequest(GET, "/objectKey?region~=.*1"), TestItem.testItemWrites)
+      )(FakeRequest(GET, "/objectKey?region~=.*1"), TestItem.testItemWrites, ExecutionContext.global)
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
       val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
@@ -157,8 +158,7 @@ object ApiSpec extends PlaySpecification with Results {
       val result: Future[Result] = Api.itemList(
         new TestCollectorAgent(),
         "objectKey",
-        ExecutionContext.global
-      )(FakeRequest(GET, "/objectKey?tags.stage=PROD"), TestItem.testItemWrites)
+      )(FakeRequest(GET, "/objectKey?tags.stage=PROD"), TestItem.testItemWrites, ExecutionContext.global)
       status(result) must equalTo(OK)
       contentType(result) must beSome("application/json")
       val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
