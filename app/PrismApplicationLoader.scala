@@ -90,9 +90,9 @@ class PrismComponents(context: ApplicationLoader.Context)
 
   lazy val homeController = new _root_.controllers.Application(controllerComponents, combinedConfig.underlying, () => router.documentation)
 
-  lazy val apiController = new _root_.controllers.Api(controllerComponents, prismController, executionContext, prismConfig)
+  lazy val apiController = new _root_.controllers.Api(controllerComponents, prismController, prismConfig)
 
-  lazy val ownerController = new _root_.controllers.OwnerApi(controllerComponents, executionContext)
+  lazy val ownerController = new _root_.controllers.OwnerApi(controllerComponents)
 
   lazy val router: Router = new _root_.router.Routes(httpErrorHandler, homeController, apiController, assets, ownerController)
 }

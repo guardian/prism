@@ -48,11 +48,11 @@ object ApiResult extends Logging {
     import jsonimplicits.model.labelWriter
 
     case class SourceData[D](sourceData: Try[Map[Label, Seq[D]]]) {
-      def reduce(reduce: Map[Label, Seq[D]] => JsValue, ec: ExecutionContext)(implicit request: RequestHeader): Future[Result] = {
-        reduceAsync(input => Future.successful(reduce(input)), ec)(request)
+      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+        reduceAsync(input => Future.successful(reduce(input)))
       }
 
-      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue], ec: ExecutionContext)(implicit request: RequestHeader): Future[Result] = {
+      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
         sourceData.map { mapSources =>
           val filter = ResourceFilter.fromRequest
           val filteredSources = mapSources.groupBy {
@@ -121,7 +121,7 @@ object ApiResult extends Logging {
     }
   }
 
-  def noSource(block: => JsValue)(ec: ExecutionContext)(implicit request:RequestHeader): Future[Result] = {
+  def noSource(block: => JsValue)(implicit request:RequestHeader, ec: ExecutionContext): Future[Result] = {
     val sourceLabel:Label = Label(
       ResourceType(noSourceContainer.name, 15 minutes, 1 minute),
       new Origin {
@@ -133,8 +133,8 @@ object ApiResult extends Logging {
       1,
       noSourceContainer.lastUpdated
     )
-    filter(Map(sourceLabel -> Seq("dummy"))) reduceAsync ({ _ =>
+    filter(Map(sourceLabel -> Seq("dummy"))) reduceAsync { _ =>
       Future.successful(block)
-    }, ec)
+    }
   }
 }

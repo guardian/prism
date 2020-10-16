@@ -16,7 +16,7 @@ import scala.language.postfixOps
 import utils.{Matchable, ResourceFilter}
 
 //noinspection TypeAnnotation
-class Api (cc: ControllerComponents, prismController: Prism, executionContext: ExecutionContext, prismConfiguration: PrismConfiguration) extends AbstractController(cc) with Logging {
+class Api (cc: ControllerComponents, prismController: Prism, prismConfiguration: PrismConfiguration)(implicit executionContext: ExecutionContext) extends AbstractController(cc) with Logging {
     implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = (o: Reference[T]) => {
       request.getQueryString("_reference") match {
         case Some("inline") =>
@@ -43,14 +43,14 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
       Action.async { implicit request =>
         ApiResult.filter[JsValue] {
           sourceAgent.get().map { datum => datum.label -> datum.data.flatMap(transform)}.toMap
-        } reduce ({ transformed =>
+        } reduce { transformed =>
           val objects = transformed.values.toSeq.flatten.distinct.sortBy(sortString)(ordering)
           val filteredObjects = if (enableFilter) {
             val filter = ResourceFilter.fromRequest
             objects.filter(filter.isMatch)
           } else objects
           Json.obj(key -> Json.toJson(filteredObjects))
-        }, executionContext)
+        }
       }
 
     def summaryFromTwo[T<:IndexedItem, U<:IndexedItem](sourceTAgent: CollectorAgent[T],
@@ -64,14 +64,14 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
         ApiResult.filter[JsValue] {
           sourceTAgent.get().map { datum => datum.label -> datum.data.flatMap(transformT)}.toMap ++
           sourceUAgent.get().map { datum => datum.label -> datum.data.flatMap(transformU)}.toMap
-        } reduce({ transformed =>
+        } reduce { transformed =>
           val objects = transformed.values.toSeq.flatten.distinct.sortBy(sortString)(ordering)
           val filteredObjects = if (enableFilter) {
             val filter = ResourceFilter.fromRequest
             objects.filter(filter.isMatch)
           } else objects
           Json.obj(key -> Json.toJson(filteredObjects))
-        }, executionContext)
+        }
       }
 
     def sources = Action.async { implicit request =>
@@ -79,9 +79,9 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
         val filter = ResourceFilter.fromRequest
         val sources = prismController.sourceStatusAgent.sources
         Map(sources.label -> sources.data.map(toJson(_)).filter(filter.isMatch))
-      } reduce({ collection =>
+      } reduce { collection =>
         toJson(collection.flatMap(_._2))
-      }, executionContext)
+      }
     }
 
     def healthCheck = Action.async { implicit request =>
@@ -89,12 +89,12 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
         val sources = prismController.sourceStatusAgent.sources
         val notInitialisedSources = sources.data.filter(_.state.status != "success")
         if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
-      } reduce({ notInitialisedSources =>
+      } reduce { notInitialisedSources =>
         if (notInitialisedSources.isEmpty)
           Json.obj("healthcheck" -> "initialised")
         else
           throw ApiCallException(Json.obj("healthcheck" -> "not yet initialised", "sources" -> notInitialisedSources.values.headOption), SERVICE_UNAVAILABLE)
-      }, executionContext)
+      }
     }
 
     def find = Action.async { implicit request =>
@@ -106,7 +106,7 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
             datum.label -> datum.data.filter(d => filter.isMatch(d.fieldIndex))
           }
         }.toMap
-      } reduce({ sources =>
+      } reduce { sources =>
         val results = sources.flatMap { case (label, dataItems) =>
           dataItems.map { data =>
             Json.obj(
@@ -116,85 +116,85 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
           }
         }
         Json.toJson(results)
-      }, executionContext)
+      }
     }
 
     def instanceList = Action.async { implicit request =>
-      Api.itemList(prismController.instanceAgent, "instances", executionContext, "vendorState" -> "running", "vendorState" -> "ACTIVE")
+      Api.itemList(prismController.instanceAgent, "instances", "vendorState" -> "running", "vendorState" -> "ACTIVE")
     }
     def instance(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.instanceAgent, arn, executionContext)
+      Api.singleItem(prismController.instanceAgent, arn)
     }
 
     def lambdaList = Action.async { implicit request =>
-      Api.itemList(prismController.lambdaAgent, "lambdas", executionContext)
+      Api.itemList(prismController.lambdaAgent, "lambdas")
     }
     def lambda(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.lambdaAgent, arn, executionContext)
+      Api.singleItem(prismController.lambdaAgent, arn)
     }
 
     def securityGroupList = Action.async { implicit request =>
-      Api.itemList(prismController.securityGroupAgent, "security-groups", executionContext)
+      Api.itemList(prismController.securityGroupAgent, "security-groups")
     }
 
     def securityGroup(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.securityGroupAgent, arn, executionContext)
+      Api.singleItem(prismController.securityGroupAgent, arn)
     }
 
     def imageList = Action.async { implicit request =>
-      Api.itemList(prismController.imageAgent, "images", executionContext)
+      Api.itemList(prismController.imageAgent, "images")
     }
     def image(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.imageAgent, arn, executionContext)
+      Api.singleItem(prismController.imageAgent, arn)
     }
 
     def launchConfigurationList = Action.async { implicit request =>
-      Api.itemList(prismController.launchConfigurationAgent, "launch-configurations", executionContext)
+      Api.itemList(prismController.launchConfigurationAgent, "launch-configurations")
     }
     def launchConfiguration(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.launchConfigurationAgent, arn, executionContext)
+      Api.singleItem(prismController.launchConfigurationAgent, arn)
     }
 
     def serverCertificateList = Action.async { implicit request =>
-      Api.itemList(prismController.serverCertificateAgent, "server-certificates", executionContext)
+      Api.itemList(prismController.serverCertificateAgent, "server-certificates")
     }
     def serverCertificate(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.serverCertificateAgent, arn, executionContext)
+      Api.singleItem(prismController.serverCertificateAgent, arn)
     }
 
     def acmCertificateList = Action.async { implicit request =>
-      Api.itemList(prismController.acmCertificateAgent, "acm-certificates", executionContext)
+      Api.itemList(prismController.acmCertificateAgent, "acm-certificates")
     }
     def acmCertificate(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.acmCertificateAgent, arn, executionContext)
+      Api.singleItem(prismController.acmCertificateAgent, arn)
     }
 
     def route53ZoneList = Action.async { implicit request =>
-      Api.itemList(prismController.route53ZoneAgent, "route53-zones", executionContext)
+      Api.itemList(prismController.route53ZoneAgent, "route53-zones")
     }
     def route53Zone(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.route53ZoneAgent, arn, executionContext)
+      Api.singleItem(prismController.route53ZoneAgent, arn)
     }
 
     def elbList = Action.async { implicit request =>
-      Api.itemList(prismController.elbAgent, "elbs", executionContext)
+      Api.itemList(prismController.elbAgent, "elbs")
     }
     def elb(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.elbAgent, arn, executionContext)
+      Api.singleItem(prismController.elbAgent, arn)
     }
 
     def bucketList = Action.async { implicit request =>
-      Api.itemList(prismController.bucketAgent, "buckets", executionContext)
+      Api.itemList(prismController.bucketAgent, "buckets")
     }
     def bucket(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.bucketAgent, arn, executionContext)
+      Api.singleItem(prismController.bucketAgent, arn)
     }
 
     def reservationList = Action.async { implicit request =>
-      Api.itemList(prismController.reservationAgent, "reservations", executionContext)
+      Api.itemList(prismController.reservationAgent, "reservations")
     }
     def reservation(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.reservationAgent, arn, executionContext)
+      Api.singleItem(prismController.reservationAgent, arn)
     }
 
     private def stackExtractor(i: IndexedItemWithStack) = i.stack.map(Json.toJson(_))
@@ -213,10 +213,10 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
     )
 
     def dataList = Action.async { implicit request =>
-      Api.itemList(prismController.dataAgent, "data", executionContext)
+      Api.itemList(prismController.dataAgent, "data")
     }
     def data(arn:String) = Action.async { implicit request =>
-      Api.singleItem(prismController.dataAgent, arn, executionContext)
+      Api.singleItem(prismController.dataAgent, arn)
     }
     def dataKeysList = summary[Data](prismController.dataAgent, d => Some(Json.toJson(d.key)), "keys")
 
@@ -242,30 +242,30 @@ class Api (cc: ControllerComponents, prismController: Prism, executionContext: E
             Json.obj("value" -> s"Key $key has no matching value for stack=$stack, app=$app and stage=$stage")
           )
         }
-      } reduce({ result =>
+      } reduce { result =>
         Json.toJson(result.head._2.head)
-      }, executionContext)
+      }
     }
 }
 
 object Api extends Status {
   import jsonimplicits.model._
 
-  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String, executionContext: ExecutionContext)
-                                (implicit request: RequestHeader, writes: Writes[T]): Future[Result] =
+  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String)
+                                (implicit request: RequestHeader, writes: Writes[T], executionContext: ExecutionContext): Future[Result] =
     ApiResult.filter {
       val sources = agent.get()
       sources.flatMap{ datum =>
         datum.data.find(_.arn == arn).map(datum.label -> Seq(_))
       }.toMap
-    } reduce({ sources =>
+    } reduce { sources =>
       sources.headOption.map {
         case (label, items) =>
           Api.itemJson(items.head, expand = true, label=Some(label)).get
       } getOrElse {
         throw ApiCallException(Json.obj("arn" -> s"Item with arn $arn doesn't exist"), NOT_FOUND)
       }
-    }, executionContext)
+    }
 
   def itemJson[T<:IndexedItem](item: T, expand: Boolean = false, label: Option[Label] = None, filter: Matchable[JsValue] = ResourceFilter.all)(implicit request: RequestHeader, writes: Writes[T]): Option[JsValue] = {
     val json = Json.toJson(item).as[JsObject] ++ Json.obj("meta"-> Json.obj("href" -> item.call.absoluteURL(), "origin" -> label.map(_.origin)))
@@ -277,8 +277,8 @@ object Api extends Status {
     }
   }
 
-  def itemList[T<:IndexedItem](agent:CollectorAgentTrait[T], objectKey:String, executionContext: ExecutionContext, defaultFilter: (String,String)*)
-                              (implicit request: RequestHeader, writes: Writes[T]): Future[Result] =
+  def itemList[T<:IndexedItem](agent:CollectorAgentTrait[T], objectKey:String, defaultFilter: (String,String)*)
+                              (implicit request: RequestHeader, writes: Writes[T], executionContext: ExecutionContext): Future[Result] =
     ApiResult.filter {
       val expand = request.getQueryString("_brief").isEmpty
       val filter =  ResourceFilter.fromRequestWithDefaults(defaultFilter:_*)
@@ -286,9 +286,9 @@ object Api extends Status {
         agent.label ->
           agent.data.flatMap(host => itemJson(host, expand, Some(agent.label), filter=filter))
       }.toMap
-    } reduce({ collection =>
+    } reduce { collection =>
       Json.obj(
         objectKey -> toJson(collection.values.flatten)
       )
-    }, executionContext)
+    }
 }

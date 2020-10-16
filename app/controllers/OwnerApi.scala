@@ -16,14 +16,14 @@ import scala.language.postfixOps
 import utils.ResourceFilter
 
 //noinspection TypeAnnotation
-class OwnerApi(cc: ControllerComponents, ec: ExecutionContext) extends AbstractController(cc) {
+class OwnerApi(cc: ControllerComponents)(implicit executionContext: ExecutionContext) extends AbstractController(cc) {
 
     private def itemsResult[T](key: String, items: => Iterable[T], baseObject: JsObject = Json.obj())(implicit request: RequestHeader, tw: Writes[T]): Future[Result] = {
       ApiResult.filter {
         Map(ownerLabel -> items.toSeq)
-      } reduce({ collection =>
+      } reduce { collection =>
         baseObject ++ Json.obj(key -> toJson(collection.values.flatten))
-      }, ec)
+      }
     }
 
     object OwnerResourceType extends ResourceType("Owners", 30 days, 30 days)
