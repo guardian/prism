@@ -1,10 +1,8 @@
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.regions.Regions
-import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity, PrismConfiguration}
-import controllers.{Api, Application, AssetsComponents, OwnerApi, Prism}
-import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Configuration, Mode}
+import conf.PrismConfiguration
+import controllers._
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
+import play.api.{ApplicationLoader, BuiltInComponentsFromContext}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilterComponents
 import router.Routes
@@ -57,7 +55,7 @@ class AppComponents(context: ApplicationLoader.Context)
     lifecycleSingletons.clear()
   })
 
-  lazy val homeController = new Application(controllerComponents, configuration, () => router.documentation)
+  lazy val homeController = new Application(controllerComponents, () => router.documentation)
 
   lazy val apiController = new Api(controllerComponents, prismController, prismConfig)
 

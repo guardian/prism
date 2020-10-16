@@ -1,3 +1,5 @@
+import com.gu.riffraff.artifact.BuildInfo
+
 name := "prism"
 
 version := "1.0-SNAPSHOT"
@@ -12,7 +14,7 @@ resolvers ++= Seq(
 val awsVersion = "1.11.759"
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin)
+  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
   .settings(
     packageName in Universal := normalizedName.value,
     fileDescriptorLimit := Some("16384"),
@@ -23,6 +25,18 @@ lazy val root = (project in file("."))
       riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
       baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml"
     ),
+    buildInfoKeys := {
+      lazy val buildInfo = BuildInfo(baseDirectory.value)
+      Seq[BuildInfoKey](
+        BuildInfoKey("buildNumber" -> buildInfo.buildIdentifier),
+        // so this next one is constant to avoid it always recompiling on dev machines.
+        // we only really care about build time on teamcity, when a constant based on when
+        // it was loaded is just fine
+        BuildInfoKey("buildTime" -> System.currentTimeMillis),
+        BuildInfoKey("gitCommitId" -> buildInfo.revision)
+      )
+    },
+    buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "2.0.0",
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
