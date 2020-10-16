@@ -38,7 +38,7 @@ class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
           awsOrigin.copy(accountNumber = Some("?????????"))
         }
     } get
-  } ++ prismConfiguration.accounts.json.list ++ prismConfiguration.accounts.googleDoc.list
+  } ++ prismConfiguration.accounts.json.list
 
   def forResource(resource:String): Seq[Origin] = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
 }
@@ -135,9 +135,4 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     Json.parse(jsonText)
   }
   val jsonFields = Map("url" -> url)
-}
-case class GoogleDocOrigin(name: String, docUrl:URL, resources:Set[String]) extends Origin {
-  lazy val vendor = "google-doc"
-  lazy val account: String = name
-  val jsonFields = Map("name" -> name, "docUrl" -> docUrl.toString)
 }

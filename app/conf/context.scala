@@ -86,13 +86,6 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
         }
       }.toList
     }
-    object googleDoc {
-      lazy val list: Seq[GoogleDocOrigin] = subConfigurations("accounts.googleDoc").map { case(name, config) =>
-        val url = config.getOptional[String]("url").getOrException("URL must be specified")
-        val resources = config.getOptional[Seq[String]]("resources").getOrElse(Nil)
-        GoogleDocOrigin(name, new URL(url), resources.toSet)
-      }.toList
-    }
   }
 
   object logging {

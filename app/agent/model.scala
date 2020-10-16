@@ -6,11 +6,8 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
 import play.api.libs.json._
-import play.api.libs.ws.WSClient
-import utils.{GoogleDoc, Logging}
+import utils.Logging
 import play.api.mvc.Call
-
-import scala.concurrent.Await
 import scala.concurrent.duration._
 
 trait IndexedItem {
@@ -91,9 +88,4 @@ trait JsonCollectorTranslator[F,T] extends Collector[T] with Logging {
     }
   }
   def translate(input: F): T
-}
-
-trait GoogleDocCollector[T] extends Collector[T] {
-  def origin:GoogleDocOrigin
-  def csvData(ws: WSClient):List[List[String]] = Await.result(GoogleDoc.getCsvForDoc(origin.docUrl, ws), 1 minute)
 }
