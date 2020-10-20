@@ -1,20 +1,20 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.certificatemanager.AWSCertificateManagerClientBuilder
 import com.amazonaws.services.certificatemanager.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
+import com.amazonaws.services.certificatemanager.{AWSCertificateManager, AWSCertificateManagerClientBuilder}
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import scala.collection.JavaConverters._
-import scala.util.Try
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
+import scala.util.Try
 
 
-object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 1 minute)) {
+class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
     case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
   }
@@ -22,7 +22,7 @@ object AmazonCertificateCollectorSet extends CollectorSet[AcmCertificate](Resour
 
 case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[AcmCertificate] with Logging {
 
-  val client = AWSCertificateManagerClientBuilder.standard()
+  val client: AWSCertificateManager = AWSCertificateManagerClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -81,7 +81,7 @@ object RenewalInfo {
 }
 
 object AcmCertificate {
-  def fromApiData(cert: CertificateDetail, origin: AmazonOrigin) = AcmCertificate(
+  def fromApiData(cert: CertificateDetail, origin: AmazonOrigin): AcmCertificate = AcmCertificate(
     arn = cert.getCertificateArn,
     domainName = cert.getDomainName,
     subjectAlternativeNames = cert.getSubjectAlternativeNames.asScala.toList,

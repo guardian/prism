@@ -10,24 +10,25 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
-import conf.AWS
-import play.api.libs.json.{JsObject, Json, JsValue}
+import conf.{AWS, PrismConfiguration}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import utils.Logging
 
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.Try
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
 
-object Accounts extends Logging {
-  val ArnIamAccountExtractor = """arn:aws:iam::(\d+):user.*""".r
-  import conf.PrismConfiguration.accounts._
-  val all:Seq[Origin] = (aws.list ++ amis.list).map { awsOrigin =>
+class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
+  val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):user.*""".r
+  val all:Seq[Origin] = (prismConfiguration.accounts.aws.list ++ prismConfiguration.accounts.amis.list).map { awsOrigin =>
     Try {
       val iamClient = AmazonIdentityManagementClientBuilder.standard()
         .withCredentials(awsOrigin.credentials.provider)
         .withRegion(AWS.connectionRegion)
         .build()
+
       val ArnIamAccountExtractor(derivedAccountNumber) = iamClient.getUser.getUser.getArn
       awsOrigin.copy(accountNumber = Some(derivedAccountNumber))
     } recover {
@@ -37,9 +38,9 @@ object Accounts extends Logging {
           awsOrigin.copy(accountNumber = Some("?????????"))
         }
     } get
-  } ++ json.list ++ googleDoc.list
+  } ++ prismConfiguration.accounts.json.list
 
-  def forResource(resource:String) = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
+  def forResource(resource:String): Seq[Origin] = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
 }
 
 trait Origin {
@@ -50,7 +51,7 @@ trait Origin {
   def transformInstance(input: Instance): Instance = input
   def standardFields: Map[String, String] = Map("vendor" -> vendor, "accountName" -> account)
   def jsonFields: Map[String, String]
-  def toJson: JsObject = JsObject((standardFields ++ jsonFields).mapValues(Json.toJson(_)).toSeq)
+  def toJson: JsObject = JsObject((standardFields ++ jsonFields).view.mapValues(Json.toJson(_)).toSeq)
 }
 
 case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], region: String)(secretKey: Option[String]) {
@@ -72,7 +73,7 @@ case class Credentials(accessKey: Option[String], role: Option[String], profile:
 }
 
 object AmazonOrigin {
-  val ArnIamAccountExtractor = """arn:aws:iam::(\d+):role.*""".r
+  val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):role.*""".r
   def apply(account:String, region:String, resources:Set[String], stagePrefix: Option[String],
             credentials: Credentials, ownerId: Option[String]): AmazonOrigin = {
     val accountNumber = credentials.role.flatMap {
@@ -93,10 +94,10 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
-  val jsonFields = Map("region" -> region, "credentials" -> credentials.id) ++
+  val jsonFields: Map[String, String] = Map("region" -> region, "credentials" -> credentials.id) ++
     accountNumber.map("accountNumber" -> _) ++
     ownerId.map("ownerId" -> _)
-  val awsRegion = Regions.fromName(region)
+  val awsRegion: Regions = Regions.fromName(region)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {
@@ -115,6 +116,7 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     }
   }
 
+  // TODO: Fix these warnings
   def data(resource:ResourceType):JsValue = {
     val jsonText: String = new URI(url.replace("%resource%", resource.name)) match {
       case classPathLocation if classPathLocation.getScheme == "classpath" =>
@@ -133,9 +135,4 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     Json.parse(jsonText)
   }
   val jsonFields = Map("url" -> url)
-}
-case class GoogleDocOrigin(name: String, docUrl:URL, resources:Set[String]) extends Origin {
-  lazy val vendor = "google-doc"
-  lazy val account = name
-  val jsonFields = Map("name" -> name, "docUrl" -> docUrl.toString)
 }

@@ -1,21 +1,20 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.autoscaling.{AmazonAutoScalingClient, AmazonAutoScalingClientBuilder}
+import com.amazonaws.services.autoscaling.{AmazonAutoScaling, AmazonAutoScalingClient, AmazonAutoScalingClientBuilder}
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
 
 import scala.util.Try
-
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes)) {
+class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
     case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
   }
@@ -23,7 +22,7 @@ object LaunchConfigurationCollectorSet extends CollectorSet[LaunchConfiguration]
 
 case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LaunchConfiguration] with Logging {
 
-  val client = AmazonAutoScalingClientBuilder.standard()
+  val client: AmazonAutoScaling = AmazonAutoScalingClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()

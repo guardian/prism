@@ -4,18 +4,18 @@ import agent._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.amazonaws.services.s3.model.{AmazonS3Exception, ListBucketsRequest, Bucket => AWSBucket}
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 import play.api.mvc.Call
 import utils.Logging
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes)) {
+class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource)
   }
@@ -23,7 +23,7 @@ object BucketCollectorSet extends CollectorSet[Bucket](ResourceType("bucket", 1 
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Bucket] with Logging {
 
-  val client = AmazonS3ClientBuilder.standard()
+  val client: AmazonS3 = AmazonS3ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()

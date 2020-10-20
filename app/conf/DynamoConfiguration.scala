@@ -8,7 +8,7 @@ import com.typesafe.config.ConfigFactory
 import play.api.{Configuration, Mode}
 import utils.Logging
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 case class Identity(stack: String, app: String, stage: String)
 case class ConfigSegment(app: String, stage: String)
@@ -23,7 +23,7 @@ object DynamoConfiguration {
 class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
                           identity: Identity, prefix:String) extends ConfigurationSource with Logging {
 
-  def configuration(mode: Mode.Mode): Configuration = {
+  def configuration(mode: Mode): Configuration = {
 
     if (mode == Mode.Test)
       Configuration.empty
@@ -42,7 +42,7 @@ class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
         configSegmentsFromIdentity(identity)
       )
 
-      val finalConfig = configs.flatMap{ case (segment, config) => config }.foldLeft[Configuration](Configuration.empty){ _ ++ _ }
+      val finalConfig = configs.flatMap{ case (_, config) => config }.foldRight[Configuration](Configuration.empty){ _.withFallback(_) }
 
       finalConfig
     }

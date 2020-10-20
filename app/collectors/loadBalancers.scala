@@ -1,17 +1,17 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder
+import com.amazonaws.services.elasticloadbalancing.{AmazonElasticLoadBalancing, AmazonElasticLoadBalancingClientBuilder}
 import com.amazonaws.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, LoadBalancerDescription}
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes)) {
+class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
     case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource)
   }
@@ -19,7 +19,7 @@ object LoadBalancerCollectorSet extends CollectorSet[LoadBalancer](ResourceType(
 
 case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LoadBalancer] with Logging {
 
-  val client = AmazonElasticLoadBalancingClientBuilder.standard()
+  val client: AmazonElasticLoadBalancing = AmazonElasticLoadBalancingClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -30,7 +30,7 @@ case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType) e
 }
 
 object LoadBalancer {
-  def fromApiData(loadBalancer: LoadBalancerDescription, origin: AmazonOrigin) = {
+  def fromApiData(loadBalancer: LoadBalancerDescription, origin: AmazonOrigin): LoadBalancer = {
     LoadBalancer(
       arn = s"arn:aws:elasticloadbalancing:${origin.region}:${origin.accountNumber.getOrElse("")}:loadbalancer/${loadBalancer.getLoadBalancerName}",
       name = loadBalancer.getLoadBalancerName,

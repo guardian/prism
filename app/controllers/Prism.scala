@@ -1,22 +1,32 @@
 package controllers
 
-import agent.CollectorAgent
+import agent.{Accounts, CollectorAgent, SourceStatusAgent}
+import akka.actor.ActorSystem
 import collectors._
+import conf.PrismConfiguration
 
-object Prism {
-  val lazyStartup = conf.PrismConfiguration.accounts.lazyStartup
-  val instanceAgent = new CollectorAgent[Instance](InstanceCollectorSet, lazyStartup)
-  val lambdaAgent = new CollectorAgent[Lambda](LambdaCollectorSet, lazyStartup)
-  val dataAgent = new CollectorAgent[Data](DataCollectorSet, lazyStartup)
-  val securityGroupAgent = new CollectorAgent[SecurityGroup](SecurityGroupCollectorSet, lazyStartup)
-  val imageAgent = new CollectorAgent[Image](ImageCollectorSet, lazyStartup)
-  val launchConfigurationAgent = new CollectorAgent[LaunchConfiguration](LaunchConfigurationCollectorSet, lazyStartup)
-  val serverCertificateAgent = new CollectorAgent[ServerCertificate](ServerCertificateCollectorSet, lazyStartup)
-  val acmCertificateAgent = new CollectorAgent[AcmCertificate](AmazonCertificateCollectorSet, lazyStartup)
-  val route53ZoneAgent = new CollectorAgent[Route53Zone](Route53ZoneCollectorSet, lazyStartup)
-  val elbAgent = new CollectorAgent[LoadBalancer](LoadBalancerCollectorSet, lazyStartup)
-  val bucketAgent = new CollectorAgent[Bucket](BucketCollectorSet, lazyStartup)
-  val reservationAgent = new CollectorAgent[Reservation](ReservationCollectorSet, lazyStartup)
+// TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
+class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
+  val sourceStatusAgent = new SourceStatusAgent(actorSystem)
+  val accounts = new Accounts(prismConfiguration)
+
+  val lazyStartup: Boolean = prismConfiguration.accounts.lazyStartup
+
+  // TODO: Maybe we should refactor this to not require a circular reference / pass in this
+  val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts, this), sourceStatusAgent, lazyStartup)(actorSystem)
+  val lambdaAgent = new CollectorAgent[Lambda](new LambdaCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val dataAgent = new CollectorAgent[Data](new DataCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+
+  val securityGroupAgent = new CollectorAgent[SecurityGroup](new SecurityGroupCollectorSet(accounts, this), sourceStatusAgent, lazyStartup)(actorSystem)
+
+  val imageAgent = new CollectorAgent[Image](new ImageCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val launchConfigurationAgent = new CollectorAgent[LaunchConfiguration](new LaunchConfigurationCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val serverCertificateAgent = new CollectorAgent[ServerCertificate](new ServerCertificateCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val acmCertificateAgent = new CollectorAgent[AcmCertificate](new AmazonCertificateCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val route53ZoneAgent = new CollectorAgent[Route53Zone](new Route53ZoneCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val elbAgent = new CollectorAgent[LoadBalancer](new LoadBalancerCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val bucketAgent = new CollectorAgent[Bucket](new BucketCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val reservationAgent = new CollectorAgent[Reservation](new ReservationCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val allAgents = Seq(instanceAgent, lambdaAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
     serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent)
 }

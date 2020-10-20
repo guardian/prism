@@ -27,7 +27,7 @@ trait Owners {
 
 object Owners extends Owners {
 
-  override def default = Owner("dig.dev.tooling")
+  override def default: Owner = Owner("dig.dev.tooling")
 
   override def stacks: Set[(String, SSA)] = Set(
     "security.dev" -> SSA("security"),

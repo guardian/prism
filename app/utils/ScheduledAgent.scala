@@ -1,10 +1,12 @@
 package utils
 
-import akka.actor.{Cancellable, ActorSystem}
+import akka.actor.{ActorSystem, Cancellable}
 import akka.agent.Agent
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.joda.time.{DateTime, Interval, LocalDate, LocalTime}
+
 import scala.concurrent.ExecutionContext
 
 object ScheduledAgent extends LifecycleWithoutApp {
@@ -22,11 +24,11 @@ object ScheduledAgent extends LifecycleWithoutApp {
     new ScheduledAgent(scheduleSystem.get, initialValue, updates:_*)
   }
 
-  def init() {
+  def init():Unit = {
     scheduleSystem = Some(ActorSystem("scheduled-agent"))
   }
 
-  def shutdown() {
+  def shutdown():Unit = {
     scheduleSystem.foreach(_.terminate())
   }
 }
@@ -54,14 +56,14 @@ object PeriodicScheduledAgentUpdate {
 
 case class DailyScheduledAgentUpdate[T](block: T => T, timeOfDay: LocalTime) extends ScheduledAgentUpdate[T] {
   def timeToNextExecution: FiniteDuration = {
-    val executionToday = (new LocalDate()).toDateTime(timeOfDay)
+    val executionToday = new LocalDate().toDateTime(timeOfDay)
 
     val interval = if (executionToday.isAfterNow)
       // today if before the time of day
       new Interval(new DateTime(), executionToday)
     else {
       // tomorrow if after the time of day
-      val executionTomorrow = (new LocalDate()).plusDays(1).toDateTime(timeOfDay)
+      val executionTomorrow = new LocalDate().plusDays(1).toDateTime(timeOfDay)
       new Interval(new DateTime(), executionTomorrow)
     }
     interval.toDurationMillis milliseconds
@@ -73,14 +75,14 @@ object DailyScheduledAgentUpdate {
 
 class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: ScheduledAgentUpdate[T]*)(implicit ec:ExecutionContext) extends Logging {
 
-  val agent = Agent[T](initialValue)(ec)
+  val agent: Agent[T] = Agent[T](initialValue)(ec)
 
-  val cancellablesAgent = Agent[Map[ScheduledAgentUpdate[T],Cancellable]]{
+  val cancellablesAgent: Agent[Map[ScheduledAgentUpdate[T], Cancellable]] = Agent[Map[ScheduledAgentUpdate[T],Cancellable]]{
     updates.map { update =>
       val cancellable = update match {
         case periodic:PeriodicScheduledAgentUpdate[_] =>
-          system.scheduler.schedule(periodic.initialDelay, periodic.frequency) {
-            queueUpdate(periodic)
+          system.scheduler.scheduleAtFixedRate(periodic.initialDelay, periodic.frequency) {
+            () => queueUpdate(periodic)
           }
         case daily:DailyScheduledAgentUpdate[_] =>
           scheduleNext(daily.asInstanceOf[DailyScheduledAgentUpdate[T]])
@@ -91,7 +93,7 @@ class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: Scheduled
 
   def scheduleNext(update: DailyScheduledAgentUpdate[T]): Cancellable = {
     val delay = update.timeToNextExecution
-    log.debug("Scheduling %s to run next in %s" format (update, delay))
+    log.debug("Scheduling %s to run next in %s".format(update, delay))
     system.scheduler.scheduleOnce(delay) {
       queueUpdate(update)
       val newCancellable = scheduleNext(update)
@@ -99,7 +101,7 @@ class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: Scheduled
     }
   }
 
-  def queueUpdate(update: ScheduledAgentUpdate[T]) {
+  def queueUpdate(update: ScheduledAgentUpdate[T]):Unit = {
     agent sendOff{ lastValue =>
       try {
         update.block(lastValue)
@@ -114,7 +116,7 @@ class ScheduledAgent[T](system: ActorSystem, initialValue: T, updates: Scheduled
   def get(): T = agent()
   def apply(): T = get()
 
-  def shutdown() {
+  def shutdown():Unit = {
     cancellablesAgent.send { cancellables =>
       cancellables.values.foreach(_.cancel())
       Map.empty

@@ -1,17 +1,10 @@
 package controllers
 
 import play.api.mvc._
-import play.api.Play
 
-object Application extends Controller {
-
+//noinspection TypeAnnotation
+class Application (cc: ControllerComponents, documentation: () => Seq[(String, String, String)]) extends AbstractController(cc) {
   def index = Action {
-    import play.api.Play.current
-    Ok(views.html.index(Play.routes.documentation))
+    Ok(views.html.index(documentation()))
   }
-
-  def config = Action {
-    Ok(play.api.Play.current.configuration.underlying.root().render())
-  }
-
 }

@@ -9,6 +9,6 @@ object FutureUtils {
     def toFlatFuture(implicit c: ExecutionContext):Future[A] = toFuture.flatMap(f => f)
   }
   implicit class Try2toFuture[A](t: Try[A]) {
-    def toFuture = Promise().complete(t).future
+    def toFuture: Future[A] = Promise().complete(t).future
   }
 }

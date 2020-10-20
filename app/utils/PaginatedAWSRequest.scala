@@ -1,6 +1,5 @@
 package utils
 
-import collectors.Lambda
 import com.amazonaws.{AmazonWebServiceRequest, AmazonWebServiceResult}
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, DescribeLaunchConfigurationsResult, LaunchConfiguration}
 import com.amazonaws.services.certificatemanager.model.{CertificateSummary, ListCertificatesRequest, ListCertificatesResult}
@@ -10,7 +9,8 @@ import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRe
 import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListFunctionsResult}
 import com.amazonaws.services.route53.model._
 
-import scala.collection.JavaConverters._
+import scala.annotation.tailrec
+import scala.jdk.CollectionConverters._
 
 trait Paging[Request, Result, A, Item] {
   def getPageMarker(result: Result): Option[A]
@@ -79,9 +79,10 @@ object PaginatedAWSRequest {
   (awsCall: Request => Result)(request: Request)
   (implicit marking: Paging[Request, Result, A, Item]): Iterable[Item] = {
 
-    def recurse( request: Request,
-                 results: List[Item],
-                 timesThrottled: Int ): Iterable[Item] = {
+    @tailrec
+    def recurse(request: Request,
+                results: List[Item],
+                timesThrottled: Int ): Iterable[Item] = {
       val result = awsCall(request)
       val newResults = results ++ marking.getItemsFromResult(result)
       val marker = marking.getPageMarker(result)

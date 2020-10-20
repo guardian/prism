@@ -1,17 +1,17 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.route53.AmazonRoute53ClientBuilder
+import com.amazonaws.services.route53.{AmazonRoute53, AmazonRoute53ClientBuilder}
 import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes)) {
+class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
     case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
   }
@@ -19,7 +19,7 @@ object Route53ZoneCollectorSet extends CollectorSet[Route53Zone](ResourceType("r
 
 case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Route53Zone] with Logging {
 
-  val client = AmazonRoute53ClientBuilder.standard()
+  val client: AmazonRoute53 = AmazonRoute53ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -31,7 +31,7 @@ case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) ex
 }
 
 object Route53Zone {
-  def fromApiData(zone: HostedZone, awsRecordSets: Iterable[ResourceRecordSet], origin: AmazonOrigin) = {
+  def fromApiData(zone: HostedZone, awsRecordSets: Iterable[ResourceRecordSet], origin: AmazonOrigin): Route53Zone = {
     val recordSets: List[Route53Record] = awsRecordSets.map { record =>
       val alias = Option(record.getAliasTarget).map(at => Route53Alias(at.getDNSName, at.getHostedZoneId, at.getEvaluateTargetHealth))
       val maybeTtl: Option[Long] = Option(record.getTTL).map(_.longValue)

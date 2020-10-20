@@ -2,41 +2,32 @@ package collectors
 
 import org.joda.time.DateTime
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
-import controllers.routes
+import controllers.{Prism, routes}
 
 import scala.language.postfixOps
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
+import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
+
 import scala.concurrent.duration._
+import scala.util.matching.Regex
 
 
-object InstanceCollectorSet extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute)) {
+class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-    case json:JsonOrigin => JsonInstanceCollector(json, resource)
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, prism)
   }
 }
 
-case class JsonInstanceCollector(origin:JsonOrigin, resource:ResourceType) extends JsonCollector[Instance] {
-  import jsonimplicits.joda.dateTimeReads
-  import jsonimplicits.model._
-  implicit val addressReads = Json.reads[Address]
-  implicit val instanceSpecificationReads = Json.reads[InstanceSpecification]
-  implicit val managementEndpointReads = Json.reads[ManagementEndpoint]
-  implicit val instanceReads = Json.reads[Instance]
-  def crawl: Iterable[Instance] = crawlJson
-}
+case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType, prism: Prism) extends Collector[Instance] with Logging {
 
-case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Instance] with Logging {
-
-  val client = AmazonEC2ClientBuilder.standard()
+  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
     .build()
@@ -59,16 +50,17 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType) exte
         instanceName = instance.getInstanceId,
         region = origin.region,
         vendor = "aws",
-        securityGroups = instance.getSecurityGroups.map{ sg =>
+        securityGroups = instance.getSecurityGroups.asScala.map{ sg =>
           Reference[SecurityGroup](
             s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.getGroupId}",
             Map(
               "groupId" -> sg.getGroupId,
               "groupName" -> sg.getGroupName
-            )
+            ),
+            prism
           )
-        },
-        tags = instance.getTags.map(t => t.getKey -> t.getValue).toMap,
+        }.toSeq,
+        tags = instance.getTags.asScala.map(t => t.getKey -> t.getValue).toMap,
         specs = InstanceSpecification(instance.getImageId, Image.arn(origin.region, instance.getImageId), instance.getInstanceType, Option(instance.getVpcId))
       )
     }.map(origin.transformInstance)
@@ -117,12 +109,12 @@ object Instance {
 
 case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
 object ManagementEndpoint {
-  val KeyValue = """([^=]*)=(.*)""".r
+  val KeyValue: Regex = """([^=]*)=(.*)""".r
   def fromTag(dnsName:String, tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
     tag match {
       case Some("none") => None
       case Some(tagContent) =>
-        Some(tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
+        Some(tagContent.split(";").filterNot(_.isEmpty).toIndexedSeq.map{ endpoint =>
           val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
             case KeyValue(key,value) => Some(key -> value)
             case _ => None
@@ -145,7 +137,7 @@ object ManagementEndpoint {
 case class AddressList(primary: Address, mapOfAddresses:Map[String,Address])
 object AddressList {
   def apply(addresses:(String, Address)*): AddressList = {
-    val filteredAddresses = addresses.filterNot { case (addressName, address) =>
+    val filteredAddresses = addresses.filterNot { case (_, address) =>
       address.dnsName == null || address.ip == null || address.dnsName.isEmpty || address.ip.isEmpty
     }
     AddressList(
@@ -187,7 +179,7 @@ case class Instance(
                  specification:Option[InstanceSpecification]
                 ) extends IndexedItemWithStage with IndexedItemWithStack {
 
-  def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
+  def callFromArn: String => Call = arn => routes.Api.instance(arn)
   override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {

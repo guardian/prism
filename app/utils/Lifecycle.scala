@@ -8,13 +8,13 @@ import play.api.Application
  * onStart() and shutdown called by onStop().
  */
 trait Lifecycle {
-  def init(app: Application)
-  def shutdown(app: Application)
+  def init(app: Application):Unit
+  def shutdown(app: Application):Unit
 }
 
 trait LifecycleWithoutApp extends Lifecycle {
-  def init(app:Application) {init()}
-  def shutdown(app:Application) {shutdown()}
-  def init()
-  def shutdown()
+  def init(app:Application):Unit = {init()}
+  def shutdown(app:Application):Unit = {shutdown()}
+  def init():Unit
+  def shutdown():Unit
 }

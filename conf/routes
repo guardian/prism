@@ -7,7 +7,6 @@ GET        /                                  controllers.Application.index
 # API V1
 GET        /sources                           controllers.Api.sources
 GET        /management/healthcheck            controllers.Api.healthCheck
-GET        /management/config                 controllers.Application.config
 
 GET        /apps                              controllers.Api.appList
 GET        /stacks                            controllers.Api.stackList
@@ -58,8 +57,8 @@ GET        /data/lookup/:key                  controllers.Api.dataLookup(key)
 GET        /data/:arn                         controllers.Api.data(arn)
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file                      controllers.Assets.at(path="/public", file)
 
+GET        /assets/*file                      controllers.Assets.versioned(path="/public", file: Asset)
 GET        /owners                            controllers.OwnerApi.ownerList
 GET        /owners/forStack/:stack            controllers.OwnerApi.ownerForStack(stack)
 GET        /owners/:id                        controllers.OwnerApi.owner(id)
