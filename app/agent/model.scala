@@ -25,7 +25,7 @@ trait IndexedItemWithStack extends IndexedItem {
   val stack: Option[String] = None
 }
 
-abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts) extends Logging {
+abstract class CollectorSet[T](val resource: ResourceType, val crawlRate: CrawlRate, accounts: Accounts) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
@@ -37,6 +37,7 @@ trait Collector[T] {
   def crawl:Iterable[T]
   def origin:Origin
   def resource:ResourceType
+  def crawlRate: CrawlRate
 }
 
 object Datum {
@@ -57,13 +58,16 @@ object Label {
   def apply[T](c: Collector[T], itemCount: Int): Label = Label(c.resource, c.origin, itemCount)
   def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, 0, error = Some(error))
 }
-case class Label(resource:ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
+case class Label(resourceType: ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
   lazy val isError: Boolean = error.isDefined
   lazy val status: String = if (isError) "error" else "success"
-  lazy val bestBefore: BestBefore = BestBefore(createdAt, resource.shelfLife, error = isError)
+  // TODO: improve the below
+  lazy val bestBefore: BestBefore = BestBefore(createdAt, origin.crawlRate("")(resourceType.name).shelfLife, error = isError)
 }
 
-case class ResourceType( name: String, shelfLife: FiniteDuration, refreshPeriod: FiniteDuration )
+case class ResourceType(name: String) //shelfLife: FiniteDuration, refreshPeriod: FiniteDuration )
+
+case class CrawlRate(shelfLife: FiniteDuration, refreshPeriod: FiniteDuration)
 
 case class BestBefore(created:DateTime, shelfLife:FiniteDuration, error:Boolean) {
   val bestBefore:DateTime = created plus Duration.millis(shelfLife.toMillis)
