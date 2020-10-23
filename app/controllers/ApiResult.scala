@@ -129,7 +129,7 @@ object ApiResult extends Logging {
         val vendor = "unknown"
         val resources = Set.empty[String]
         val jsonFields = Map.empty[String, String]
-        val crawlRate = Map.empty[String, CrawlRate]
+        val crawlRate = Map(noSourceContainer.name -> CrawlRate(15 minutes, 1 minutes))
       },
       1,
       noSourceContainer.lastUpdated

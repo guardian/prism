@@ -4,7 +4,7 @@ import play.api.libs.json.{JsArray, _}
 import play.api.mvc._
 import play.api.test._
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -76,16 +76,18 @@ object ApiSpec extends PlaySpecification with Results {
   }
 
   class TestOrigin extends Origin {
+    private val duration = FiniteDuration(1, "s")
+
     def vendor: String = "vendor"
     def account: String = "account"
     def resources: Set[String] = Set("resources")
     def jsonFields: Map[String, String] = Map("key" -> "value")
+    def crawlRate: Map[String, CrawlRate] = Map("test" -> CrawlRate(duration, duration))
   }
 
 
   class TestCollectorAgent extends CollectorAgentTrait[TestItem] {
-    private val duration = FiniteDuration(1, "s")
-    private val resourceType = ResourceType("test", duration, duration)
+    private val resourceType = ResourceType("test")
     private val label = Label(resourceType, new TestOrigin, 1)
 
     def get(collector: Collector[TestItem]): Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
