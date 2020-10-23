@@ -14,13 +14,13 @@ import scala.language.postfixOps
 import scala.util.Try
 
 
-class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates", 1 hour, 1 minute), accounts) {
+class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
-    case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource)
+    case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[AcmCertificate] with Logging {
+case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[AcmCertificate] with Logging {
 
   val client: AWSCertificateManager = AWSCertificateManagerClientBuilder.standard()
     .withCredentials(origin.credentials.provider)

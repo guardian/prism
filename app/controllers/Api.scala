@@ -110,7 +110,7 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
         val results = sources.flatMap { case (label, dataItems) =>
           dataItems.map { data =>
             Json.obj(
-              "type" -> label.resource.name,
+              "type" -> label.resourceType.name,
               "href" -> data.call.absoluteURL()
             )
           }

@@ -15,7 +15,7 @@ import com.amazonaws.services.ec2.AmazonEC2AsyncClientBuilder
 import com.amazonaws.services.ec2.model.DescribeRegionsRequest
 import conf.AWS.instance.region
 
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -57,26 +57,25 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
 
     val fastCrawl: CrawlRate = CrawlRate(15 minutes, 1 minute)
     val slowCrawl: CrawlRate = CrawlRate(1 hour, 5 minutes)
-    val defaultRegions: Seq[String] = configuration.get[Seq[String]]("accounts.aws.regions")
 
-    // TODO: I need help with this mega map, I'm not sure what it should look like
-    // given a region, give me a Map[resource, CrawlRate]
-    // we have vals for crawl rates
-    // we could have vals for priorityRegions and non-priority-slow-crawl regions
-
-    val amazonCrawlRatesPerRegion: Map[String, Map[String, CrawlRate]] = {
-      region match {
-        case ???
-      }
+    val highPriorityRegionCrawlRate: Map[String, CrawlRate] = {
+      Map(
+        "reservation" -> fastCrawl,
+        "instance" -> fastCrawl,
+        "images" -> fastCrawl,
+        "data" -> fastCrawl
+      ).withDefaultValue(slowCrawl)
     }
 
+    val lowPriorityRegionCrawlRate: Map[String, CrawlRate] = Map.empty.withDefaultValue(slowCrawl)
+
     object aws {
-      // lazy val crawlRate: Map[String, Int] = configuration.get[Map[String, Int]]("accounts.aws.crawlRate")
-      lazy val defaultRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regions").getOrElse(allRegions)
+      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regions").getOrElse(allRegions)
+      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.highPriorityRegions").getOrElse(Seq("eu-west-1"))
+      lazy val crawlRates: Map[String, Map[String, CrawlRate]] = highPriorityRegions.map(region => (region, highPriorityRegionCrawlRate)).toMap.withDefaultValue(lowPriorityRegionCrawlRate)
       lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
-      lazy val crawlRates: Map[String, Map[String, CrawlRate]] = Map("eu-west-1" -> Map("instance" -> CrawlRate(5 minutes, 1 minute))) // config.getOrElse(our massive map)
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
-        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(defaultRegions)
+        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl)
         val accessKey = subConfig.getOptional[String]("accessKey")
         val secretKey = subConfig.getOptional[String]("secretKey")
         val role = subConfig.getOptional[String]("role")
@@ -86,15 +85,14 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
         val stagePrefix = subConfig.getOptional[String]("stagePrefix")
         regions.map { region =>
           val credentials = Credentials(accessKey, role, profile, region)(secretKey)
-          // for each region, we create an AmazonOrigin
-          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId, crawlRates)
+          AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId, crawlRates(region))
         }
       }.toList
     }
 
     object amis {
       lazy val defaultRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regions").getOrElse(allRegions)
-      lazy val crawlRates: Map[String, Map[String, CrawlRate]] = Map("eu-west-1" -> Map("ami" -> CrawlRate(5 minutes, 1 minute))) // config.getOrElse(our massive map)
+      lazy val crawlRates: Map[String, Map[String, CrawlRate]] = Map("eu-west-1" -> Map("" -> CrawlRate(5 minutes, 1 minute))) // config.getOrElse(our massive map)
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.amis").flatMap{ case (name, subConfig) =>
         val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(defaultRegions)
         val accessKey = subConfig.getOptional[String]("accessKey")
@@ -104,7 +102,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
         val accountNumber = subConfig.getOptional[String]("accountNumber")
         regions.map { region =>
           val credentials = Credentials(accessKey, role, profile, region)(secretKey)
-          AmazonOrigin.amis(name, region, accountNumber, credentials, ownerId = None, crawlRates)
+          AmazonOrigin.amis(name, region, accountNumber, credentials, ownerId = None, crawlRates(region))
         }
       }.toList
     }
@@ -117,7 +115,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
           val account = config.getOptional[String]("account").getOrException("Account must be specified")
           val resources = config.getOptional[Seq[String]]("resources").getOrElse(Nil)
           val url = config.getOptional[String]("url").getOrException("URL must be specified")
-          val crawlRates: Map[String, Map[String, CrawlRate]] = Map("eu-west-1" -> Map("data" -> CrawlRate(5 minutes, 1 minute)))
+          val crawlRates: Map[String, CrawlRate] = Map("data" -> CrawlRate(5 minutes, 1 minute))
 
           val o = JsonOrigin(vendor, account, url, resources.toSet, crawlRates)
           log.info(s"Parsed $name, got $o")

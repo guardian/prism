@@ -1,6 +1,6 @@
 package controllers
 
-import agent.{Label, Origin, ResourceType}
+import agent.{CrawlRate, Label, Origin, ResourceType}
 import data.Owners
 import jsonimplicits.model._
 import model.Owner
@@ -9,6 +9,7 @@ import play.api.mvc._
 import play.api.mvc.{RequestHeader, Result}
 import play.api.libs.json.{JsObject, Json, Writes}
 import play.api.libs.json.Json._
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -26,7 +27,7 @@ class OwnerApi(cc: ControllerComponents)(implicit executionContext: ExecutionCon
       }
     }
 
-    object OwnerResourceType extends ResourceType("Owners", 30 days, 30 days)
+    object OwnerResourceType extends ResourceType("Owners")
 
     val ownerLabel: Label = Label(
       OwnerResourceType,
@@ -35,6 +36,7 @@ class OwnerApi(cc: ControllerComponents)(implicit executionContext: ExecutionCon
         val account = "prism"
         val resources = Set("sources")
         val jsonFields = Map.empty[String, String]
+        val crawlRate = Map("Owners" -> CrawlRate(30 days, 30 days))
       },
       Owners.all.size,
       DateTime.now

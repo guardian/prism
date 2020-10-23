@@ -11,13 +11,13 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes), accounts) {
+class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
-    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController)
+    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController, aws.crawlRate(resource.name))
   }
 }
 
-case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism)
+case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism, crawlRate: CrawlRate)
     extends Collector[SecurityGroup] {
 
   def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {

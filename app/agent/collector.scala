@@ -68,7 +68,6 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
       }
 
       val agent = ScheduledAgent[Datum[T]](0 seconds, collector.crawlRate.refreshPeriod, initial){ previous =>
-        // **we need the refreshPeriod here
         update(collector, previous)
       }
       collector -> agent
@@ -134,7 +133,7 @@ class SourceStatusAgent(actorSystem: ActorSystem) {
         val account = "prism"
         val resources = Set("sources")
         // TODO: change crawlRate parameters to smallestDuration
-        val crawlRate = Map("region" -> Map("sources" -> CrawlRate(1 minute, 1 minute)))
+        val crawlRate = Map(("sources" -> CrawlRate(1 minute, 1 minute)))
         val jsonFields = Map.empty[String, String]
       },
       statusList.size,

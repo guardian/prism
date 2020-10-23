@@ -13,13 +13,13 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates", 1 hour, 5 minutes), accounts) {
+class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[ServerCertificate]] = {
-    case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource)
+    case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[ServerCertificate] with Logging {
+case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[ServerCertificate] with Logging {
 
   val client: AmazonIdentityManagement = AmazonIdentityManagementClientBuilder.standard()
     .withCredentials(origin.credentials.provider)

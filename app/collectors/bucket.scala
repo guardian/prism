@@ -15,13 +15,13 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket", 1 hour, 5 minutes), accounts) {
+class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
-    case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource)
+    case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Bucket] with Logging {
+case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {
 
   val client: AmazonS3 = AmazonS3ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)

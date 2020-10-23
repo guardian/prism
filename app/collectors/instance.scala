@@ -18,10 +18,10 @@ import agent._
 import scala.concurrent.duration._
 import scala.util.matching.Regex
 
-class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance"), CrawlRate(1 hour, 15 minutes), accounts) {
+class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
         // I know this code is terrible, but it's just for testing the instance collector set
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, crawlRate, prism)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, amazon.crawlRate(resource.name), prism)
   }
 }
 

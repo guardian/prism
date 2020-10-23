@@ -13,13 +13,13 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation", 15 minutes, 1 minute), accounts) {
+class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
-    case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource)
+    case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Reservation] with Logging {
+case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Reservation] with Logging {
 
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)

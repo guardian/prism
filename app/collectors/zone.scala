@@ -11,13 +11,13 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes), accounts) {
+class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
-    case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
+    case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Route53Zone] with Logging {
+case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Route53Zone] with Logging {
 
   val client: AmazonRoute53 = AmazonRoute53ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)

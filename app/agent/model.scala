@@ -25,7 +25,7 @@ trait IndexedItemWithStack extends IndexedItem {
   val stack: Option[String] = None
 }
 
-abstract class CollectorSet[T](val resource: ResourceType, val crawlRate: CrawlRate, accounts: Accounts) extends Logging {
+abstract class CollectorSet[T](val resource: ResourceType, accounts: Accounts) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {
     if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
@@ -62,7 +62,7 @@ case class Label(resourceType: ResourceType, origin:Origin, itemCount:Int, creat
   lazy val isError: Boolean = error.isDefined
   lazy val status: String = if (isError) "error" else "success"
   // TODO: improve the below
-  lazy val bestBefore: BestBefore = BestBefore(createdAt, origin.crawlRate("")(resourceType.name).shelfLife, error = isError)
+  lazy val bestBefore: BestBefore = BestBefore(createdAt, origin.crawlRate(resourceType.name).shelfLife, error = isError)
 }
 
 case class ResourceType(name: String) //shelfLife: FiniteDuration, refreshPeriod: FiniteDuration )

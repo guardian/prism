@@ -11,13 +11,13 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers", 1 hour, 5 minutes), accounts) {
+class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
-    case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource)
+    case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LoadBalancer] with Logging {
+case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[LoadBalancer] with Logging {
 
   val client: AmazonElasticLoadBalancing = AmazonElasticLoadBalancingClientBuilder.standard()
     .withCredentials(origin.credentials.provider)

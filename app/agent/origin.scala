@@ -48,7 +48,7 @@ trait Origin {
   def account: String
   def filterMap: Map[String,String] = Map.empty
   def resources: Set[String]
-  def crawlRate: Map[String, Map[String, CrawlRate]]
+  def crawlRate: Map[String, CrawlRate]
   def transformInstance(input: Instance): Instance = input
   def standardFields: Map[String, String] = Map("vendor" -> vendor, "accountName" -> account)
   def jsonFields: Map[String, String]
@@ -76,7 +76,7 @@ case class Credentials(accessKey: Option[String], role: Option[String], profile:
 object AmazonOrigin {
   val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):role.*""".r
   def apply(account:String, region:String, resources:Set[String], stagePrefix: Option[String],
-            credentials: Credentials, ownerId: Option[String], crawlRates: Map[String, Map[String, CrawlRate]]): AmazonOrigin = {
+            credentials: Credentials, ownerId: Option[String], crawlRates: Map[String, CrawlRate]): AmazonOrigin = {
     val accountNumber = credentials.role.flatMap {
       case ArnIamAccountExtractor(accountId) => Some(accountId)
       case _ => None
@@ -85,13 +85,13 @@ object AmazonOrigin {
   }
 
   def amis(name: String, region: String, accountNumber: Option[String], credentials: Credentials,
-           ownerId: Option[String], crawlRates: Map[String, Map[String, CrawlRate]]): AmazonOrigin = {
+           ownerId: Option[String], crawlRates: Map[String, CrawlRate]): AmazonOrigin = {
     AmazonOrigin(name, region, credentials, Set("images"), None, accountNumber, ownerId, crawlRates)
   }
 }
 
 case class AmazonOrigin(account:String, region:String, credentials: Credentials, resources:Set[String],
-                        stagePrefix: Option[String], accountNumber:Option[String], ownerId: Option[String], crawlRate: Map[String, Map[String, CrawlRate]]) extends Origin {
+                        stagePrefix: Option[String], accountNumber:Option[String], ownerId: Option[String], crawlRate: Map[String, CrawlRate]) extends Origin {
   lazy val vendor = "aws"
   override lazy val filterMap = Map("vendor" -> vendor, "region" -> region, "accountName" -> account)
   override def transformInstance(input:Instance): Instance = stagePrefix.map(input.prefixStage).getOrElse(input)
@@ -100,7 +100,7 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
     ownerId.map("ownerId" -> _)
   val awsRegion: Regions = Regions.fromName(region)
 }
-case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String], crawlRate: Map[String, Map[String, CrawlRate]]) extends Origin with Logging {
+case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String], crawlRate: Map[String, CrawlRate]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {
     override def openConnection(u: URL): URLConnection = {
       Option(getClass.getResource(u.getPath)).map(_.openConnection()).getOrElse{
