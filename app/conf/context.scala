@@ -46,7 +46,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     lazy val allRegions = {
       val ec2Client = AmazonEC2AsyncClientBuilder.standard().withRegion(Regions.EU_WEST_1).build()
       try {
-        val request = new DescribeRegionsRequest().withAllRegions(true)
+        val request = new DescribeRegionsRequest() //.withAllRegions(true)
         val response = ec2Client.describeRegions(request)
         val regions = response.getRegions.asScala.toList.map(_.getRegionName)
         regions
@@ -57,8 +57,8 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     }
 
     object aws {
-      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regions").getOrElse(allRegions)
-      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.highPriorityRegions").getOrElse(Seq("eu-west-1"))
+      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsDefault").getOrElse(allRegions)
+      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsHighPriority").getOrElse(Seq("eu-west-1"))
       lazy val crawlRates = getCrawlRates(highPriorityRegions)
       lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
@@ -78,10 +78,11 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     }
 
     object amis {
-      lazy val defaultRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regions").getOrElse(allRegions)
-      lazy val crawlRates: Map[String, Map[String, CrawlRate]] = Map("eu-west-1" -> Map("" -> CrawlRate(5 minutes, 1 minute))) // config.getOrElse(our massive map)
+      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.ami.regionsDefault").getOrElse(allRegions)
+      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.ami.regionsHighPriority").getOrElse(Seq("eu-west-1"))
+      lazy val crawlRates: Map[String, Map[String, CrawlRate]] = getCrawlRates(highPriorityRegions)
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.amis").flatMap{ case (name, subConfig) =>
-        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(defaultRegions)
+        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl)
         val accessKey = subConfig.getOptional[String]("accessKey")
         val secretKey = subConfig.getOptional[String]("secretKey")
         val role = subConfig.getOptional[String]("role")
@@ -133,18 +134,20 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
 }
 
 object PrismConfiguration {
-  val fastCrawl: CrawlRate = CrawlRate(15 minutes, 1 minute)
-  val slowCrawl: CrawlRate = CrawlRate(1 hour, 5 minutes)
+  val fastCrawlRate: CrawlRate = CrawlRate(15 minutes, 1 minute)
+  val defaultCrawlRate: CrawlRate = CrawlRate(1 hour, 5 minutes)
+  // this crawl rate is for low priority regions - ask Kate/Simon which rates they want for this
+  val slowCrawlRate: CrawlRate = CrawlRate(1 day, 1 hour)
 
   val highPriorityRegionCrawlRate: Map[String, CrawlRate] = {
     Map(
-      "reservation" -> fastCrawl,
-      "instance" -> fastCrawl,
-      "images" -> fastCrawl,
-      "data" -> fastCrawl
-    ).withDefaultValue(slowCrawl)
+      "reservation" -> fastCrawlRate,
+      "instance" -> fastCrawlRate,
+      "images" -> fastCrawlRate,
+      "data" -> fastCrawlRate
+    ).withDefaultValue(defaultCrawlRate)
   }
-  val lowPriorityRegionCrawlRate: Map[String, CrawlRate] = Map.empty.withDefaultValue(slowCrawl)
+  val lowPriorityRegionCrawlRate: Map[String, CrawlRate] = Map.empty.withDefaultValue(slowCrawlRate)
 
   def getCrawlRates(highPriorityRegions: Seq[String]): Map[String, Map[String, CrawlRate]] = {
     highPriorityRegions.map(region => (region, highPriorityRegionCrawlRate)).toMap.withDefaultValue(lowPriorityRegionCrawlRate)
