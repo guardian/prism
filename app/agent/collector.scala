@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import akka.actor.ActorSystem
 
 import scala.concurrent.ExecutionContext
+import scala.util.Random
 
 class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with LifecycleWithoutApp {
 
@@ -67,7 +68,9 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
         startupData
       }
 
-      val agent = ScheduledAgent[Datum[T]](0 seconds, collector.crawlRate.refreshPeriod, initial){ previous =>
+      val randomDelay = new Random().nextInt(60)
+
+      val agent = ScheduledAgent[Datum[T]](randomDelay seconds, collector.crawlRate.refreshPeriod, initial){ previous =>
         update(collector, previous)
       }
       collector -> agent
