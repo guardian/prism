@@ -12,7 +12,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import conf.{AWS, PrismConfiguration}
 import play.api.libs.json.{JsObject, JsValue, Json}
-import utils.Logging
+import utils.{Logging, AWSCredentialProviders}
 
 import scala.io.Source
 import scala.language.postfixOps
@@ -68,7 +68,7 @@ case class Credentials(accessKey: Option[String], role: Option[String], profile:
       (p, new ProfileCredentialsProvider(p))
     case (Some(ak), Some(sk), _, _) =>
       (ak, new AWSStaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
-    case _ => ("default", new DefaultAWSCredentialsProviderChain())
+    case _ => ("default", AWSCredentialProviders.deployToolsCredentialsProviderChain)
   }
 }
 
@@ -112,7 +112,7 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     Option(url.getUserInfo) match {
       case Some(role) if role.startsWith("arn:") => new STSAssumeRoleSessionCredentialsProvider.Builder(role, "prismS3").build()
       case Some(profile) => new ProfileCredentialsProvider(profile)
-      case _ => new DefaultAWSCredentialsProviderChain()
+      case _ => AWSCredentialProviders.deployToolsCredentialsProviderChain
     }
   }
 

@@ -1,8 +1,7 @@
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.Regions
 import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity}
-import play.api.{Application, ApplicationLoader, Configuration, LoggerConfigurator, Mode}
-import utils.Logging
+import play.api._
+import utils.{Logging, AWSCredentialProviders}
 
 class AppLoader extends ApplicationLoader with Logging {
   def load(context: ApplicationLoader.Context): Application = {
@@ -21,7 +20,7 @@ class AppLoader extends ApplicationLoader with Logging {
 
     val extraConfigs = List(
       DynamoConfiguration(
-        new DefaultAWSCredentialsProviderChain(),
+        AWSCredentialProviders.deployToolsCredentialsProviderChain,
         Regions.EU_WEST_1,
         identity
       ),
