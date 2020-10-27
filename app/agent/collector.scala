@@ -127,16 +127,17 @@ class SourceStatusAgent(actorSystem: ActorSystem) {
     val statusList = sourceStatusAgent().values
     val statusDates = statusList.map(_.latest.createdAt)
     val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
-    // TODO: Make smallestDuration compile
-    // val smallestDuration = statusList.map(_.latest.resource.shelfLife).minBy(_.toSeconds)
+    val smallestDuration = statusList.flatMap{ status =>
+      status.latest.origin.crawlRate.values.toList.map(_.shelfLife)
+    }.minBy(_.toSeconds)
+
     val label = Label(
       ResourceType("sources"),
       new Origin {
         val vendor = "prism"
         val account = "prism"
         val resources = Set("sources")
-        // TODO: change crawlRate parameters to smallestDuration
-        val crawlRate = Map(("sources" -> CrawlRate(1 minute, 1 minute)))
+        val crawlRate = Map(("sources" -> CrawlRate(smallestDuration, smallestDuration)))
         val jsonFields = Map.empty[String, String]
       },
       statusList.size,

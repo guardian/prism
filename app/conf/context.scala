@@ -46,7 +46,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     lazy val allRegions = {
       val ec2Client = AmazonEC2AsyncClientBuilder.standard().withRegion(Regions.EU_WEST_1).build()
       try {
-        val request = new DescribeRegionsRequest() //.withAllRegions(true)
+        val request = new DescribeRegionsRequest() //.withAllRegions(true) - let's add this back in once DeployTools has access to all regions
         val response = ec2Client.describeRegions(request)
         val regions = response.getRegions.asScala.toList.map(_.getRegionName)
         regions
