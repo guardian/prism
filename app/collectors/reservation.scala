@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AWSRecurringCharge}
+import conf.AWS
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
@@ -24,6 +25,7 @@ case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType,
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Reservation] = {

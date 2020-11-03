@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
 import com.amazonaws.services.lambda.{AWSLambda, AWSLambdaClientBuilder}
+import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
@@ -22,6 +23,7 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, craw
   val client: AWSLambda = AWSLambdaClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Lambda] = {

@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.certificatemanager.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
 import com.amazonaws.services.certificatemanager.{AWSCertificateManager, AWSCertificateManagerClientBuilder}
+import conf.AWS
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
@@ -25,6 +26,7 @@ case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceTy
   val client: AWSCertificateManager = AWSCertificateManagerClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[AcmCertificate] = PaginatedAWSRequest.run(client.listCertificates)(new ListCertificatesRequest()).map{ cert =>

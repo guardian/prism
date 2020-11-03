@@ -9,6 +9,7 @@ import utils.{Logging, PaginatedAWSRequest}
 
 import scala.jdk.CollectionConverters._
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
+import conf.AWS
 
 import scala.util.Try
 import scala.concurrent.duration._
@@ -25,6 +26,7 @@ case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: Resou
   val client: AmazonAutoScaling = AmazonAutoScalingClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[LaunchConfiguration] = {

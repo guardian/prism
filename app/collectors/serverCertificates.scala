@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.identitymanagement.{AmazonIdentityManagement, AmazonIdentityManagementClientBuilder}
 import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ServerCertificateMetadata}
+import conf.AWS
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
@@ -24,6 +25,7 @@ case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: Resourc
   val client: AmazonIdentityManagement = AmazonIdentityManagementClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[ServerCertificate] =

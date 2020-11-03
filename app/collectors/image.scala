@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeImagesRequest, Filter, Image => AWSImage}
+import conf.AWS
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
@@ -24,6 +25,7 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRa
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Image] = {

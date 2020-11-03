@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.route53.{AmazonRoute53, AmazonRoute53ClientBuilder}
 import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
+import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
@@ -22,6 +23,7 @@ case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType, cr
   val client: AmazonRoute53 = AmazonRoute53ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Route53Zone] = PaginatedAWSRequest.run(client.listHostedZones)(new ListHostedZonesRequest()).map{ zone =>

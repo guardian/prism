@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.elasticloadbalancing.{AmazonElasticLoadBalancing, AmazonElasticLoadBalancingClientBuilder}
 import com.amazonaws.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, LoadBalancerDescription}
+import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
@@ -22,6 +23,7 @@ case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType, c
   val client: AmazonElasticLoadBalancing = AmazonElasticLoadBalancingClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[LoadBalancer] = PaginatedAWSRequest.run(client.describeLoadBalancers)(new DescribeLoadBalancersRequest()).map{ elb =>

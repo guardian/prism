@@ -6,7 +6,6 @@ import scala.jdk.CollectionConverters._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
 import controllers.{Prism, routes}
 
@@ -14,13 +13,13 @@ import scala.language.postfixOps
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
+import com.amazonaws.ClientConfiguration
+import conf.AWS
 
-import scala.concurrent.duration._
 import scala.util.matching.Regex
 
 class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-        // I know this code is terrible, but it's just for testing the instance collector set
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, amazon.crawlRate(resource.name), prism)
   }
 }
@@ -30,7 +29,9 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, cra
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
+
 
   def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
     PaginatedAWSRequest.run(client.describeInstances)(new DescribeInstancesRequest())

@@ -7,6 +7,7 @@ import play.api.{Configuration, Mode}
 import agent._
 import java.net.URL
 
+import com.amazonaws.ClientConfiguration
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 
 import scala.jdk.CollectionConverters._

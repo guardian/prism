@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.amazonaws.services.s3.model.{AmazonS3Exception, ListBucketsRequest, Bucket => AWSBucket}
+import conf.AWS
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
@@ -26,6 +27,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
   val client: AmazonS3 = AmazonS3ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Bucket] = {
