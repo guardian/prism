@@ -5,10 +5,11 @@ import com.amazonaws.regions.Regions
 import com.gu.logback.appender.kinesis.KinesisAppender
 import org.slf4j.{LoggerFactory, Logger => SLFLogger}
 import ch.qos.logback.classic.{Logger => LogbackLogger}
-import com.amazonaws.auth.{InstanceProfileCredentialsProvider, STSAssumeRoleSessionCredentialsProvider}
+import com.amazonaws.auth.{AWSCredentialsProvider, InstanceProfileCredentialsProvider, STSAssumeRoleSessionCredentialsProvider}
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import net.logstash.logback.layout.LogstashLayout
 import play.api.libs.json.Json
+import utils.AWSCredentialProviders
 
 object LogConfiguration {
 
@@ -19,15 +20,7 @@ object LogConfiguration {
       "stage" -> config.stage)).toString()
   }
 
-  private def buildCredentialsProvider(role: String, config: Identity) = {
-    val sessionId = s"${config.app}-session"
-
-    val instanceProvider = InstanceProfileCredentialsProvider.getInstance()
-    val client = AWSSecurityTokenServiceClientBuilder.standard.withCredentials(instanceProvider).build
-    new STSAssumeRoleSessionCredentialsProvider.Builder(role, sessionId).withStsClient(client).build
-  }
-
-  def shipping(role: String, stream: String, config: Identity) = {
+  def shipping(stream: String, config: Identity) = {
     val bufferSize: Int = 1000
     val region: Regions = Regions.EU_WEST_1
     val rootLogger: LogbackLogger = LoggerFactory.getLogger(SLFLogger.ROOT_LOGGER_NAME).asInstanceOf[LogbackLogger]
@@ -44,8 +37,9 @@ object LogConfiguration {
     appender.setStreamName(stream)
     appender.setContext(context)
     appender.setLayout(layout)
-    appender.setRoleToAssumeArn(role)
-    appender.setCredentialsProvider(buildCredentialsProvider(role, config))
+    appender.setCredentialsProvider(AWSCredentialProviders.deployToolsCredentialsProviderChain)
     appender.start()
+    rootLogger.addAppender(appender)
+    rootLogger.info("initialised log shipping")
   }
 }
