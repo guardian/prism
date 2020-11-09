@@ -1,7 +1,8 @@
 import com.amazonaws.regions.Regions
-import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity}
+import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity, LogConfiguration}
+import play.api.Configuration
 import play.api._
-import utils.{Logging, AWSCredentialProviders}
+import utils.{AWSCredentialProviders, Logging}
 
 class AppLoader extends ApplicationLoader with Logging {
   def load(context: ApplicationLoader.Context): Application = {
@@ -28,6 +29,13 @@ class AppLoader extends ApplicationLoader with Logging {
     )
 
     val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
+
+    val stream: Option[String] = extraConfig.getOptional[String]("LoggingStream")
+    stream match {
+      case Some(stream) =>
+        LogConfiguration.shipping(stream, identity)
+      case _ => log.info("Missing stream configuration to enable log shipping to central ELK")
+    }
 
     log.info(s"Loaded config $extraConfig")
 
