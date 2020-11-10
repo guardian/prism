@@ -1,23 +1,16 @@
 package conf
 
-import utils.{Logging, UnnaturalOrdering}
-
-import scala.language.postfixOps
-import play.api.{Configuration, Mode}
 import agent._
-import java.net.URL
-
-import com.amazonaws.ClientConfiguration
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-
-import scala.jdk.CollectionConverters._
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.ec2.AmazonEC2AsyncClientBuilder
 import com.amazonaws.services.ec2.model.DescribeRegionsRequest
-import conf.AWS.instance.region
 import conf.PrismConfiguration.getCrawlRates
+import play.api.{Configuration, Mode}
+import utils.{Logging, UnnaturalOrdering}
 
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.DurationInt
+import scala.jdk.CollectionConverters._
+import scala.language.postfixOps
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -47,7 +40,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     lazy val allRegions = {
       val ec2Client = AmazonEC2AsyncClientBuilder.standard().withRegion(Regions.EU_WEST_1).build()
       try {
-        val request = new DescribeRegionsRequest() //.withAllRegions(true) - let's add this back in once DeployTools has access to all regions
+        val request = new DescribeRegionsRequest() 
         val response = ec2Client.describeRegions(request)
         val regions = response.getRegions.asScala.toList.map(_.getRegionName)
         regions
