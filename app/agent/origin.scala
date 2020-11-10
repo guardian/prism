@@ -12,7 +12,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import conf.{AWS, PrismConfiguration}
 import play.api.libs.json.{JsObject, JsValue, Json}
-import utils.{Logging, AWSCredentialProviders}
+import utils.{AWSCredentialProviders, Logging, Marker}
 
 import scala.io.Source
 import scala.language.postfixOps
@@ -43,7 +43,7 @@ class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
   def forResource(resource:String): Seq[Origin] = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
 }
 
-trait Origin {
+trait Origin extends Marker {
   def vendor: String
   def account: String
   def filterMap: Map[String,String] = Map.empty
@@ -99,6 +99,8 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
     accountNumber.map("accountNumber" -> _) ++
     ownerId.map("ownerId" -> _)
   val awsRegion: Regions = Regions.fromName(region)
+
+  override def toMarkerMap: Map[String, Any] = Map("region" -> awsRegion)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String], crawlRate: Map[String, CrawlRate]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {
@@ -136,4 +138,6 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     Json.parse(jsonText)
   }
   val jsonFields = Map("url" -> url)
+
+  override def toMarkerMap: Map[String, Any] = jsonFields
 }

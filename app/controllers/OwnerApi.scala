@@ -37,6 +37,8 @@ class OwnerApi(cc: ControllerComponents)(implicit executionContext: ExecutionCon
         val resources = Set("sources")
         val jsonFields = Map.empty[String, String]
         val crawlRate = Map("Owners" -> CrawlRate(30 days, 30 days))
+
+        override def toMarkerMap: Map[String, Any] = jsonFields
       },
       Owners.all.size,
       DateTime.now

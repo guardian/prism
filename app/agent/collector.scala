@@ -1,17 +1,19 @@
 package agent
 
-import utils.{LifecycleWithoutApp, Logging, ScheduledAgent, StopWatch}
+import utils.{LifecycleWithoutApp, Logging, Marker, ScheduledAgent, StopWatch}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import akka.agent.Agent
 import org.joda.time.DateTime
 import akka.actor.ActorSystem
+import net.logstash.logback.marker.Markers
 
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
-class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with Marker with LifecycleWithoutApp {
 
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
   val collectors: Seq[Collector[T]] = collectorSet.collectors
@@ -32,6 +34,8 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
   def size: Int = get().map(_.data.size).sum
 
+  override def toMarkerMap: Map[String, Any] = Map("records" -> size)
+
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
     val s = new StopWatch
     val datum = Datum[T](collector)
@@ -39,16 +43,18 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
     sourceStatusAgent.update(datum.label)
     datum.label match {
       case l@Label(product, origin, size, _, None) =>
-        log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
+        val marker = Markers.appendEntries((origin.toMarkerMap ++ l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
+        log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")(marker)
         datum
-      case Label(product, origin, _, _, Some(error)) =>
+      case l@Label(product, origin, _, _, Some(error)) =>
+        val marker = Markers.appendEntries((l.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         previous.label match {
           case bad if bad.isError =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)(marker)
           case stale if stale.bestBefore.isStale =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
           case notYetStale if !notYetStale.bestBefore.isStale =>
-            log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
+            log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
         }
         previous
     }
@@ -139,6 +145,8 @@ class SourceStatusAgent(actorSystem: ActorSystem) {
         val resources = Set("sources")
         val crawlRate = Map(("sources" -> CrawlRate(smallestDuration, smallestDuration)))
         val jsonFields = Map.empty[String, String]
+
+        override def toMarkerMap: Map[String, Any] = jsonFields
       },
       statusList.size,
       oldestDate
