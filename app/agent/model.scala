@@ -6,8 +6,9 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.language.postfixOps
 import play.api.libs.json._
-import utils.Logging
+import utils.{Logging, Marker}
 import play.api.mvc.Call
+
 import scala.concurrent.duration._
 
 trait IndexedItem {
@@ -58,10 +59,12 @@ object Label {
   def apply[T](c: Collector[T], itemCount: Int): Label = Label(c.resource, c.origin, itemCount)
   def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, 0, error = Some(error))
 }
-case class Label(resourceType: ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) {
+case class Label(resourceType: ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) extends Marker {
   lazy val isError: Boolean = error.isDefined
   lazy val status: String = if (isError) "error" else "success"
   lazy val bestBefore: BestBefore = BestBefore(createdAt, origin.crawlRate(resourceType.name).shelfLife, error = isError)
+
+  override def toMarkerMap: Map[String, Any] = Map("resource" -> resourceType.name, "account" -> origin.account)
 }
 
 case class ResourceType(name: String)

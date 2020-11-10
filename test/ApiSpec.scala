@@ -83,6 +83,8 @@ object ApiSpec extends PlaySpecification with Results {
     def resources: Set[String] = Set("resources")
     def jsonFields: Map[String, String] = Map("key" -> "value")
     def crawlRate: Map[String, CrawlRate] = Map("test" -> CrawlRate(duration, duration))
+
+    override def toMarkerMap: Map[String, Any] = jsonFields
   }
 
 

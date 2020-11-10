@@ -130,6 +130,8 @@ object ApiResult extends Logging {
         val resources = Set.empty[String]
         val jsonFields = Map.empty[String, String]
         val crawlRate = Map(noSourceContainer.name -> CrawlRate(15 minutes, 1 minutes))
+
+        override def toMarkerMap: Map[String, Any] = jsonFields
       },
       1,
       noSourceContainer.lastUpdated
