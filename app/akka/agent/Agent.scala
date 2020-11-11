@@ -1,22 +1,27 @@
-/*
- * Copyright (C) 2009-2019 Lightbend Inc. <https://www.lightbend.com>
- */
-
-/*
+/**
  * This file is copied from the Akka project <https://github.com/akka/akka>. It has been included here as Agents
  * are now deprecated within Akka. It contains modifications from the original source. License information can be
  * seen in the project LICENSE file.
+ *
+ * This original source from which this was copied can be found here
+ * <https://github.com/akka/akka/blob/release-2.4/akka-agent/src/main/scala/akka/agent/Agent.scala>
+ *
+ * Modifications:
+ * - unicode arrow `⇒` is deprecated, use `=>` instead
+ * - Auto-application to `()` is deprecated. Supply the empty argument list `()` explicitly to invoke method
+ */
+
+/**
+ * Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
  */
 
 package akka.agent
 
-import akka.util.SerializedSuspendableExecutionContext
-
 import scala.concurrent.stm._
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import akka.util.{ SerializedSuspendableExecutionContext }
 
 object Agent {
-
   /**
    * Factory method for creating an Agent.
    */
@@ -24,7 +29,6 @@ object Agent {
 
   /**
    * Java API: Factory method for creating an Agent.
-   * @deprecated Agents are deprecated and scheduled for removal in the next major version, use Actors instead.i
    */
   def create[T](initialValue: T, context: ExecutionContext): Agent[T] = Agent(initialValue)(context)
 
@@ -37,14 +41,15 @@ object Agent {
 
     def get(): T = ref.single.get
 
-    def send(newValue: T): Unit = withinTransaction(() => ref.single.update(newValue))
+    def send(newValue: T): Unit = withinTransaction(new Runnable { def run = ref.single.update(newValue) })
 
-    def send(f: T => T): Unit = withinTransaction(() => ref.single.transform(f))
+    def send(f: T => T): Unit = withinTransaction(new Runnable { def run = ref.single.transform(f) })
 
-    def sendOff(f: T => T)(implicit ec: ExecutionContext): Unit =
-      withinTransaction(() => try updater.suspend()
-      finally ec.execute(() => try ref.single.transform(f)
-      finally updater.resume()))
+    def sendOff(f: T => T)(implicit ec: ExecutionContext): Unit = withinTransaction(
+      new Runnable {
+        def run =
+          try updater.suspend() finally ec.execute(new Runnable { def run = try ref.single.transform(f) finally updater.resume() })
+      })
 
     def alter(newValue: T): Future[T] = doAlter({ ref.single.update(newValue); newValue })
 
@@ -52,11 +57,11 @@ object Agent {
 
     def alterOff(f: T => T)(implicit ec: ExecutionContext): Future[T] = {
       val result = Promise[T]()
-      withinTransaction(() => {
-        updater.suspend()
-        result.completeWith(
-          Future(try ref.single.transformAndGet(f)
-          finally updater.resume()))
+      withinTransaction(new Runnable {
+        def run = {
+          updater.suspend()
+          result completeWith Future(try ref.single.transformAndGet(f) finally updater.resume())
+        }
       })
       result.future
     }
@@ -64,7 +69,7 @@ object Agent {
     /**
      * Internal helper method
      */
-    private def withinTransaction(run: Runnable): Unit = {
+    private final def withinTransaction(run: Runnable): Unit = {
       Txn.findCurrent match {
         case Some(txn) => Txn.afterCommit(_ => updater.execute(run))(txn)
         case _         => updater.execute(run)
@@ -74,11 +79,11 @@ object Agent {
     /**
      * Internal helper method
      */
-    private def doAlter(f: => T): Future[T] = {
+    private final def doAlter(f: => T): Future[T] = {
       Txn.findCurrent match {
         case Some(txn) =>
           val result = Promise[T]()
-          Txn.afterCommit(status => result.completeWith(Future(f)(updater)))(txn)
+          Txn.afterCommit(status => result completeWith Future(f)(updater))(txn)
           result.future
         case _ => Future(f)(updater)
       }
@@ -159,8 +164,6 @@ object Agent {
  * participate in that transaction. Agents are integrated with the STM -
  * any dispatches made in a transaction are held until that transaction
  * commits, and are discarded if it is retried or aborted.
- *
- * @deprecated Agents are deprecated and scheduled for removal in the next major version, use Actors instead.
  */
 abstract class Agent[T] {
 
