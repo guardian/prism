@@ -140,7 +140,7 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
             "sourcesYetToCrawl" -> uninitialisedSources,
             "duration" -> timeSpent,
             "durationType" -> "healthcheck",
-            "percentageCrawled" -> math.floor((newMap.size - uninitialisedSources)/ newMap.size.toFloat * 100)
+            "percentageCrawled" -> math.floor((newMap.size - uninitialisedSources)/ newMap.size.toFloat)
           ).asJava)
           if (uninitialisedSources == 0) {
             initialisedResources += (label.resourceType -> true)
