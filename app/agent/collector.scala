@@ -34,7 +34,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
   def size: Int = get().map(_.data.size).sum
 
-  override def toMarkerMap: Map[String, Any] = Map("records" -> size)
+  override def toMarkerMap: Map[String, Any] = Map("records" -> size, "durationType" -> "crawl")
 
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
     val s = new StopWatch
@@ -43,11 +43,12 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
     sourceStatusAgent.update(datum.label)
     datum.label match {
       case l@Label(product, origin, size, _, None) =>
-        val marker = Markers.appendEntries((origin.toMarkerMap ++ l.toMarkerMap ++ this.toMarkerMap ++ Map("CrawlDuration" -> timeSpent)).asJava)
+        val marker = Markers.appendEntries((
+          origin.toMarkerMap ++ l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")(marker)
         datum
       case l@Label(product, origin, _, _, Some(error)) =>
-        val marker = Markers.appendEntries((l.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
+        val marker = Markers.appendEntries((l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         previous.label match {
           case bad if bad.isError =>
             log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)(marker)
@@ -138,6 +139,7 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
             "resource" -> label.resourceType.name,
             "sourcesYetToCrawl" -> uninitialisedSources,
             "duration" -> timeSpent,
+            "durationType" -> "healthcheck",
             "percentageCrawled" -> math.floor((newMap.size - uninitialisedSources)/ newMap.size.toFloat * 100)
           ).asJava)
           if (uninitialisedSources == 0) {
