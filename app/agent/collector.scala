@@ -1,19 +1,16 @@
 package agent
 
-import utils.{LifecycleWithoutApp, Logging, Marker, ScheduledAgent, StopWatch}
-
-import scala.concurrent.duration._
-import scala.language.postfixOps
+import akka.actor.ActorSystem
 import akka.agent.Agent
-import org.joda.time.DateTime
-import akka.actor.{ActorSystem, actorRef2Scala}
-import conf.PrismConfiguration
-import controllers.Prism
 import net.logstash.logback.marker.Markers
+import org.joda.time.DateTime
+import utils._
 
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
+import scala.language.postfixOps
 import scala.util.{Failure, Random, Success}
 
 class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with Marker with LifecycleWithoutApp {

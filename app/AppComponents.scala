@@ -6,7 +6,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilterComponents
 import router.Routes
-import utils.{Lifecycle, Logging, ScheduledAgent, StopWatch}
+import utils.{Lifecycle, Logging, ScheduledAgent}
 
 import scala.collection.mutable
 import scala.concurrent.Future
