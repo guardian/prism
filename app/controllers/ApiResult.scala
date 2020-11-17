@@ -1,7 +1,7 @@
 package controllers
 
 import scala.language.postfixOps
-import agent.{Label, Origin, ResourceType}
+import agent.{CrawlRate, Label, Origin, ResourceType}
 import model.DataContainer
 import org.joda.time.DateTime
 import play.api.http.{ContentTypes, Status}
@@ -123,12 +123,15 @@ object ApiResult extends Logging {
 
   def noSource(block: => JsValue)(implicit request:RequestHeader, ec: ExecutionContext): Future[Result] = {
     val sourceLabel:Label = Label(
-      ResourceType(noSourceContainer.name, 15 minutes, 1 minute),
+      ResourceType(noSourceContainer.name),
       new Origin {
         val account = "unknown"
         val vendor = "unknown"
         val resources = Set.empty[String]
         val jsonFields = Map.empty[String, String]
+        val crawlRate = Map(noSourceContainer.name -> CrawlRate(15 minutes, 1 minutes))
+
+        override def toMarkerMap: Map[String, Any] = jsonFields
       },
       1,
       noSourceContainer.lastUpdated
