@@ -64,7 +64,7 @@ object model {
 
   implicit val labelWriter:Writes[Label] = (l: Label) => {
     Json.obj(
-      "resource" -> l.resourceType.name,
+      "resource" -> l.resource.name,
       "origin" -> l.origin
     ) ++ basicLabelWriter.writes(l).as[JsObject]
   }
@@ -90,7 +90,7 @@ object model {
     implicit val writes: OWrites[SourceStatus] = Json.writes[SourceStatus]
     def writes(o: SourceStatus): JsValue = {
       Json.obj(
-        "resource" -> o.state.resourceType.name,
+        "resource" -> o.state.resource.name,
         "origin" -> o.state.origin,
         "status" -> o.latest.status
       ) ++ Json.toJson(o).as[JsObject]

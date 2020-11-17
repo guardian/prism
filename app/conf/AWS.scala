@@ -2,7 +2,6 @@ package conf
 
 import java.net.InetAddress
 
-import com.amazonaws.ClientConfiguration
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
@@ -15,8 +14,6 @@ import scala.util.Try
 
 object AWS extends Logging {
 
-  val clientConfig: ClientConfiguration = new ClientConfiguration().withMaxErrorRetry(10)
-
   // This is to detect if we are running in AWS or on GC2. The 169.254.169.254
   // thing works on both but this DNS entry seems peculiar to AWS.
   lazy val isAWS: Boolean = Try(InetAddress.getByName("instance-data")).isSuccess
@@ -24,7 +21,7 @@ object AWS extends Logging {
 
   lazy val connectionRegion: Regions = instance.region.getOrElse(Regions.EU_WEST_1)
 
-  lazy val EC2Client: AmazonEC2 = AmazonEC2ClientBuilder.standard().withRegion(connectionRegion).withClientConfiguration(clientConfig).build()
+  lazy val EC2Client: AmazonEC2 = AmazonEC2ClientBuilder.standard().withRegion(connectionRegion).build()
 
   type Tag = (String, String)
 

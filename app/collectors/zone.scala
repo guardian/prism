@@ -3,7 +3,6 @@ package collectors
 import agent._
 import com.amazonaws.services.route53.{AmazonRoute53, AmazonRoute53ClientBuilder}
 import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
-import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
@@ -12,18 +11,17 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones"), accounts) {
+class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
-    case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource)
   }
 }
 
-case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Route53Zone] with Logging {
+case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Route53Zone] with Logging {
 
   val client: AmazonRoute53 = AmazonRoute53ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Route53Zone] = PaginatedAWSRequest.run(client.listHostedZones)(new ListHostedZonesRequest()).map{ zone =>

@@ -3,7 +3,6 @@ package collectors
 import agent._
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AWSSecurityGroup}
-import conf.AWS
 import controllers.{Prism, routes}
 import play.api.mvc.Call
 import utils.PaginatedAWSRequest
@@ -12,13 +11,13 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts) {
+class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group", 1 hour, 5 minutes), accounts) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
-    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController, aws.crawlRate(resource.name))
+    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController)
   }
 }
 
-case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism, crawlRate: CrawlRate)
+case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism)
     extends Collector[SecurityGroup] {
 
   def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
@@ -53,7 +52,6 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType,
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[SecurityGroup] = {
