@@ -76,13 +76,13 @@ object ApiSpec extends PlaySpecification with Results {
   }
 
   class TestOrigin extends Origin {
-    private val duration = FiniteDuration(1, "s")
+    private val oneSecond = FiniteDuration(1, "s")
 
     def vendor: String = "vendor"
     def account: String = "account"
     def resources: Set[String] = Set("resources")
     def jsonFields: Map[String, String] = Map("key" -> "value")
-    def crawlRate: Map[String, CrawlRate] = Map("test" -> CrawlRate(duration, duration))
+    def crawlRate: Map[String, CrawlRate] = Map("test" -> CrawlRate(oneSecond, oneSecond))
 
     override def toMarkerMap: Map[String, Any] = jsonFields
   }

@@ -8,7 +8,7 @@ import utils.StopWatch
 
 // TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
 class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
-  val prismRunTimeStopWatch = new StopWatch
+  val prismRunTimeStopWatch = new StopWatch()
   val sourceStatusAgent = new SourceStatusAgent(actorSystem, prismRunTimeStopWatch)
   val accounts = new Accounts(prismConfiguration)
 
