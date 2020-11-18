@@ -4,10 +4,12 @@ import agent.{Accounts, CollectorAgent, SourceStatusAgent}
 import akka.actor.ActorSystem
 import collectors._
 import conf.PrismConfiguration
+import utils.StopWatch
 
 // TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
 class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
-  val sourceStatusAgent = new SourceStatusAgent(actorSystem)
+  val prismRunTimeStopWatch = new StopWatch()
+  val sourceStatusAgent = new SourceStatusAgent(actorSystem, prismRunTimeStopWatch)
   val accounts = new Accounts(prismConfiguration)
 
   val lazyStartup: Boolean = prismConfiguration.accounts.lazyStartup

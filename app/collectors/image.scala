@@ -3,6 +3,7 @@ package collectors
 import agent._
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeImagesRequest, Filter, Image => AWSImage}
+import conf.AWS
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
@@ -13,17 +14,18 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceType("images", 15 minutes, 1 minute), accounts) {
+class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceType("images"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
-    case amazon:AmazonOrigin => AWSImageCollector(amazon, resource)
+    case amazon:AmazonOrigin => AWSImageCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType) extends Collector[Image] with Logging {
+case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRate: CrawlRate) extends Collector[Image] with Logging {
 
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Image] = {

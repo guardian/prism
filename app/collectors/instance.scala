@@ -6,7 +6,6 @@ import scala.jdk.CollectionConverters._
 import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import play.api.libs.json.{Json, Reads}
 import play.api.mvc.Call
 import controllers.{Prism, routes}
 
@@ -14,23 +13,25 @@ import scala.language.postfixOps
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
 import agent._
+import com.amazonaws.ClientConfiguration
+import conf.AWS
 
-import scala.concurrent.duration._
 import scala.util.matching.Regex
 
-
-class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance", 15 minutes, 1 minute), accounts) {
+class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, prism)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, amazon.crawlRate(resource.name), prism)
   }
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin, resource:ResourceType, prism: Prism) extends Collector[Instance] with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate, prism: Prism) extends Collector[Instance] with Logging {
 
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
+
 
   def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
     PaginatedAWSRequest.run(client.describeInstances)(new DescribeInstancesRequest())
