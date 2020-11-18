@@ -9,22 +9,24 @@ import utils.{Logging, PaginatedAWSRequest}
 
 import scala.jdk.CollectionConverters._
 import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
+import conf.AWS
 
 import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations", 1 hour, 5 minutes), accounts) {
+class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
-    case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource)
+    case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[LaunchConfiguration] with Logging {
+case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[LaunchConfiguration] with Logging {
 
   val client: AmazonAutoScaling = AmazonAutoScalingClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
+    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[LaunchConfiguration] = {

@@ -1,16 +1,19 @@
 package agent
 
-import utils.{LifecycleWithoutApp, Logging, ScheduledAgent, StopWatch}
-
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import akka.agent.Agent
-import org.joda.time.DateTime
 import akka.actor.ActorSystem
+import akka.agent.Agent
+import net.logstash.logback.marker.Markers
+import org.joda.time.DateTime
+import utils._
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
+import scala.language.postfixOps
+import scala.util.{Failure, Random, Success}
 
-class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with LifecycleWithoutApp {
+class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent, lazyStartup:Boolean = true)(actorSystem: ActorSystem) extends CollectorAgentTrait[T] with Logging with Marker with LifecycleWithoutApp {
 
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
   val collectors: Seq[Collector[T]] = collectorSet.collectors
@@ -31,6 +34,8 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
   def size: Int = get().map(_.data.size).sum
 
+  override def toMarkerMap: Map[String, Any] = Map("records" -> size, "durationType" -> "crawl")
+
   def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
     val s = new StopWatch
     val datum = Datum[T](collector)
@@ -38,16 +43,19 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
     sourceStatusAgent.update(datum.label)
     datum.label match {
       case l@Label(product, origin, size, _, None) =>
-        log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
+        val marker = Markers.appendEntries((
+          origin.toMarkerMap ++ l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
+        log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")(marker)
         datum
-      case Label(product, origin, _, _, Some(error)) =>
+      case l@Label(product, origin, _, _, Some(error)) =>
+        val marker = Markers.appendEntries((l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         previous.label match {
           case bad if bad.isError =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)(marker)
           case stale if stale.bestBefore.isStale =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
           case notYetStale if !notYetStale.bestBefore.isStale =>
-            log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
+            log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
         }
         previous
     }
@@ -67,7 +75,9 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
         startupData
       }
 
-      val agent = ScheduledAgent[Datum[T]](0 seconds, collectorSet.resource.refreshPeriod, initial){ previous =>
+      val randomDelay = new Random().nextInt(60)
+
+      val agent = ScheduledAgent[Datum[T]](randomDelay seconds, collector.crawlRate.refreshPeriod, initial){ previous =>
         update(collector, previous)
       }
       collector -> agent
@@ -104,19 +114,42 @@ case class SourceStatus(state: Label, error: Option[Label] = None) {
   lazy val latest: Label = error.getOrElse(state)
 }
 
-class SourceStatusAgent(actorSystem: ActorSystem) {
+class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWatch) extends Logging with Marker {
   implicit private val collectorAgent: ExecutionContext = actorSystem.dispatchers.lookup("collectorAgent")
   val sourceStatusAgent: Agent[Map[(ResourceType, Origin), SourceStatus]] = Agent(Map.empty)
 
+  val initialisedResources: mutable.Map[ResourceType, Boolean] = mutable.Map()
+
   def update(label:Label):Unit = {
-    sourceStatusAgent.send { previousMap =>
-      val key = (label.resource, label.origin)
+    sourceStatusAgent.alter { previousMap =>
+      val key = (label.resourceType, label.origin)
       val previous = previousMap.get(key)
       val next = label match {
         case good if !good.isError => SourceStatus(good)
         case bad => SourceStatus(previous.map(_.state).getOrElse(bad), Some(bad))
       }
       previousMap + (key -> next)
+    } onComplete {
+      case Success(newMap) =>
+        if (!initialisedResources.getOrElse(label.resourceType, false)) {
+          val timeSpent = prismRunTimeStopWatch.elapsed
+          val uninitialisedSources = newMap.values.count(_.state.status != "success")
+          val marker = Markers.appendEntries(Map(
+            "totalSourcesToCrawl" -> newMap.size,
+            "resource" -> label.resourceType.name,
+            "sourcesYetToCrawl" -> uninitialisedSources,
+            "duration" -> timeSpent,
+            "durationType" -> "healthcheck",
+            "percentageCrawled" -> math.floor((newMap.size - uninitialisedSources)/ newMap.size.toFloat)
+          ).asJava)
+          if (uninitialisedSources == 0) {
+            initialisedResources += (label.resourceType -> true)
+            log.info(s"Healthcheck passed successfully for ${label.resourceType.name} after ${timeSpent}ms")(marker)
+          } else {
+            log.info(s"$uninitialisedSources out of ${newMap.size} still not healthy after ${timeSpent}ms")(marker)
+          }
+        }
+      case Failure(_) => log.warn(s"failed to update resource ${label.resourceType.name}")
     }
   }
 
@@ -124,18 +157,25 @@ class SourceStatusAgent(actorSystem: ActorSystem) {
     val statusList = sourceStatusAgent().values
     val statusDates = statusList.map(_.latest.createdAt)
     val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
-    val smallestDuration = statusList.map(_.latest.resource.shelfLife).minBy(_.toSeconds)
+    val smallestDuration = statusList.flatMap{ status =>
+      status.latest.origin.crawlRate.values.toList.map(_.shelfLife)
+    }.minBy(_.toSeconds)
+
     val label = Label(
-      ResourceType("sources", smallestDuration, smallestDuration),
+      ResourceType("sources"),
       new Origin {
         val vendor = "prism"
         val account = "prism"
         val resources = Set("sources")
+        val crawlRate = Map(("sources" -> CrawlRate(smallestDuration, smallestDuration)))
         val jsonFields = Map.empty[String, String]
+
+        override def toMarkerMap: Map[String, Any] = jsonFields
       },
       statusList.size,
       oldestDate
     )
     Datum(label, statusList.toSeq)
   }
+  override def toMarkerMap: Map[String, Any] = Map.empty
 }
