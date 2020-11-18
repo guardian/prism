@@ -3,17 +3,20 @@ package controllers
 import agent._
 import collectors._
 import conf.PrismConfiguration
-import play.api.http.Status
-import play.api.libs.json.Json._
+import play.api.Logging
+import play.api.mvc._
+import play.api.mvc.{Action, RequestHeader, Result}
 import play.api.libs.json._
-import play.api.mvc.{Action, RequestHeader, Result, _}
+import play.api.libs.json.Json._
+import play.api.http.Status
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.language.postfixOps
 import utils.{Matchable, ResourceFilter}
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.language.postfixOps
-
 //noinspection TypeAnnotation
-class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: PrismConfiguration)(implicit executionContext: ExecutionContext) extends AbstractController(cc) {
+class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: PrismConfiguration)(implicit executionContext: ExecutionContext) extends AbstractController(cc) with Logging {
     implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = (o: Reference[T]) => {
       request.getQueryString("_reference") match {
         case Some("inline") =>
@@ -87,9 +90,9 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
         val notInitialisedSources = sources.data.filter(_.state.status != "success")
         if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
       } reduce { notInitialisedSources =>
-        if (notInitialisedSources.isEmpty) {
+        if (notInitialisedSources.isEmpty)
           Json.obj("healthcheck" -> "initialised")
-        } else
+        else
           throw ApiCallException(Json.obj("healthcheck" -> "not yet initialised", "sources" -> notInitialisedSources.values.headOption), SERVICE_UNAVAILABLE)
       }
     }
@@ -107,7 +110,7 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
         val results = sources.flatMap { case (label, dataItems) =>
           dataItems.map { data =>
             Json.obj(
-              "type" -> label.resourceType.name,
+              "type" -> label.resource.name,
               "href" -> data.call.absoluteURL()
             )
           }

@@ -3,7 +3,6 @@ package collectors
 import agent._
 import com.amazonaws.services.identitymanagement.{AmazonIdentityManagement, AmazonIdentityManagementClientBuilder}
 import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ServerCertificateMetadata}
-import conf.AWS
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
@@ -14,18 +13,17 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates"), accounts) {
+class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[ServerCertificate]] = {
-    case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource)
   }
 }
 
-case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[ServerCertificate] with Logging {
+case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[ServerCertificate] with Logging {
 
   val client: AmazonIdentityManagement = AmazonIdentityManagementClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[ServerCertificate] =

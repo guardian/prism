@@ -3,7 +3,6 @@ package collectors
 import agent._
 import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
 import com.amazonaws.services.lambda.{AWSLambda, AWSLambdaClientBuilder}
-import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import utils.{Logging, PaginatedAWSRequest}
@@ -12,18 +11,17 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](ResourceType("lambda"), accounts) {
+class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](ResourceType("lambda", 1 hour, 5 minutes), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Lambda]] = {
-    case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource)
   }
 }
 
-case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Lambda] with Logging {
+case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Lambda] with Logging {
 
   val client: AWSLambda = AWSLambdaClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Lambda] = {

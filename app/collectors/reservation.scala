@@ -3,7 +3,6 @@ package collectors
 import agent._
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AWSRecurringCharge}
-import conf.AWS
 import controllers.routes
 import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
@@ -14,18 +13,17 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation"), accounts) {
+class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation", 15 minutes, 1 minute), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
-    case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource)
   }
 }
 
-case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Reservation] with Logging {
+case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType) extends Collector[Reservation] with Logging {
 
   val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
     .withCredentials(origin.credentials.provider)
     .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
     .build()
 
   def crawl: Iterable[Reservation] = {
