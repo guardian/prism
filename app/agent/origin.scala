@@ -5,13 +5,18 @@ import java.net.{URI, URL, URLConnection, URLStreamHandler}
 
 import collectors.Instance
 import com.amazonaws.auth._
-import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.auth.profile.{ProfileCredentialsProvider => ProfileCredentialsProviderV1}
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, AwsCredentials, AwsCredentialsProvider, StaticCredentialsProvider, ProfileCredentialsProvider => ProfileCredentialsProviderV2}
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import conf.{AWS, PrismConfiguration}
 import play.api.libs.json.{JsObject, JsValue, Json}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.sts.StsClient
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest
 import utils.{AWSCredentialProviders, Logging, Marker}
 
 import scala.io.Source
@@ -56,20 +61,54 @@ trait Origin extends Marker {
 }
 
 case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], region: String)(secretKey: Option[String]) {
-  val (id, provider) = (accessKey, secretKey, role, profile) match {
+  val regionV2: Region = Region.of(region)
+  val (id, provider, providerV2) = (accessKey, secretKey, role, profile) match {
     case (_, _, Some(r), Some(p)) =>
-      val stsClient = AWSSecurityTokenServiceClientBuilder.standard()
-        .withCredentials(new ProfileCredentialsProvider(p))
+      val stsClientV1 = AWSSecurityTokenServiceClientBuilder.standard()
+        .withCredentials(new ProfileCredentialsProviderV1(p))
         .withRegion(region)
         .build()
-      (s"$p/$r", new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").withStsClient(stsClient).build())
+      val stsClientV2 = StsClient.builder()
+        .credentialsProvider(ProfileCredentialsProviderV2.builder().profileName(p).build())
+        .region(regionV2)
+        .build()
+      val req: AssumeRoleRequest = AssumeRoleRequest.builder()
+        .roleSessionName("prism")
+        .roleArn(r)
+        .build()
+      (
+        s"$p/$r",
+        new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").withStsClient(stsClientV1).build(),
+        StsAssumeRoleCredentialsProvider.builder().stsClient(stsClientV2).refreshRequest(req).build()
+      )
     case (_, _, Some(r), _) =>
-      (r, new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").build())
+      val req: AssumeRoleRequest = AssumeRoleRequest.builder()
+        .roleSessionName("prism")
+        .roleArn(r)
+        .build()
+      (
+        r,
+        new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").build(),
+        StsAssumeRoleCredentialsProvider.builder().refreshRequest(req).build()
+      )
     case (_, _, _, Some(p)) =>
-      (p, new ProfileCredentialsProvider(p))
+      (
+        p,
+        new ProfileCredentialsProviderV1(p),
+        ProfileCredentialsProviderV2.builder().profileName(p).build()
+      )
     case (Some(ak), Some(sk), _, _) =>
-      (ak, new AWSStaticCredentialsProvider(new BasicAWSCredentials(ak, sk)))
-    case _ => ("default", AWSCredentialProviders.deployToolsCredentialsProviderChain)
+      (
+        ak,
+        new AWSStaticCredentialsProvider(new BasicAWSCredentials(ak, sk)),
+        StaticCredentialsProvider.create(AwsBasicCredentials.create(ak, sk))
+      )
+    case _ =>
+      (
+        "default",
+        AWSCredentialProviders.deployToolsCredentialsProviderChain,
+        AWSCredentialProviders.deployToolsCredentialsProviderChainV2,
+      )
   }
 }
 
@@ -99,6 +138,7 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
     accountNumber.map("accountNumber" -> _) ++
     ownerId.map("ownerId" -> _)
   val awsRegion: Regions = Regions.fromName(region)
+  val awsRegionV2: Region = Region.of(region)
 
   override def toMarkerMap: Map[String, Any] = Map("region" -> awsRegion)
 }
@@ -114,7 +154,7 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
   def credsFromS3Url(url: URI): AWSCredentialsProvider = {
     Option(url.getUserInfo) match {
       case Some(role) if role.startsWith("arn:") => new STSAssumeRoleSessionCredentialsProvider.Builder(role, "prismS3").build()
-      case Some(profile) => new ProfileCredentialsProvider(profile)
+      case Some(profile) => new ProfileCredentialsProviderV1(profile)
       case _ => AWSCredentialProviders.deployToolsCredentialsProviderChain
     }
   }

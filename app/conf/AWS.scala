@@ -7,6 +7,8 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Filter, DescribeTagsRequest => EC2DescribeTagsRequest}
 import com.amazonaws.util.EC2MetadataUtils
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
+import software.amazon.awssdk.core.retry.RetryPolicy
 import utils.Logging
 
 import scala.collection.MapView
@@ -16,6 +18,16 @@ import scala.util.Try
 object AWS extends Logging {
 
   val clientConfig: ClientConfiguration = new ClientConfiguration().withMaxErrorRetry(10)
+
+  val clientConfigV2: ClientOverrideConfiguration = ClientOverrideConfiguration
+    .builder()
+    .retryPolicy(
+      RetryPolicy
+        .builder()
+        .numRetries(10)
+        .build()
+    )
+    .build()
 
   // This is to detect if we are running in AWS or on GC2. The 169.254.169.254
   // thing works on both but this DNS entry seems peculiar to AWS.

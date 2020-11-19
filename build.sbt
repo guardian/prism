@@ -12,6 +12,7 @@ resolvers ++= Seq(
 )
 
 val awsVersion = "1.11.887"
+val awsVersionTwo = "2.15.31"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
@@ -39,6 +40,9 @@ lazy val root = (project in file("."))
     buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "2.0.0",
+      "software.amazon.awssdk" % "lambda" % awsVersionTwo,
+      "software.amazon.awssdk" % "auth" % awsVersionTwo,
+      "software.amazon.awssdk" % "sts" % awsVersionTwo,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
       "com.amazonaws" % "aws-java-sdk-ec2" % awsVersion,
       "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,

@@ -1,15 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.lambda.model.{FunctionConfiguration, ListFunctionsRequest, ListTagsRequest}
-import com.amazonaws.services.lambda.{AWSLambda, AWSLambdaClientBuilder}
+import software.amazon.awssdk.services.lambda.LambdaClient
+import software.amazon.awssdk.services.lambda.model.{FunctionConfiguration, ListTagsRequest}
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
-import utils.{Logging, PaginatedAWSRequest}
+import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](ResourceType("lambda"), accounts) {
@@ -20,35 +19,33 @@ class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](Resour
 
 case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Lambda] with Logging {
 
-  val client: AWSLambda = AWSLambdaClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client = LambdaClient
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
   def crawl: Iterable[Lambda] = {
-    PaginatedAWSRequest.run(client.listFunctions)(new ListFunctionsRequest()).map { lambda => {
-      val tags = client.listTags(new ListTagsRequest().withResource(lambda.getFunctionArn)).getTags.asScala.toMap
+    client.listFunctionsPaginator().asScala.flatMap(_.functions.asScala).map { lambda =>
+      val tags = client.listTags(ListTagsRequest.builder().resource(lambda.functionArn).build()).tags.asScala.toMap
       Thread.sleep(100) // this avoids ThrottlingException back from AWS
       Lambda.fromApiData(
         lambda,
-        client,
         origin.region,
         tags
       )
-    }
-
     }
   }
 }
 
 object Lambda {
 
-  def fromApiData(lambda: FunctionConfiguration, client: AWSLambda, region: String, tags: Map[String, String]): Lambda = Lambda(
-    arn = lambda.getFunctionArn,
-    name = lambda.getFunctionName,
+  def fromApiData(lambda: FunctionConfiguration, region: String, tags: Map[String, String]): Lambda = Lambda(
+    arn = lambda.functionArn(),
+    name = lambda.functionName,
     region,
-    runtime = lambda.getRuntime,
+    runtime = lambda.runtime.toString,
     tags,
     stage = tags.get("Stage"),
     stack = tags.get("Stack")
