@@ -43,6 +43,7 @@ lazy val root = (project in file("."))
       "software.amazon.awssdk" % "lambda" % awsVersionTwo,
       "software.amazon.awssdk" % "auth" % awsVersionTwo,
       "software.amazon.awssdk" % "sts" % awsVersionTwo,
+      "com.beust" % "jcommander" % "1.75", // deal with security vulnerability introduced by aws sdk
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
       "com.amazonaws" % "aws-java-sdk-ec2" % awsVersion,
       "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,
