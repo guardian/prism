@@ -11,23 +11,22 @@ import utils.AWSCredentialProviders
 
 object LogConfiguration {
 
-  private def makeCustomFields(config: Identity, instanceId: Option[String]): String = {
+  private def makeCustomFields(config: Identity, loggingContext: Map[String, String]): String = {
     Json.toJson(Map(
         "app" -> config.app,
         "stack" -> config.stack,
         "stage" -> config.stage,
-        "buildId" -> prism.BuildInfo.buildNumber,
       )
-      ++ instanceId.map("instanceId" -> _)
+      ++ loggingContext
     ).toString()
   }
 
-  def shipping(stream: String, config: Identity, instanceId: Option[String]) = {
+  def shipping(stream: String, config: Identity, loggingContext: Map[String, String]) = {
     val bufferSize: Int = 1000
     val region: Regions = Regions.EU_WEST_1
     val rootLogger: LogbackLogger = LoggerFactory.getLogger(SLFLogger.ROOT_LOGGER_NAME).asInstanceOf[LogbackLogger]
     val context = rootLogger.getLoggerContext
-    val customFields = makeCustomFields(config, instanceId)
+    val customFields = makeCustomFields(config, loggingContext)
     val layout = new LogstashLayout
     layout.setContext(context)
     layout.setCustomFields(customFields)

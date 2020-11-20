@@ -33,12 +33,12 @@ class AppLoader extends ApplicationLoader with Logging {
 
     val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
 
-    val maybeInstanceId = Try(EC2MetadataUtils.getInstanceId).toOption
-
     val stream: Option[String] = extraConfig.getOptional[String]("LoggingStream")
     stream match {
       case Some(stream) =>
-        LogConfiguration.shipping(stream, identity, maybeInstanceId)
+        val maybeInstanceId = Try(EC2MetadataUtils.getInstanceId).toOption
+        val loggingContext = Map("buildId" -> prism.BuildInfo.buildNumber) ++ maybeInstanceId.map("instanceId" -> _)
+        LogConfiguration.shipping(stream, identity, loggingContext)
       case _ => log.info("Missing stream configuration to enable log shipping to central ELK")
     }
 
