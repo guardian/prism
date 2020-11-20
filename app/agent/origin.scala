@@ -86,10 +86,13 @@ case class Credentials(accessKey: Option[String], role: Option[String], profile:
         .roleSessionName("prism")
         .roleArn(r)
         .build()
+      val stsClientV2 = StsClient.builder()
+        .region(regionV2)
+        .build()
       (
         r,
         new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").build(),
-        StsAssumeRoleCredentialsProvider.builder().refreshRequest(req).build()
+        StsAssumeRoleCredentialsProvider.builder().stsClient(stsClientV2).refreshRequest(req).build()
       )
     case (_, _, _, Some(p)) =>
       (
