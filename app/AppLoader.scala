@@ -1,8 +1,7 @@
 import com.amazonaws.regions.Regions
 import com.amazonaws.util.EC2MetadataUtils
-import conf.{AWS, DynamoConfiguration, FileConfiguration, Identity, LogConfiguration}
-import play.api.Configuration
-import play.api._
+import conf._
+import play.api.{Configuration, _}
 import utils.{AWSCredentialProviders, Logging}
 
 import scala.util.Try
@@ -48,6 +47,12 @@ class AppLoader extends ApplicationLoader with Logging {
 
     val contextWithConfig = context.copy(initialConfiguration = combinedConfig)
 
-    new AppComponents(contextWithConfig).application
+    try {
+      new AppComponents(contextWithConfig).application
+    } catch {
+      case t: Throwable =>
+        log.error("Unable to initialise prism", t)
+        throw t
+    }
   }
 }
