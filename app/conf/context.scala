@@ -51,7 +51,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     }
 
     object aws {
-      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsToCrawl").getOrElse(Seq("eu-west-1")) //.getOrElse(allRegions)
+      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsToCrawl").getOrElse(allRegions)
       lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsHighPriority").getOrElse(Seq("eu-west-1"))
       lazy val crawlRates = getCrawlRates(highPriorityRegions)
       lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
