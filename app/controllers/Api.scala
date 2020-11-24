@@ -81,6 +81,20 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
       }
     }
 
+    def sourceAccounts: Action[AnyContent] = Action.async { implicit request =>
+      ApiResult.noSource {
+        val accounts = prismDataStore.sourceStatusAgent.sources.data.map { source =>
+          val accountName = source.latest.origin.account
+          val accountNumber = source.latest.origin match {
+            case a: AmazonOrigin => a.accountNumber
+            case _ => None
+          }
+          AWSAccount(accountNumber, accountName)
+        }.toList.distinct
+        Json.toJson(accounts)
+      }
+    }
+
     def healthCheck = Action.async { implicit request =>
       ApiResult.filter {
         val sources = prismDataStore.sourceStatusAgent.sources
@@ -121,20 +135,6 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
     }
     def instance(arn:String) = Action.async { implicit request =>
       Api.singleItem(prismDataStore.instanceAgent, arn)
-    }
-
-    def instanceAccounts: Action[AnyContent] = Action.async { implicit request =>
-      ApiResult.noSource {
-        val accounts = prismDataStore.instanceAgent.get().map { c =>
-          val accountName = c.label.origin.account
-          val accountNumber = c.label.origin match {
-            case a: AmazonOrigin => a.accountNumber
-            case _ => None
-          }
-          AWSAccount(accountNumber, accountName)
-        }.toList.distinct
-        Json.toJson(accounts)
-      }
     }
 
     def lambdaList = Action.async { implicit request =>

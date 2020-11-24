@@ -6,6 +6,7 @@ GET        /                                  controllers.Application.index
 
 # API V1
 GET        /sources                           controllers.Api.sources
+GET        /sources/accounts                  controllers.Api.sourceAccounts
 GET        /management/healthcheck            controllers.Api.healthCheck
 
 GET        /apps                              controllers.Api.appList
@@ -19,7 +20,6 @@ GET        /instances/regions                 controllers.Api.regionList
 GET        /instances/vendors                 controllers.Api.vendorList
 GET        /instances/roles                   controllers.Api.roleList
 GET        /instances/mainclasses             controllers.Api.mainclassList
-GET        /instances/accounts                controllers.Api.instanceAccounts
 GET        /instances/:arn                    controllers.Api.instance(arn)
 
 GET        /lambdas                           controllers.Api.lambdaList
