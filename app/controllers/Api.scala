@@ -200,6 +200,19 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
     def mainclassList = summary[Instance](prismDataStore.instanceAgent, i => i.mainclasses.map(Json.toJson(_)), "mainclasses")
     def stackList = summaryFromTwo[Instance, Lambda](prismDataStore.instanceAgent, stackExtractor, prismDataStore.lambdaAgent, stackExtractor, "stacks")(prismConfiguration.stages.ordering)
     def stageList = summaryFromTwo[Instance, Lambda](prismDataStore.instanceAgent, stageExtractor, prismDataStore.lambdaAgent, stageExtractor, "stages")(prismConfiguration.stages.ordering)
+    def instanceAccounts: Action[AnyContent] = Action.async { implicit request =>
+      ApiResult.noSource {
+        val accounts = prismDataStore.instanceAgent.get().map{c =>
+          val accountName = c.label.origin.account
+          val accountNumber = c.label.origin match {
+            case a: AmazonOrigin => a.accountNumber
+            case _ => None
+          }
+          AWSAccount(accountNumber, accountName)
+        }.toList
+        Json.toJson(accounts.distinct)
+      }
+    }
     def regionList = summary[Instance](prismDataStore.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
     def vendorList = summary[Instance](prismDataStore.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
     def appList = summary[Instance](

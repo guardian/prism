@@ -26,6 +26,8 @@ trait IndexedItemWithStack extends IndexedItem {
   val stack: Option[String] = None
 }
 
+case class AWSAccount(accountNumber: Option[String], accountName: String)
+
 abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts) extends Logging {
   def lookupCollector:PartialFunction[Origin, Collector[T]]
   def collectorFor(origin:Origin): Option[Collector[T]] = {

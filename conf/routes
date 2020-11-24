@@ -19,6 +19,7 @@ GET        /instances/regions                 controllers.Api.regionList
 GET        /instances/vendors                 controllers.Api.vendorList
 GET        /instances/roles                   controllers.Api.roleList
 GET        /instances/mainclasses             controllers.Api.mainclassList
+GET        /instances/accounts                controllers.Api.instanceAccounts
 GET        /instances/:arn                    controllers.Api.instance(arn)
 
 GET        /lambdas                           controllers.Api.lambdaList
