@@ -41,6 +41,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "2.0.0",
       "software.amazon.awssdk" % "lambda" % awsVersionTwo,
+      "software.amazon.awssdk" % "s3" % awsVersionTwo,
       "software.amazon.awssdk" % "auth" % awsVersionTwo,
       "software.amazon.awssdk" % "sts" % awsVersionTwo,
       "software.amazon.awssdk" % "acm" % awsVersionTwo,
