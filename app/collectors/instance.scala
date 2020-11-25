@@ -1,20 +1,18 @@
 package collectors
 
-import org.joda.time.DateTime
-
-import scala.jdk.CollectionConverters._
-import utils.{Logging, PaginatedAWSRequest}
 import java.net.InetAddress
 
-import play.api.mvc.Call
-import controllers.{Prism, routes}
-
-import scala.language.postfixOps
-import software.amazon.awssdk.services.ec2.Ec2Client
-import software.amazon.awssdk.services.ec2.model.{DescribeInstancesRequest, Reservation => AwsReservation, Instance => AwsInstance}
 import agent._
 import conf.AWS
+import controllers.{Prism, routes}
+import org.joda.time.DateTime
+import play.api.mvc.Call
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeInstancesRequest, Instance => AwsInstance, Reservation => AwsReservation}
+import utils.Logging
 
+import scala.jdk.CollectionConverters._
+import scala.language.postfixOps
 import scala.util.matching.Regex
 
 class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance"), accounts) {
@@ -34,11 +32,10 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, cra
 
   def getInstances:Iterable[(AwsReservation, AwsInstance)] = {
     val request = DescribeInstancesRequest.builder().build()
-    val response = client.describeInstances
-    //TODO: find the right paginator function
-    // https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/ec2/paginators/package-summary.html
-    // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/pagination.html
-    PaginatedAWSRequest.run(response)(request)
+    client.describeInstancesPaginator(request).reservations().asScala.map( r =>
+      // TODO
+      (r, new AwsInstance())
+      )
   }
 
   def crawl:Iterable[Instance] = {
