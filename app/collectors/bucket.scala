@@ -9,6 +9,7 @@ import conf.AWS
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
+import software.amazon.awssdk.regions.Region
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
@@ -36,7 +37,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     val request = ListBucketsRequest.builder().build()
     client.listBuckets(request).buckets().asScala
       .flatMap {
-        Bucket.fromApiData(_, client)
+        Bucket.fromApiData(_, client, origin.awsRegionV2)
       }
   }
 }
@@ -45,17 +46,20 @@ object Bucket {
 
   private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
 
-  def fromApiData(bucket: AWSBucket, client: S3Client): Option[Bucket] = {
+  def fromApiData(bucket: AWSBucket, client: S3Client, originRegion: Region): Option[Bucket] = {
     val bucketName = bucket.name
     try {
-      // TODO: not sure if we still need the if block that checked the bucket location vs the client's region
       val bucketRegion = client.getBucketLocation(GetBucketLocationRequest.builder().bucket(bucketName).build()).locationConstraintAsString()
+      if (bucketRegion == originRegion.toString) {
         Some(Bucket(
           arn = arn(bucketName),
           name = bucketName,
           region = bucketRegion,
           createdTime = Try(new DateTime(bucket.creationDate())).toOption
         ))
+      } else {
+        None
+      }
     } catch {
       case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" => None
       case e:S3Exception if e.awsErrorDetails.errorCode == "AuthorizationHeaderMalformed" => None
