@@ -1,16 +1,15 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
-import com.amazonaws.services.ec2.model.{DescribeImagesRequest, Filter, Image => AWSImage}
 import conf.AWS
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeImagesRequest, DescribeImagesResponse, Filter, Image => AwsImage}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
@@ -22,43 +21,51 @@ class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceT
 
 case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRate: CrawlRate) extends Collector[Image] with Logging {
 
-  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client: Ec2Client = Ec2Client
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
   def crawl: Iterable[Image] = {
-    val result = client.describeImages(new DescribeImagesRequest()
-      .withFilters(
-        new Filter("owner-id", Seq(origin.accountNumber.get).asJava),
-        new Filter("image-type", Seq("machine").asJava)
-      )
-    )
-    result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
+    //TODO
+    val ownerIdFilter = Filter.builder().name("owner-id").values(origin.accountNumber.get).build()
+    val imageTypeFilter = Filter.builder().name("image-type").values("machine").build()
+    val request = DescribeImagesRequest.builder()
+    val result = DescribeImagesResponse.builder().build()
+    result.images.asScala.map(Image.fromApiData(_, origin.region))
+
+//    val result = client.describeImages(new DescribeImagesRequest()
+//      .withFilters(
+//        new Filter("owner-id", Seq(origin.accountNumber.get).asJava),
+//        new Filter("image-type", Seq("machine").asJava)
+//      )
+//    )
+//    result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
   }
 }
 
 object Image {
   def arn(region: String, imageId: String) = s"arn:aws:ec2:$region::image/$imageId"
 
-  def fromApiData(image: AWSImage, regionName: String): Image = {
+  def fromApiData(image: AwsImage, regionName: String): Image = {
     Image(
-      arn = arn(regionName, image.getImageId),
-      name = Option(image.getName),
-      imageId = image.getImageId,
+      arn = arn(regionName, image.imageId),
+      name = Option(image.name),
+      imageId = image.imageId,
       region = regionName,
-      description = Option(image.getDescription),
-      tags = image.getTags.asScala.map(t => t.getKey -> t.getValue).toMap,
-      creationDate = Try(new DateTime(image.getCreationDate)).toOption,
-      state = image.getState,
-      architecture = image.getArchitecture,
-      ownerId = image.getOwnerId,
-      virtualizationType = image.getVirtualizationType,
-      hypervisor = image.getHypervisor,
-      sriovNetSupport = Option(image.getSriovNetSupport),
-      rootDeviceType = image.getRootDeviceType,
-      imageType = image.getImageType
+      description = Option(image.description),
+      tags = image.tags.asScala.map(t => t.key -> t.value).toMap,
+      creationDate = Try(new DateTime(image.creationDate)).toOption,
+      state = image.stateAsString,
+      architecture = image.architectureAsString,
+      ownerId = image.ownerId,
+      virtualizationType = image.virtualizationTypeAsString,
+      hypervisor = image.hypervisorAsString,
+      sriovNetSupport = Option(image.sriovNetSupport),
+      rootDeviceType = image.rootDeviceTypeAsString,
+      imageType = image.imageTypeAsString
     )
   }
 }
