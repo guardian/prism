@@ -1,15 +1,14 @@
 package collectors
 
 import agent._
-import software.amazon.awssdk.services.ec2.{Ec2Client}
-import software.amazon.awssdk.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AwsSecurityGroup}
 import conf.AWS
 import controllers.{Prism, routes}
 import play.api.mvc.Call
-import utils.PaginatedAWSRequest
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AwsSecurityGroup}
 
 import scala.jdk.CollectionConverters._
-import scala.language.postfixOps
+import scala.language.{existentials, postfixOps}
 
 class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
@@ -59,9 +58,8 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType,
   def crawl: Iterable[SecurityGroup] = {
     //  get all existing groups to allow for cross referencing
     val existingGroups = prismController.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
-    //TODO
-    val secGroups = PaginatedAWSRequest.run(client.describeSecurityGroups)(new DescribeSecurityGroupsRequest())
-    secGroups.map ( fromAWS(_, existingGroups) )
+    val request = DescribeSecurityGroupsRequest.builder().build()
+    client.describeSecurityGroupsPaginator(request).securityGroups.asScala.map(fromAWS(_, existingGroups))
   }
 }
 
