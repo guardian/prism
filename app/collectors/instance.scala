@@ -10,10 +10,9 @@ import play.api.mvc.Call
 import controllers.{Prism, routes}
 
 import scala.language.postfixOps
-import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
-import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AWSInstance, Reservation => AWSReservation}
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeInstancesRequest, Reservation => AwsReservation, Instance => AwsInstance}
 import agent._
-import com.amazonaws.ClientConfiguration
 import conf.AWS
 
 import scala.util.matching.Regex
@@ -26,43 +25,48 @@ class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSe
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate, prism: Prism) extends Collector[Instance] with Logging {
 
-  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client: Ec2Client = Ec2Client
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
-
-  def getInstances:Iterable[(AWSReservation, AWSInstance)] = {
-    PaginatedAWSRequest.run(client.describeInstances)(new DescribeInstancesRequest())
+  def getInstances:Iterable[(AwsReservation, AwsInstance)] = {
+    val request = DescribeInstancesRequest.builder().build()
+    val response = client.describeInstances
+    //TODO: find the right paginator function
+    // https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/ec2/paginators/package-summary.html
+    // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/pagination.html
+    PaginatedAWSRequest.run(response)(request)
   }
 
   def crawl:Iterable[Instance] = {
     getInstances.map { case (reservation, instance) =>
       Instance.fromApiData(
-        arn = s"arn:aws:ec2:${origin.region}:${origin.accountNumber.getOrElse(reservation.getOwnerId)}:instance/${instance.getInstanceId}",
-        vendorState = Some(instance.getState.getName),
-        group = instance.getPlacement.getAvailabilityZone,
+        arn = s"arn:aws:ec2:${origin.region}:${origin.accountNumber.getOrElse(reservation.ownerId)}:instance/${instance.instanceId}",
+        vendorState = Some(instance.state.nameAsString),
+        group = instance.placement.availabilityZone,
         addresses = AddressList(
-          "public" -> Address(instance.getPublicDnsName, instance.getPublicIpAddress),
-          "private" -> Address(instance.getPrivateDnsName, instance.getPrivateIpAddress)
+          "public" -> Address(instance.publicDnsName, instance.publicIpAddress),
+          "private" -> Address(instance.privateDnsName, instance.privateIpAddress)
         ),
-        createdAt = new DateTime(instance.getLaunchTime),
-        instanceName = instance.getInstanceId,
+        createdAt = new DateTime(instance.launchTime),
+        instanceName = instance.instanceId,
         region = origin.region,
         vendor = "aws",
-        securityGroups = instance.getSecurityGroups.asScala.map{ sg =>
+        securityGroups = instance.securityGroups.asScala.map{ sg =>
           Reference[SecurityGroup](
-            s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.getGroupId}",
+            s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.groupId}",
             Map(
-              "groupId" -> sg.getGroupId,
-              "groupName" -> sg.getGroupName
+              "groupId" -> sg.groupId,
+              "groupName" -> sg.groupName
             ),
             prism
           )
         }.toSeq,
-        tags = instance.getTags.asScala.map(t => t.getKey -> t.getValue).toMap,
-        specs = InstanceSpecification(instance.getImageId, Image.arn(origin.region, instance.getImageId), instance.getInstanceType, Option(instance.getVpcId))
+        tags = instance.tags.asScala.map(t => t.key -> t.value).toMap,
+        specs = InstanceSpecification(instance.imageId, Image.arn(origin.region, instance.imageId), instance.instanceTypeAsString, Option(instance.vpcId))
       )
     }.map(origin.transformInstance)
   }
