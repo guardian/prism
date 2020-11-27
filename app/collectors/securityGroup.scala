@@ -31,8 +31,8 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType,
         rule.ipProtocol.replace("-1","all"),
         Option(rule.fromPort).map(_.toInt),
         Option(rule.toPort).map(_.toInt),
-        rule.ipRanges.asScala.toSeq.map(_.toString).sorted.wrap,
-        rule.ipv6Ranges.asScala.toSeq.map(_.toString).sorted.wrap,
+        rule.ipRanges.asScala.toSeq.map(_.cidrIp).sorted.wrap,
+        rule.ipv6Ranges.asScala.toSeq.map(_.cidrIpv6).sorted.wrap,
         groupRefs(rule).wrap
       )
     }
