@@ -6,7 +6,7 @@ import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
 import software.amazon.awssdk.services.ec2.Ec2Client
-import software.amazon.awssdk.services.ec2.model.{DescribeImagesRequest, DescribeImagesResponse, Filter, Image => AwsImage}
+import software.amazon.awssdk.services.ec2.model.{DescribeImagesRequest, Filter, Image => AwsImage}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
@@ -29,20 +29,16 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRa
     .build()
 
   def crawl: Iterable[Image] = {
-    //TODO
     val ownerIdFilter = Filter.builder().name("owner-id").values(origin.accountNumber.get).build()
     val imageTypeFilter = Filter.builder().name("image-type").values("machine").build()
-    val request = DescribeImagesRequest.builder()
-    val result = DescribeImagesResponse.builder().build()
+    //TODO
+    val result = client.describeImages(DescribeImagesRequest.builder
+      .filters(
+        ownerIdFilter,
+        imageTypeFilter
+      )
+      .build)
     result.images.asScala.map(Image.fromApiData(_, origin.region))
-
-//    val result = client.describeImages(new DescribeImagesRequest()
-//      .withFilters(
-//        new Filter("owner-id", Seq(origin.accountNumber.get).asJava),
-//        new Filter("image-type", Seq("machine").asJava)
-//      )
-//    )
-//    result.getImages.asScala.map { Image.fromApiData(_, origin.region) }
   }
 }
 
