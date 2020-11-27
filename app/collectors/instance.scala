@@ -31,11 +31,11 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, cra
     .build()
 
   def getInstances:Iterable[(AwsReservation, AwsInstance)] = {
-    val request = DescribeInstancesRequest.builder().build()
-    client.describeInstancesPaginator(request).reservations().asScala.map( r =>
-      // TODO
-      (r, new AwsInstance())
-      )
+    val reservations = client.describeInstancesPaginator(DescribeInstancesRequest.builder.build).reservations.asScala
+    for {
+      reservation <- reservations
+      instance <- reservation.instances.asScala
+    } yield (reservation, instance)
   }
 
   def crawl:Iterable[Instance] = {
