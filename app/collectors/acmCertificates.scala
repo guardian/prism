@@ -103,7 +103,6 @@ object AcmCertificate {
     signatureAlgorithm = cert.signatureAlgorithm,
     serial = cert.serial,
     validationMethod = cert.domainValidationOptions.asScala.headOption.map(_.validationMethodAsString),
-    //TODO
     domainValidationOptions = cert.domainValidationOptions.asScala.toList.map(DomainValidation.fromApiData),
     renewalStatus = Option(cert.renewalSummary).map(RenewalInfo.fromApiData)
   )
