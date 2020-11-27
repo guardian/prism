@@ -1,18 +1,17 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
-import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AWSRecurringCharge}
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AwsRecurringCharge}
 import conf.AWS
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.DateTime
 import play.api.mvc.Call
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import scala.util.Try
-import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 
 class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
@@ -22,14 +21,15 @@ class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservati
 
 case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Reservation] with Logging {
 
-  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client = Ec2Client
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
   def crawl: Iterable[Reservation] = {
-    client.describeReservedInstances(new DescribeReservedInstancesRequest()).getReservedInstances.asScala.map {
+    client.describeReservedInstances(DescribeReservedInstancesRequest.builder.build).reservedInstances.asScala.map {
       Reservation.fromApiData(_, origin)
     }
   }
@@ -59,26 +59,26 @@ case class Reservation(
 
 object Reservation {
   def fromApiData(reservationInstance: ReservedInstances, origin: AmazonOrigin): Reservation = {
-    val region = reservationInstance.getAvailabilityZone
-    val arn = s"arn:aws:ec2:$region:${origin.accountNumber.getOrElse("")}:reservation/${reservationInstance.getReservedInstancesId}"
-    val recurringCharges = reservationInstance.getRecurringCharges.asScala.map(RecurringCharge.fromApiData).toList
+    val region = reservationInstance.availabilityZone
+    val arn = s"arn:aws:ec2:$region:${origin.accountNumber.getOrElse("")}:reservation/${reservationInstance.reservedInstancesId}"
+    val recurringCharges = reservationInstance.recurringCharges.asScala.map(RecurringCharge.fromApiData).toList
     Reservation(
       arn = arn,
-      id = reservationInstance.getReservedInstancesId,
+      id = reservationInstance.reservedInstancesId,
       region = region,
-      instanceType = reservationInstance.getInstanceType,
-      instanceCount = reservationInstance.getInstanceCount,
-      productDescription = reservationInstance.getProductDescription,
-      fixedPrice = reservationInstance.getFixedPrice,
-      usagePrice = reservationInstance.getUsagePrice,
+      instanceType = reservationInstance.instanceTypeAsString,
+      instanceCount = reservationInstance.instanceCount,
+      productDescription = reservationInstance.productDescriptionAsString,
+      fixedPrice = reservationInstance.fixedPrice,
+      usagePrice = reservationInstance.usagePrice,
       recurringCharges = recurringCharges,
-      state = reservationInstance.getState,
-      currencyCode = reservationInstance.getCurrencyCode,
-      duration = reservationInstance.getDuration,
-      instanceTenancy = reservationInstance.getInstanceTenancy,
-      offeringType = reservationInstance.getOfferingType,
-      startTime = Try(new DateTime(reservationInstance.getStart)).toOption,
-      endTime = Try(new DateTime(reservationInstance.getEnd)).toOption
+      state = reservationInstance.stateAsString,
+      currencyCode = reservationInstance.currencyCodeAsString,
+      duration = reservationInstance.duration,
+      instanceTenancy = reservationInstance.instanceTenancyAsString,
+      offeringType = reservationInstance.offeringTypeAsString,
+      startTime = Try(new DateTime(reservationInstance.start)).toOption,
+      endTime = Try(new DateTime(reservationInstance.end)).toOption
     )
   }
 }
@@ -89,10 +89,10 @@ case class RecurringCharge(
 )
 
 object RecurringCharge {
-  def fromApiData(recurringCharge: AWSRecurringCharge): RecurringCharge = {
+  def fromApiData(recurringCharge: AwsRecurringCharge): RecurringCharge = {
     RecurringCharge(
-      frequency = recurringCharge.getFrequency,
-      amount = recurringCharge.getAmount
+      frequency = recurringCharge.frequencyAsString,
+      amount = recurringCharge.amount
     )
   }
 }
