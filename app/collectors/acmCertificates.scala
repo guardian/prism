@@ -1,17 +1,17 @@
 package collectors
 
+import java.time.Instant
+
 import agent._
-import software.amazon.awssdk.services.acm.AcmClient
-import software.amazon.awssdk.services.acm.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
 import conf.AWS
 import controllers.routes
-import org.joda.time.DateTime
 import play.api.mvc.Call
+import software.amazon.awssdk.services.acm.AcmClient
+import software.amazon.awssdk.services.acm.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
-import scala.util.Try
 
 
 class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates"), accounts) {
@@ -93,10 +93,10 @@ object AcmCertificate {
     status = cert.statusAsString,
     issuer = cert.issuer,
     inUseBy = cert.inUseBy.asScala.toList,
-    notBefore = Option(cert.notBefore).flatMap(dt => Try(new DateTime(dt)).toOption),
-    notAfter = Option(cert.notAfter).flatMap(dt => Try(new DateTime(dt)).toOption),
-    createdAt = Option(cert.createdAt).flatMap(dt => Try(new DateTime(dt)).toOption),
-    issuedAt = Option(cert.issuedAt).flatMap(dt => Try(new DateTime(dt)).toOption),
+    notBefore = Option(cert.notBefore),
+    notAfter = Option(cert.notAfter),
+    createdAt = Option(cert.createdAt),
+    issuedAt = Option(cert.issuedAt),
     failureReason = Option(cert.failureReasonAsString),
     subject = cert.subject,
     keyAlgorithm = cert.keyAlgorithmAsString,
@@ -116,10 +116,10 @@ case class AcmCertificate(
                               status: String,
                               issuer: String,
                               inUseBy: List[String],
-                              notBefore: Option[DateTime],
-                              notAfter: Option[DateTime],
-                              createdAt: Option[DateTime],
-                              issuedAt: Option[DateTime],
+                              notBefore: Option[Instant],
+                              notAfter: Option[Instant],
+                              createdAt: Option[Instant],
+                              issuedAt: Option[Instant],
                               failureReason: Option[String],
                               subject: String,
                               keyAlgorithm: String,
