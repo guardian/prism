@@ -1,19 +1,18 @@
 package collectors
 
-import agent._
-import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.{GetBucketLocationRequest, ListBucketsRequest, S3Exception, Bucket => AWSBucket}
+import java.time.Instant
 
-import scala.language.reflectiveCalls
+import agent._
 import conf.AWS
 import controllers.routes
-import org.joda.time.DateTime
 import play.api.mvc.Call
 import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.{GetBucketLocationRequest, ListBucketsRequest, S3Exception, Bucket => AWSBucket}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import scala.language.postfixOps
+import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -55,7 +54,7 @@ object Bucket {
           arn = arn(bucketName),
           name = bucketName,
           region = bucketRegion,
-          createdTime = Try(new DateTime(bucket.creationDate())).toOption
+          createdTime = Try(bucket.creationDate).toOption
         ))
       } else {
         None
@@ -73,7 +72,7 @@ case class Bucket(
   arn: String,
   name: String,
   region: String,
-  createdTime: Option[DateTime]
+  createdTime: Option[Instant]
 ) extends IndexedItem {
   override def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
 }
