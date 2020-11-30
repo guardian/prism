@@ -31,7 +31,6 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRa
   def crawl: Iterable[Image] = {
     val ownerIdFilter = Filter.builder().name("owner-id").values(origin.accountNumber.get).build()
     val imageTypeFilter = Filter.builder().name("image-type").values("machine").build()
-    //TODO
     val result = client.describeImages(DescribeImagesRequest.builder
       .filters(
         ownerIdFilter,
