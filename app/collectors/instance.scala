@@ -1,11 +1,11 @@
 package collectors
 
 import java.net.InetAddress
+import java.time.Instant
 
 import agent._
 import conf.AWS
 import controllers.{Prism, routes}
-import org.joda.time.DateTime
 import play.api.mvc.Call
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeInstancesRequest, Instance => AwsInstance, Reservation => AwsReservation}
@@ -48,7 +48,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, cra
           "public" -> Address(instance.publicDnsName, instance.publicIpAddress),
           "private" -> Address(instance.privateDnsName, instance.privateIpAddress)
         ),
-        createdAt = new DateTime(instance.launchTime),
+        createdAt = instance.launchTime,
         instanceName = instance.instanceId,
         region = origin.region,
         vendor = "aws",
@@ -74,7 +74,7 @@ object Instance {
              vendorState: Option[String],
              group: String,
              addresses: AddressList,
-             createdAt: DateTime,
+             createdAt: Instant,
              instanceName: String,
              region: String,
              vendor: String,
@@ -166,7 +166,7 @@ case class Instance(
                  dnsName: String,
                  ip: String,
                  addresses: Map[String,Address],
-                 createdAt: DateTime,
+                 createdAt: Instant,
                  instanceName: String,
                  region: String,
                  vendor: String,
