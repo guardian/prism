@@ -1,5 +1,7 @@
 package collectors
 
+import java.time.Instant
+
 import agent._
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AwsRecurringCharge}
@@ -50,8 +52,8 @@ case class Reservation(
   duration: Long,
   instanceTenancy: String,
   offeringType: String,
-  startTime: Option[DateTime],
-  endTime: Option[DateTime]
+  startTime: Option[Instant],
+  endTime: Option[Instant]
 ) extends IndexedItem {
   override def callFromArn: (String) => Call = arn => routes.Api.reservation(arn)
 
@@ -77,8 +79,8 @@ object Reservation {
       duration = reservationInstance.duration,
       instanceTenancy = reservationInstance.instanceTenancyAsString,
       offeringType = reservationInstance.offeringTypeAsString,
-      startTime = Try(new DateTime(reservationInstance.start)).toOption,
-      endTime = Try(new DateTime(reservationInstance.end)).toOption
+      startTime = Try(reservationInstance.start).toOption,
+      endTime = Try(reservationInstance.end).toOption
     )
   }
 }
