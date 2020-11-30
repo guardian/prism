@@ -1,16 +1,16 @@
 package collectors
 
+import java.time.Instant
+
 import agent._
+import conf.AWS
+import controllers.routes
+import play.api.mvc.Call
 import software.amazon.awssdk.services.autoscaling.AutoScalingClient
 import software.amazon.awssdk.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AwsLaunchConfiguration}
-import controllers.routes
-import org.joda.time.DateTime
-import play.api.mvc.Call
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import conf.AWS
-
 import scala.language.postfixOps
 import scala.util.Try
 
@@ -45,7 +45,7 @@ object LaunchConfiguration {
       imageId = config.imageId,
       region = origin.region,
       instanceProfile = Option(config.iamInstanceProfile),
-      createdTime = Try(new DateTime(config.createdTime)).toOption,
+      createdTime = Try(config.createdTime).toOption,
       instanceType = config.instanceType,
       keyName = config.keyName,
       placementTenancy = Option(config.placementTenancy),
@@ -62,7 +62,7 @@ case class LaunchConfiguration(
   imageId: String,
   region: String,
   instanceProfile: Option[String],
-  createdTime: Option[DateTime],
+  createdTime: Option[Instant],
   instanceType: String,
   keyName: String,
   placementTenancy: Option[String],
