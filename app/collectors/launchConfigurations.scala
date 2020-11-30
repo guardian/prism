@@ -1,19 +1,18 @@
 package collectors
 
+import java.time.Instant
+
 import agent._
-import com.amazonaws.services.autoscaling.{AmazonAutoScaling, AmazonAutoScalingClient, AmazonAutoScalingClientBuilder}
+import conf.AWS
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
-import utils.{Logging, PaginatedAWSRequest}
+import software.amazon.awssdk.services.autoscaling.AutoScalingClient
+import software.amazon.awssdk.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AwsLaunchConfiguration}
+import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import com.amazonaws.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AWSLaunchConfiguration}
-import conf.AWS
-
-import scala.util.Try
-import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 
 class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
@@ -23,30 +22,34 @@ class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[L
 
 case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[LaunchConfiguration] with Logging {
 
-  val client: AmazonAutoScaling = AmazonAutoScalingClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client: AutoScalingClient = AutoScalingClient
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
   def crawl: Iterable[LaunchConfiguration] = {
-    PaginatedAWSRequest.run(client.describeLaunchConfigurations)(new DescribeLaunchConfigurationsRequest()).map(lc => LaunchConfiguration.fromApiData(lc, origin))
+    val request = DescribeLaunchConfigurationsRequest.builder.build
+    client.describeLaunchConfigurationsPaginator(request).launchConfigurations().asScala.map(lc =>
+      LaunchConfiguration.fromApiData(lc, origin)
+    )
   }
 }
 
 object LaunchConfiguration {
-  def fromApiData(config: AWSLaunchConfiguration, origin: AmazonOrigin): LaunchConfiguration = {
+  def fromApiData(config: AwsLaunchConfiguration, origin: AmazonOrigin): LaunchConfiguration = {
     LaunchConfiguration(
-      arn = config.getLaunchConfigurationARN,
-      name = config.getLaunchConfigurationName,
-      imageId = config.getImageId,
+      arn = config.launchConfigurationARN,
+      name = config.launchConfigurationName,
+      imageId = config.imageId,
       region = origin.region,
-      instanceProfile = Option(config.getIamInstanceProfile),
-      createdTime = Try(new DateTime(config.getCreatedTime)).toOption,
-      instanceType = config.getInstanceType,
-      keyName = config.getKeyName,
-      placementTenancy = Option(config.getPlacementTenancy),
-      securityGroups = Option(config.getSecurityGroups).toList.flatMap(_.asScala).map { sg =>
+      instanceProfile = Option(config.iamInstanceProfile),
+      createdTime = Try(config.createdTime).toOption,
+      instanceType = config.instanceType,
+      keyName = config.keyName,
+      placementTenancy = Option(config.placementTenancy),
+      securityGroups = Option(config.securityGroups).toList.flatMap(_.asScala).map { sg =>
         s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
       }
     )
@@ -59,7 +62,7 @@ case class LaunchConfiguration(
   imageId: String,
   region: String,
   instanceProfile: Option[String],
-  createdTime: Option[DateTime],
+  createdTime: Option[Instant],
   instanceType: String,
   keyName: String,
   placementTenancy: Option[String],
