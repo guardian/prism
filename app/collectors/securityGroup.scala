@@ -1,16 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.ec2.{AmazonEC2, AmazonEC2ClientBuilder}
-import com.amazonaws.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AWSSecurityGroup}
 import conf.AWS
 import controllers.{Prism, routes}
 import play.api.mvc.Call
-import utils.PaginatedAWSRequest
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AwsSecurityGroup}
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
-import scala.language.postfixOps
+import scala.language.{existentials, postfixOps}
 
 class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
@@ -21,46 +19,47 @@ class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) exte
 case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism, crawlRate: CrawlRate)
     extends Collector[SecurityGroup] {
 
-  def fromAWS( secGroup: AWSSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
+  def fromAWS( secGroup: AwsSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
-      rule.getUserIdGroupPairs.asScala.map { pair =>
-        SecurityGroupRef(pair.getGroupId, pair.getUserId, lookup.get(pair.getGroupId).map(_.arn))
+      rule.userIdGroupPairs.asScala.map { pair =>
+        SecurityGroupRef(pair.groupId, pair.userId, lookup.get(pair.groupId).map(_.arn))
       }
     }.toSeq
 
-    val rules = secGroup.getIpPermissions.asScala.map { rule =>
+    val rules = secGroup.ipPermissions.asScala.map { rule =>
       Rule(
-        rule.getIpProtocol.replace("-1","all"),
-        Option(rule.getFromPort).map(_.toInt),
-        Option(rule.getToPort).map(_.toInt),
-        rule.getIpv4Ranges.asScala.toSeq.map(_.toString).sorted.wrap,
-        rule.getIpv6Ranges.asScala.toSeq.map(_.toString).sorted.wrap,
+        rule.ipProtocol.replace("-1","all"),
+        Option(rule.fromPort).map(_.toInt),
+        Option(rule.toPort).map(_.toInt),
+        rule.ipRanges.asScala.toSeq.map(_.cidrIp).sorted.wrap,
+        rule.ipv6Ranges.asScala.toSeq.map(_.cidrIpv6).sorted.wrap,
         groupRefs(rule).wrap
       )
     }
 
     SecurityGroup(
-      s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${secGroup.getGroupId}",
-      secGroup.getGroupId,
-      secGroup.getGroupName,
+      s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${secGroup.groupId}",
+      secGroup.groupId,
+      secGroup.groupName,
       origin.region,
       rules.toSeq,
-      Option(secGroup.getVpcId),
-      secGroup.getTags.asScala.map(t => t.getKey -> t.getValue).toMap
+      Option(secGroup.vpcId),
+      secGroup.tags.asScala.map(t => t.key -> t.value).toMap
     )
   }
 
-  val client: AmazonEC2 = AmazonEC2ClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client: Ec2Client = Ec2Client
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
   def crawl: Iterable[SecurityGroup] = {
     //  get all existing groups to allow for cross referencing
     val existingGroups = prismController.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
-    val secGroups = PaginatedAWSRequest.run(client.describeSecurityGroups)(new DescribeSecurityGroupsRequest())
-    secGroups.map ( fromAWS(_, existingGroups) )
+    val request = DescribeSecurityGroupsRequest.builder().build()
+    client.describeSecurityGroupsPaginator(request).securityGroups.asScala.map(fromAWS(_, existingGroups))
   }
 }
 
