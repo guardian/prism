@@ -1,13 +1,15 @@
 package jsonimplicits
 
-import org.joda.time.format.ISODateTimeFormat
-import play.api.libs.json._
-import collectors._
-import play.api.libs.json.JsString
-import agent._
-import play.api.mvc.RequestHeader
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId, ZoneOffset}
+
 import _root_.model.{Owner, SSA}
+import agent._
+import collectors._
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import play.api.libs.json.{JsString, _}
+import play.api.mvc.RequestHeader
 
 trait RequestWrites[T] {
   def writes(request: RequestHeader): Writes[T]
@@ -25,6 +27,8 @@ object joda {
 
 object model {
   import joda.dateTimeWrites
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX").withZone(ZoneId.from(ZoneOffset.UTC))
+  implicit val instantWrites: Writes[Instant] = Writes.temporalWrites[Instant, DateTimeFormatter](formatter)
 
   implicit val originWriter: Writes[Origin] = (o: Origin) => o.toJson
 
