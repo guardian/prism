@@ -3,17 +3,15 @@ package collectors
 import java.time.Instant
 
 import agent._
-import software.amazon.awssdk.services.ec2.Ec2Client
-import software.amazon.awssdk.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AwsRecurringCharge}
 import conf.AWS
 import controllers.routes
-import org.joda.time.DateTime
 import play.api.mvc.Call
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AwsRecurringCharge}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
-import scala.util.Try
 
 class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation"), accounts) {
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
@@ -52,8 +50,8 @@ case class Reservation(
   duration: Long,
   instanceTenancy: String,
   offeringType: String,
-  startTime: Option[Instant],
-  endTime: Option[Instant]
+  startTime: Instant,
+  endTime: Instant,
 ) extends IndexedItem {
   override def callFromArn: (String) => Call = arn => routes.Api.reservation(arn)
 
@@ -79,8 +77,8 @@ object Reservation {
       duration = reservationInstance.duration,
       instanceTenancy = reservationInstance.instanceTenancyAsString,
       offeringType = reservationInstance.offeringTypeAsString,
-      startTime = Try(reservationInstance.start).toOption,
-      endTime = Try(reservationInstance.end).toOption
+      startTime = reservationInstance.start,
+      endTime = reservationInstance.end
     )
   }
 }
