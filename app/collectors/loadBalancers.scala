@@ -1,15 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.elasticloadbalancing.{AmazonElasticLoadBalancing, AmazonElasticLoadBalancingClientBuilder}
-import com.amazonaws.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, LoadBalancerDescription}
+import software.amazon.awssdk.services.elasticloadbalancing.ElasticLoadBalancingClient
+import software.amazon.awssdk.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, LoadBalancerDescription}
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
-import utils.{Logging, PaginatedAWSRequest}
+import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers"), accounts) {
@@ -20,27 +19,30 @@ class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBala
 
 case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[LoadBalancer] with Logging {
 
-  val client: AmazonElasticLoadBalancing = AmazonElasticLoadBalancingClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client = ElasticLoadBalancingClient
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
-  def crawl: Iterable[LoadBalancer] = PaginatedAWSRequest.run(client.describeLoadBalancers)(new DescribeLoadBalancersRequest()).map{ elb =>
-    LoadBalancer.fromApiData(elb, origin)
+  def crawl: Iterable[LoadBalancer] = {
+    client.describeLoadBalancersPaginator(DescribeLoadBalancersRequest.builder.build).loadBalancerDescriptions.asScala.map { elb =>
+      LoadBalancer.fromApiData(elb, origin)
+    }
   }
 }
 
 object LoadBalancer {
   def fromApiData(loadBalancer: LoadBalancerDescription, origin: AmazonOrigin): LoadBalancer = {
     LoadBalancer(
-      arn = s"arn:aws:elasticloadbalancing:${origin.region}:${origin.accountNumber.getOrElse("")}:loadbalancer/${loadBalancer.getLoadBalancerName}",
-      name = loadBalancer.getLoadBalancerName,
-      dnsName = loadBalancer.getDNSName,
-      vpcId = Option(loadBalancer.getVPCId),
-      scheme = Option(loadBalancer.getScheme),
-      availabilityZones = loadBalancer.getAvailabilityZones.asScala.toList,
-      subnets = loadBalancer.getSubnets.asScala.toList
+      arn = s"arn:aws:elasticloadbalancing:${origin.region}:${origin.accountNumber.getOrElse("")}:loadbalancer/${loadBalancer.loadBalancerName}",
+      name = loadBalancer.loadBalancerName,
+      dnsName = loadBalancer.dnsName,
+      vpcId = Option(loadBalancer.vpcId),
+      scheme = Option(loadBalancer.scheme),
+      availabilityZones = loadBalancer.availabilityZones.asScala.toList,
+      subnets = loadBalancer.subnets.asScala.toList
     )
   }
 }
