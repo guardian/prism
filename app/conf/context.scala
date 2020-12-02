@@ -37,6 +37,8 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
   object accounts {
     lazy val lazyStartup: Boolean = configuration.getOptional[String]("accounts.lazyStartup").exists("true" ==)
 
+    lazy val prismServerRegion: String = configuration.getOptional[]
+
     lazy val allRegions = {
       val ec2Client = AmazonEC2AsyncClientBuilder.standard().withRegion(Regions.EU_WEST_1).build()
       try {
@@ -52,11 +54,11 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
 
     object aws {
       lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsToCrawl").getOrElse(allRegions)
-      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsHighPriority").getOrElse(Seq("eu-west-1"))
+      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsHighPriority").getOrElse(Seq("eu-west-1")) :+ "aws-global"
       lazy val crawlRates = getCrawlRates(highPriorityRegions)
       lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
-        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl)
+        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl) :+ "aws-global"
         val accessKey = subConfig.getOptional[String]("accessKey")
         val secretKey = subConfig.getOptional[String]("secretKey")
         val role = subConfig.getOptional[String]("role")
@@ -65,7 +67,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
         val resources = subConfig.getOptional[Seq[String]]("resources").getOrElse(Nil)
         val stagePrefix = subConfig.getOptional[String]("stagePrefix")
         regions.map { region =>
-          val credentials = Credentials(accessKey, role, profile, region)(secretKey)
+          val credentials = Credentials(accessKey, role, profile, prismServerRegion)(secretKey)
           AmazonOrigin(name, region, resources.toSet, stagePrefix, credentials, ownerId, crawlRates(region))
         }
       }.toList

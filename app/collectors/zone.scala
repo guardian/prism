@@ -6,6 +6,7 @@ import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest,
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
+import software.amazon.awssdk.regions.Region
 import utils.{Logging, PaginatedAWSRequest}
 
 import scala.jdk.CollectionConverters._
@@ -13,6 +14,9 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones"), accounts) {
+
+  override def awsRegionType: AwsRegionType = Some(Global)
+
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
     case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource, amazon.crawlRate(resource.name))
   }

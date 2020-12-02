@@ -8,6 +8,7 @@ import scala.language.postfixOps
 import play.api.libs.json._
 import utils.{Logging, Marker}
 import play.api.mvc.Call
+import software.amazon.awssdk.regions.Region
 
 import scala.concurrent.duration._
 
@@ -28,12 +29,30 @@ trait IndexedItemWithStack extends IndexedItem {
 
 case class AWSAccount(accountNumber: Option[String], accountName: String)
 
+sealed trait AwsRegionType
+case object Global extends AwsRegionType
+case object Regional extends AwsRegionType
+
 abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts) extends Logging {
+  /** AWS services are either global or regional. AWS collectors should specify which to ensure that the APIs are used
+   * correctly. */
+  def awsRegionType: Option[AwsRegionType]
+  /** Create a collector for the given origin (this is a partial function because not all collectors support
+   *  all types of origin */
   def lookupCollector:PartialFunction[Origin, Collector[T]]
-  def collectorFor(origin:Origin): Option[Collector[T]] = {
-    if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
+
+  def isOriginRegionType(regionType: Option[AwsRegionType])(origin: Origin): Boolean = {
+    (origin, regionType) match {
+      case (AmazonOrigin(_, region, _, _, _, _, _, _), Some(Global)) if region != Region.AWS_GLOBAL.id => false
+      case (AmazonOrigin(_, region, _, _, _, _, _, _), Some(Regional)) if region == Region.AWS_GLOBAL.id => false
+      case _ => true
+    }
   }
-  lazy val collectors: Seq[Collector[T]] = accounts.forResource(resource.name).flatMap(collectorFor)
+  lazy val collectors: Seq[Collector[T]] =
+    accounts
+      .forResource(resource.name)
+      .filter(isOriginRegionType(awsRegionType))
+      .flatMap(lookupCollector.lift)
 }
 
 trait Collector[T] {
