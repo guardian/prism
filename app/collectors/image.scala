@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.util.Try
 
-class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceType("images"), accounts) {
+class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceType("images"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
     case amazon:AmazonOrigin => AWSImageCollector(amazon, resource, amazon.crawlRate(resource.name))
   }

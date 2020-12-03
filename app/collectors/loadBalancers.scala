@@ -11,7 +11,7 @@ import utils.Logging
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 
-class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers"), accounts) {
+class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBalancer](ResourceType("loadBalancers"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[LoadBalancer]] = {
     case amazon: AmazonOrigin => LoadBalancerCollector(amazon, resource, amazon.crawlRate(resource.name))
   }

@@ -11,7 +11,7 @@ import utils.Logging
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 
-class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](ResourceType("lambda"), accounts) {
+class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](ResourceType("lambda"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Lambda]] = {
     case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource, amazon.crawlRate(resource.name))
   }

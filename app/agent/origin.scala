@@ -140,10 +140,9 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
   val jsonFields: Map[String, String] = Map("region" -> region, "credentials" -> credentials.id) ++
     accountNumber.map("accountNumber" -> _) ++
     ownerId.map("ownerId" -> _)
-  val awsRegion: Regions = Regions.fromName(region)
   val awsRegionV2: Region = Region.of(region)
 
-  override def toMarkerMap: Map[String, Any] = Map("region" -> awsRegion)
+  override def toMarkerMap: Map[String, Any] = Map("region" -> awsRegionV2.id)
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String], crawlRate: Map[String, CrawlRate]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {

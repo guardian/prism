@@ -14,7 +14,7 @@ import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.util.Try
 
-class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations"), accounts) {
+class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[LaunchConfiguration](ResourceType("launch-configurations"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[LaunchConfiguration]] = {
     case amazon: AmazonOrigin => AWSLaunchConfigurationCollector(amazon, resource, amazon.crawlRate(resource.name))
   }

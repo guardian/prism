@@ -8,6 +8,7 @@ import scala.language.postfixOps
 import play.api.libs.json._
 import utils.{Logging, Marker}
 import play.api.mvc.Call
+import software.amazon.awssdk.regions.Region
 
 import scala.concurrent.duration._
 
@@ -28,12 +29,39 @@ trait IndexedItemWithStack extends IndexedItem {
 
 case class AWSAccount(accountNumber: Option[String], accountName: String)
 
-abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts) extends Logging {
+sealed trait AwsRegionType
+case object Global extends AwsRegionType
+case object Regional extends AwsRegionType
+
+/** A CollectorSet knows how to create a set of collectors for a given resource type that typically
+ *  spans multiple accounts, which can be of different underlying platforms. 
+ *  A CollectorSet creates an appropriate set of Collector instances for each account and region.
+ *
+ * @param resource the name of the resource that this CollectorSet is responsible for
+ * @param accounts the set of accounts to collect this resource from
+ * @param awsRegionType some resourceTypes in AWS have a single Global instance instead of Regional 
+ * instances. If a CollectorSet processes `AmazonOrigin` origins then you should specify whether the AWS 
+ * collector is global (such as Route53) or regional (such as EC2 instances).
+ * @tparam T the class that represents a collected instance of the resource
+ */
+abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts, val awsRegionType: Option[AwsRegionType]) extends Logging {
+  /** Create a collector for the given origin (this is a partial function because not all collectors support
+   *  all types of origin */
   def lookupCollector:PartialFunction[Origin, Collector[T]]
-  def collectorFor(origin:Origin): Option[Collector[T]] = {
-    if (lookupCollector.isDefinedAt(origin)) Some(lookupCollector(origin)) else None
+  /** Returns true if the AwsRegionType (Global or Regional) matches the origin's region. This means that we can filter
+   * on this value when we come to create the list of collectors and ensure that Global services crawl AWS_GLOBAL only. */
+  def isOriginRegionType(regionType: Option[AwsRegionType])(origin: Origin): Boolean = {
+    (origin, regionType) match {
+      case (AmazonOrigin(_, region, _, _, _, _, _, _), Some(Global)) if region != Region.AWS_GLOBAL.id => false
+      case (AmazonOrigin(_, region, _, _, _, _, _, _), Some(Regional)) if region == Region.AWS_GLOBAL.id => false
+      case _ => true
+    }
   }
-  lazy val collectors: Seq[Collector[T]] = accounts.forResource(resource.name).flatMap(collectorFor)
+  lazy val collectors: Seq[Collector[T]] =
+    accounts
+      .forResource(resource.name)
+      .filter(isOriginRegionType(awsRegionType))
+      .flatMap(lookupCollector.lift)
 }
 
 trait Collector[T] {

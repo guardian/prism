@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.ec2.model.{DescribeSecurityGroupsRequest,
 import scala.jdk.CollectionConverters._
 import scala.language.{existentials, postfixOps}
 
-class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts) {
+class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts, Some(Regional)) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
     case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController, aws.crawlRate(resource.name))
   }

@@ -17,7 +17,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 
-class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts) {
+class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
   }

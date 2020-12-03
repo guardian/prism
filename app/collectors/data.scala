@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.matching.Regex
 
-class DataCollectorSet(accounts: Accounts) extends CollectorSet[Data](ResourceType("data"), accounts) {
+class DataCollectorSet(accounts: Accounts) extends CollectorSet[Data](ResourceType("data"), accounts, None) {
   def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
     case json:JsonOrigin => JsonDataCollector(json, resource, json.crawlRate(resource.name))
   }

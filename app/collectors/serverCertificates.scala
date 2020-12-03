@@ -1,20 +1,20 @@
 package collectors
 
+import java.time.Instant
+
 import agent._
-import com.amazonaws.services.identitymanagement.{AmazonIdentityManagement, AmazonIdentityManagementClientBuilder}
-import com.amazonaws.services.identitymanagement.model.{ListServerCertificatesRequest, ServerCertificateMetadata}
 import conf.AWS
 import controllers.routes
-import org.joda.time.{DateTime, Duration}
 import play.api.mvc.Call
-import utils.{Logging, PaginatedAWSRequest}
+import software.amazon.awssdk.services.iam.IamClient
+import software.amazon.awssdk.services.iam.model.{ListServerCertificatesRequest, ServerCertificateMetadata}
+import utils.Logging
 
-import scala.collection.JavaConverters._
-import scala.util.Try
-import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
+import scala.util.Try
 
-class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates"), accounts) {
+class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates"), accounts, Some(Global)) {
   val lookupCollector: PartialFunction[Origin, Collector[ServerCertificate]] = {
     case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
@@ -22,24 +22,28 @@ class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[Ser
 
 case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[ServerCertificate] with Logging {
 
-  val client: AmazonIdentityManagement = AmazonIdentityManagementClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client: IamClient = IamClient
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
-  def crawl: Iterable[ServerCertificate] =
-    PaginatedAWSRequest.run(client.listServerCertificates)(new ListServerCertificatesRequest()).map(ServerCertificate.fromApiData(_, origin))
+  def crawl: Iterable[ServerCertificate] = {
+    client.listServerCertificatesPaginator(ListServerCertificatesRequest.builder.build).serverCertificateMetadataList.asScala.map(
+      ServerCertificate.fromApiData(_, origin)
+    )
+  }
 }
 
 object ServerCertificate {
   def fromApiData(metadata: ServerCertificateMetadata, origin: AmazonOrigin): ServerCertificate = ServerCertificate(
-    arn = metadata.getArn,
-    id = metadata.getServerCertificateId,
-    name = metadata.getServerCertificateName,
-    path = metadata.getPath,
-    uploadedAt = Try(new DateTime(metadata.getUploadDate)).toOption,
-    expiryDate = Try(new DateTime(metadata.getExpiration)).toOption
+    arn = metadata.arn,
+    id = metadata.serverCertificateId,
+    name = metadata.serverCertificateName,
+    path = metadata.path,
+    uploadedAt = Try(metadata.uploadDate).toOption,
+    expiryDate = Try(metadata.expiration).toOption
   )
 }
 
@@ -48,8 +52,8 @@ case class ServerCertificate(
   id: String,
   name: String,
   path: String,
-  uploadedAt: Option[DateTime],
-  expiryDate: Option[DateTime]
+  uploadedAt: Option[Instant],
+  expiryDate: Option[Instant]
 ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.serverCertificate(arn)
 }
