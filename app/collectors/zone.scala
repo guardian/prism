@@ -1,16 +1,14 @@
 package collectors
 
 import agent._
-import com.amazonaws.services.route53.{AmazonRoute53, AmazonRoute53ClientBuilder}
-import com.amazonaws.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
-import software.amazon.awssdk.regions.Region
-import utils.{Logging, PaginatedAWSRequest}
+import software.amazon.awssdk.services.route53.Route53Client
+import software.amazon.awssdk.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
+import utils.Logging
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones"), accounts, Some(Global)) {
@@ -22,41 +20,44 @@ class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zo
 
 case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Route53Zone] with Logging {
 
-  val client: AmazonRoute53 = AmazonRoute53ClientBuilder.standard()
-    .withCredentials(origin.credentials.provider)
-    .withRegion(origin.awsRegion)
-    .withClientConfiguration(AWS.clientConfig)
+  val client: Route53Client = Route53Client
+    .builder()
+    .credentialsProvider(origin.credentials.providerV2)
+    .region(origin.awsRegionV2)
+    .overrideConfiguration(AWS.clientConfigV2)
     .build()
 
-  def crawl: Iterable[Route53Zone] = PaginatedAWSRequest.run(client.listHostedZones)(new ListHostedZonesRequest()).map{ zone =>
-    val records = PaginatedAWSRequest.run(client.listResourceRecordSets)(new ListResourceRecordSetsRequest(zone.getId))
-    Route53Zone.fromApiData(zone, records, origin)
+  def crawl: Iterable[Route53Zone] = {
+     client.listHostedZonesPaginator(ListHostedZonesRequest.builder.build).hostedZones.asScala.map { zone =>
+       val records = client.listResourceRecordSetsPaginator(ListResourceRecordSetsRequest.builder.hostedZoneId(zone.id).build).resourceRecordSets.asScala
+       Route53Zone.fromApiData(zone, records, origin)
+     }
   }
 }
 
 object Route53Zone {
   def fromApiData(zone: HostedZone, awsRecordSets: Iterable[ResourceRecordSet], origin: AmazonOrigin): Route53Zone = {
     val recordSets: List[Route53Record] = awsRecordSets.map { record =>
-      val alias = Option(record.getAliasTarget).map(at => Route53Alias(at.getDNSName, at.getHostedZoneId, at.getEvaluateTargetHealth))
-      val maybeTtl: Option[Long] = Option(record.getTTL).map(_.longValue)
-      val records = record.getResourceRecords.asScala.map(_.getValue).toList
+      val alias = Option(record.aliasTarget).map(at => Route53Alias(at.dnsName, at.hostedZoneId, at.evaluateTargetHealth))
+      val maybeTtl: Option[Long] = Option(record.ttl).map(_.longValue)
+      val records = record.resourceRecords.asScala.map(_.value).toList
       Route53Record(
-        record.getName,
-        if (alias.nonEmpty) "ALIAS" else record.getType,
+        record.name,
+        if (alias.nonEmpty) "ALIAS" else record.typeAsString,
         maybeTtl,
         if (records.isEmpty) None else Some(records),
         alias
       )
     }.toList
-    val nameServers = recordSets.filter(rs => rs.name == zone.getName && rs.recordType == "NS").flatMap(_.records.getOrElse(Nil))
+    val nameServers = recordSets.filter(rs => rs.name == zone.name && rs.recordType == "NS").flatMap(_.records.getOrElse(Nil))
     Route53Zone(
-      arn = s"arn:aws:route53:::hostedzone/${zone.getId}",
-      name = zone.getName,
-      id = zone.getId,
-      callerReference = zone.getCallerReference,
-      comment = Option(zone.getConfig.getComment),
-      isPrivateZone = zone.getConfig.getPrivateZone,
-      resourceRecordSetCount = zone.getResourceRecordSetCount,
+      arn = s"arn:aws:route53:::hostedzone/${zone.id}",
+      name = zone.name,
+      id = zone.id,
+      callerReference = zone.callerReference,
+      comment = Option(zone.config.comment),
+      isPrivateZone = zone.config.privateZone,
+      resourceRecordSetCount = zone.resourceRecordSetCount,
       nameServers = nameServers,
       records = recordSets
     )
