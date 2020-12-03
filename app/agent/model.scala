@@ -33,14 +33,14 @@ sealed trait AwsRegionType
 case object Global extends AwsRegionType
 case object Regional extends AwsRegionType
 
-abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts) extends Logging {
-  /** AWS services are either global or regional. AWS collectors should specify which to ensure that the APIs are used
-   * correctly. */
-  def awsRegionType: Option[AwsRegionType]
+/** The awsRegionType specifies whether an AWS collector is global or regional. The AWS_GLOBAL region is required for
+ * global services, such as Route 53. */
+abstract class CollectorSet[T](val resource:ResourceType, accounts: Accounts, val awsRegionType: Option[AwsRegionType]) extends Logging {
   /** Create a collector for the given origin (this is a partial function because not all collectors support
    *  all types of origin */
   def lookupCollector:PartialFunction[Origin, Collector[T]]
-
+  /** Returns true if the AwsRegionType (Global or Regional) matches the origin's region. This means that we can filter
+   * on this value when we come to create the list of collectors and ensure that Global services crawl AWS_GLOBAL only. */
   def isOriginRegionType(regionType: Option[AwsRegionType])(origin: Origin): Boolean = {
     (origin, regionType) match {
       case (AmazonOrigin(_, region, _, _, _, _, _, _), Some(Global)) if region != Region.AWS_GLOBAL.id => false

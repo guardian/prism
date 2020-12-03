@@ -13,11 +13,10 @@ import utils.Logging
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 
-class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation"), accounts) {
+class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservation](ResourceType("reservation"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
     case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
-  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Reservation] with Logging {

@@ -13,9 +13,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones"), accounts) {
-
-  override def awsRegionType: Option[AwsRegionType] = Some(Global)
+class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zone](ResourceType("route53Zones"), accounts, Some(Global)) {
 
   val lookupCollector: PartialFunction[Origin, Collector[Route53Zone]] = {
     case amazon: AmazonOrigin => Route53ZoneCollector(amazon, resource, amazon.crawlRate(resource.name))

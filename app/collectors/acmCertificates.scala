@@ -14,12 +14,10 @@ import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 
 
-class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates"), accounts) {
+class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
     case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
-
-  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[AcmCertificate] with Logging {

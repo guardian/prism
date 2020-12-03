@@ -17,12 +17,10 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 
-class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts) {
+class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
-
-  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {

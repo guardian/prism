@@ -14,12 +14,10 @@ import scala.util.Try
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates"), accounts) {
+class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[ServerCertificate](ResourceType("server-certificates"), accounts, Some(Global)) {
   val lookupCollector: PartialFunction[Origin, Collector[ServerCertificate]] = {
     case amazon: AmazonOrigin => AWSServerCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
-
-  override def awsRegionType: Option[AwsRegionType] = Some(Global)
 }
 
 case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[ServerCertificate] with Logging {
