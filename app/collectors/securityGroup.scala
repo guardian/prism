@@ -14,6 +14,8 @@ class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) exte
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
     case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController, aws.crawlRate(resource.name))
   }
+
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism, crawlRate: CrawlRate)

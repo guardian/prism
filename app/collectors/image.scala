@@ -17,6 +17,8 @@ class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceT
   val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
     case amazon:AmazonOrigin => AWSImageCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
+
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRate: CrawlRate) extends Collector[Image] with Logging {

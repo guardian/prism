@@ -13,6 +13,8 @@ class DataCollectorSet(accounts: Accounts) extends CollectorSet[Data](ResourceTy
   def lookupCollector: PartialFunction[Origin, Collector[Data]] = {
     case json:JsonOrigin => JsonDataCollector(json, resource, json.crawlRate(resource.name))
   }
+
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class JsonDataCollector(origin:JsonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends JsonCollector[Data] {

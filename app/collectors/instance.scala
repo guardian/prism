@@ -19,6 +19,8 @@ class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSe
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
     case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, amazon.crawlRate(resource.name), prism)
   }
+
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate, prism: Prism) extends Collector[Instance] with Logging {

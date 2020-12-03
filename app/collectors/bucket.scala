@@ -21,6 +21,8 @@ class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](Resour
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
+
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {

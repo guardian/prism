@@ -15,6 +15,7 @@ class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](Resour
   val lookupCollector: PartialFunction[Origin, Collector[Lambda]] = {
     case amazon: AmazonOrigin => AWSLambdaCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Lambda] with Logging {

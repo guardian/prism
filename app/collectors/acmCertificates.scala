@@ -18,6 +18,8 @@ class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[Acm
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
     case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
+
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[AcmCertificate] with Logging {

@@ -17,6 +17,7 @@ class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservati
   val lookupCollector: PartialFunction[Origin, Collector[Reservation]] = {
     case amazon: AmazonOrigin => AWSReservationCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
+  override def awsRegionType: Option[AwsRegionType] = Some(Regional)
 }
 
 case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Reservation] with Logging {

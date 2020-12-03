@@ -6,6 +6,7 @@ import com.amazonaws.services.ec2.AmazonEC2AsyncClientBuilder
 import com.amazonaws.services.ec2.model.DescribeRegionsRequest
 import conf.PrismConfiguration.getCrawlRates
 import play.api.{Configuration, Mode}
+import software.amazon.awssdk.regions.Region
 import utils.{Logging, UnnaturalOrdering}
 
 import scala.concurrent.duration.DurationInt
@@ -37,7 +38,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
   object accounts {
     lazy val lazyStartup: Boolean = configuration.getOptional[String]("accounts.lazyStartup").exists("true" ==)
 
-    lazy val prismServerRegion: String = configuration.getOptional[]
+    lazy val prismServerRegion: String = configuration.getOptional[String]("accounts.aws.prismServerRegion").getOrElse(Region.EU_WEST_1.id)
 
     lazy val allRegions = {
       val ec2Client = AmazonEC2AsyncClientBuilder.standard().withRegion(Regions.EU_WEST_1).build()
@@ -54,11 +55,11 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
 
     object aws {
       lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsToCrawl").getOrElse(allRegions)
-      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsHighPriority").getOrElse(Seq("eu-west-1")) :+ "aws-global"
+      lazy val highPriorityRegions: Seq[String] = configuration.getOptional[Seq[String]]("accounts.aws.regionsHighPriority").getOrElse(Seq(prismServerRegion)) :+ Region.AWS_GLOBAL.id
       lazy val crawlRates = getCrawlRates(highPriorityRegions)
       lazy val defaultOwnerId: Option[String] = configuration.getOptional[String]("accounts.aws.defaultOwnerId")
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.aws").flatMap{ case (name, subConfig) =>
-        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl) :+ "aws-global"
+        val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl) :+ Region.AWS_GLOBAL.id
         val accessKey = subConfig.getOptional[String]("accessKey")
         val secretKey = subConfig.getOptional[String]("secretKey")
         val role = subConfig.getOptional[String]("role")
@@ -74,7 +75,7 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     }
 
     object amis {
-      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.ami.regionsToCrawl").getOrElse(Seq("eu-west-1"))
+      lazy val regionsToCrawl: Seq[String] = configuration.getOptional[Seq[String]]("accounts.ami.regionsToCrawl").getOrElse(Seq(prismServerRegion))
       lazy val crawlRates: Map[String, Map[String, CrawlRate]] = getCrawlRates(regionsToCrawl)
       val list: Seq[AmazonOrigin] = subConfigurations("accounts.amis").flatMap{ case (name, subConfig) =>
         val regions = subConfig.getOptional[Seq[String]]("regions").getOrElse(regionsToCrawl)
@@ -131,7 +132,6 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
 object PrismConfiguration {
   val fastCrawlRate: CrawlRate = CrawlRate(15 minutes, 1 minute)
   val defaultCrawlRate: CrawlRate = CrawlRate(1 hour, 5 minutes)
-  // this crawl rate is for low priority regions - ask Kate/Simon which rates they want for this
   val slowCrawlRate: CrawlRate = CrawlRate(1 day, 1 hour)
 
   val highPriorityRegionCrawlRate: Map[String, CrawlRate] = {
