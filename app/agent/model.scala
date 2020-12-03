@@ -37,7 +37,7 @@ case object Regional extends AwsRegionType
  *  spans multiple accounts, which can be of different underlying platforms. 
  *  A CollectorSet creates an appropriate set of Collector instances for each account and region.
  *
- * @param resourceType the name of the resource that this CollectorSet is responsible for
+ * @param resource the name of the resource that this CollectorSet is responsible for
  * @param accounts the set of accounts to collect this resource from
  * @param awsRegionType some resourceTypes in AWS have a single Global instance instead of Regional 
  * instances. If a CollectorSet processes `AmazonOrigin` origins then you should specify whether the AWS 
