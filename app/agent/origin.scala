@@ -163,18 +163,24 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
 
   // TODO: Fix these warnings
   def data(resource:ResourceType):JsValue = {
-    val jsonText: String = new URI(url.replace("%resource%", resource.name)) match {
+    val source: Source = new URI(url.replace("%resource%", resource.name)) match {
       case classPathLocation if classPathLocation.getScheme == "classpath" =>
-        Source.fromURL(new URL(null, classPathLocation.toString, classpathHandler), "utf-8").getLines().mkString
+        Source.fromURL(new URL(null, classPathLocation.toString, classpathHandler), "utf-8")
       case s3Location if s3Location.getScheme == "s3" =>
         val s3Client = AmazonS3ClientBuilder.standard()
           .withCredentials(credsFromS3Url(s3Location))
           .withRegion(AWS.connectionRegion)
           .build()
         val obj = s3Client.getObject(s3Location.getHost, s3Location.getPath.stripPrefix("/"))
-        Source.fromInputStream(obj.getObjectContent).getLines().mkString
+        Source.fromInputStream(obj.getObjectContent)
       case otherURL =>
-        Source.fromURL(otherURL.toURL, "utf-8").getLines().mkString
+        Source.fromURL(otherURL.toURL, "utf-8")
+    }
+
+    val jsonText: String = try {
+      source.getLines().mkString
+    } finally {
+      source.close()
     }
 
     Json.parse(jsonText)
