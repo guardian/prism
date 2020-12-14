@@ -4,16 +4,13 @@ import java.io.FileNotFoundException
 import java.net.{URI, URL, URLConnection, URLStreamHandler}
 
 import collectors.Instance
-import com.amazonaws.auth._
-import com.amazonaws.auth.profile.{ProfileCredentialsProvider => ProfileCredentialsProviderV1}
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, AwsCredentials, AwsCredentialsProvider, StaticCredentialsProvider, ProfileCredentialsProvider => ProfileCredentialsProviderV2}
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import conf.{AWS, PrismConfiguration}
 import play.api.libs.json.{JsObject, JsValue, Json}
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, AwsCredentialsProvider, ProfileCredentialsProvider, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.iam.IamClient
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest
@@ -29,12 +26,12 @@ class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
   val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):user.*""".r
   val all:Seq[Origin] = (prismConfiguration.accounts.aws.list ++ prismConfiguration.accounts.amis.list).map { awsOrigin =>
     Try {
-      val iamClient = AmazonIdentityManagementClientBuilder.standard()
-        .withCredentials(awsOrigin.credentials.provider)
-        .withRegion(AWS.connectionRegion)
-        .build()
+      val iamClient = IamClient.builder
+        .credentialsProvider(awsOrigin.credentials.provider)
+        .region(AWS.connectionRegion)
+        .build
 
-      val ArnIamAccountExtractor(derivedAccountNumber) = iamClient.getUser.getUser.getArn
+      val ArnIamAccountExtractor(derivedAccountNumber) = iamClient.getUser.user.arn
       awsOrigin.copy(accountNumber = Some(derivedAccountNumber))
     } recover {
       case NonFatal(e) =>
@@ -60,57 +57,48 @@ trait Origin extends Marker {
   def toJson: JsObject = JsObject((standardFields ++ jsonFields).view.mapValues(Json.toJson(_)).toSeq)
 }
 
-case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], region: String)(secretKey: Option[String]) {
-  val regionV2: Region = Region.of(region)
-  val (id, provider, providerV2) = (accessKey, secretKey, role, profile) match {
+case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], regionName: String)(secretKey: Option[String]) {
+  val region: Region = Region.of(regionName)
+  val (id, provider) = (accessKey, secretKey, role, profile) match {
     case (_, _, Some(r), Some(p)) =>
-      val stsClientV1 = AWSSecurityTokenServiceClientBuilder.standard()
-        .withCredentials(new ProfileCredentialsProviderV1(p))
-        .withRegion(region)
-        .build()
-      val stsClientV2 = StsClient.builder()
-        .credentialsProvider(ProfileCredentialsProviderV2.builder().profileName(p).build())
-        .region(regionV2)
-        .build()
-      val req: AssumeRoleRequest = AssumeRoleRequest.builder()
+      val stsClient = StsClient.builder
+        .credentialsProvider(ProfileCredentialsProvider.builder.profileName(p).build)
+        .region(region)
+        .build
+      val req: AssumeRoleRequest = AssumeRoleRequest.builder
         .roleSessionName("prism")
         .roleArn(r)
-        .build()
+        .build
       (
         s"$p/$r",
-        new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").withStsClient(stsClientV1).build(),
-        StsAssumeRoleCredentialsProvider.builder().stsClient(stsClientV2).refreshRequest(req).build()
+        StsAssumeRoleCredentialsProvider.builder.stsClient(stsClient).refreshRequest(req).build
       )
     case (_, _, Some(r), _) =>
-      val req: AssumeRoleRequest = AssumeRoleRequest.builder()
+      val req: AssumeRoleRequest = AssumeRoleRequest.builder
         .roleSessionName("prism")
         .roleArn(r)
-        .build()
-      val stsClientV2 = StsClient.builder()
-        .region(regionV2)
-        .build()
+        .build
+      val stsClient = StsClient.builder
+        .region(region)
+        .build
       (
         r,
-        new STSAssumeRoleSessionCredentialsProvider.Builder(r, "prism").build(),
-        StsAssumeRoleCredentialsProvider.builder().stsClient(stsClientV2).refreshRequest(req).build()
+        StsAssumeRoleCredentialsProvider.builder.stsClient(stsClient).refreshRequest(req).build
       )
     case (_, _, _, Some(p)) =>
       (
         p,
-        new ProfileCredentialsProviderV1(p),
-        ProfileCredentialsProviderV2.builder().profileName(p).build()
+        ProfileCredentialsProvider.builder.profileName(p).build
       )
     case (Some(ak), Some(sk), _, _) =>
       (
         ak,
-        new AWSStaticCredentialsProvider(new BasicAWSCredentials(ak, sk)),
         StaticCredentialsProvider.create(AwsBasicCredentials.create(ak, sk))
       )
     case _ =>
       (
         "default",
         AWSCredentialProviders.deployToolsCredentialsProviderChain,
-        AWSCredentialProviders.deployToolsCredentialsProviderChainV2,
       )
   }
 }
@@ -153,36 +141,40 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
     }
   }
 
-  def credsFromS3Url(url: URI): AWSCredentialsProvider = {
+  def credsFromS3Url(url: URI): AwsCredentialsProvider = {
     Option(url.getUserInfo) match {
-      case Some(role) if role.startsWith("arn:") => new STSAssumeRoleSessionCredentialsProvider.Builder(role, "prismS3").build()
-      case Some(profile) => new ProfileCredentialsProviderV1(profile)
+      case Some(role) if role.startsWith("arn:") =>
+        val request: AssumeRoleRequest = AssumeRoleRequest.builder
+          .roleSessionName("prismS3")
+          .roleArn(role)
+          .build
+        StsAssumeRoleCredentialsProvider.builder.refreshRequest(request).build
+      case Some(profile) => AWSCredentialProviders.profileCredentialsProvider(profile)
       case _ => AWSCredentialProviders.deployToolsCredentialsProviderChain
     }
   }
 
-  // TODO: Fix these warnings
   def data(resource:ResourceType):JsValue = {
     val source: Source = new URI(url.replace("%resource%", resource.name)) match {
       case classPathLocation if classPathLocation.getScheme == "classpath" =>
         Source.fromURL(new URL(null, classPathLocation.toString, classpathHandler), "utf-8")
       case s3Location if s3Location.getScheme == "s3" =>
-        val s3Client = AmazonS3ClientBuilder.standard()
-          .withCredentials(credsFromS3Url(s3Location))
-          .withRegion(AWS.connectionRegion)
-          .build()
-        val obj = s3Client.getObject(s3Location.getHost, s3Location.getPath.stripPrefix("/"))
-        Source.fromInputStream(obj.getObjectContent)
+        val s3Client = S3Client.builder
+          .credentialsProvider(credsFromS3Url(s3Location))
+          .region(AWS.connectionRegion)
+          .build
+        val obj = s3Client.getObjectAsBytes(
+          GetObjectRequest.builder.bucket(s3Location.getHost).key(s3Location.getPath.stripPrefix("/")).build
+        )
+        Source.fromBytes(obj.asByteArray)
       case otherURL =>
         Source.fromURL(otherURL.toURL, "utf-8")
     }
-
     val jsonText: String = try {
       source.getLines().mkString
     } finally {
       source.close()
     }
-
     Json.parse(jsonText)
   }
   val jsonFields = Map("url" -> url)

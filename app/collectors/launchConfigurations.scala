@@ -23,11 +23,11 @@ class LaunchConfigurationCollectorSet(accounts: Accounts) extends CollectorSet[L
 case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[LaunchConfiguration] with Logging {
 
   val client: AutoScalingClient = AutoScalingClient
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[LaunchConfiguration] = {
     val request = DescribeLaunchConfigurationsRequest.builder.build

@@ -23,11 +23,11 @@ class ServerCertificateCollectorSet(accounts: Accounts) extends CollectorSet[Ser
 case class AWSServerCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[ServerCertificate] with Logging {
 
   val client: IamClient = IamClient
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[ServerCertificate] = {
     client.listServerCertificatesPaginator(ListServerCertificatesRequest.builder.build).serverCertificateMetadataList.asScala.map(

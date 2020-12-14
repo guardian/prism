@@ -1,7 +1,7 @@
 import com.amazonaws.regions.Regions
-import com.amazonaws.util.EC2MetadataUtils
 import conf._
 import play.api.{Configuration, _}
+import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils
 import utils.{AWSCredentialProviders, Logging}
 
 import scala.util.Try
@@ -23,7 +23,7 @@ class AppLoader extends ApplicationLoader with Logging {
 
     val extraConfigs = List(
       DynamoConfiguration(
-        AWSCredentialProviders.deployToolsCredentialsProviderChain,
+        AWSCredentialProviders.deployToolsCredentialsProviderChainV1,
         Regions.EU_WEST_1,
         identity
       ),
