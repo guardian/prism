@@ -50,7 +50,6 @@ lazy val root = (project in file("."))
       "software.amazon.awssdk" % "elasticloadbalancing" % awsVersion,
       "software.amazon.awssdk" % "route53" % awsVersion,
       "software.amazon.awssdk" % "iam" % awsVersion,
-      "software.amazon.awssdk" % "kinesis" % awsVersion,
       "com.beust" % "jcommander" % "1.75", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
