@@ -17,7 +17,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 
-class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts, Some(Regional)) {
+class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts, Some(Global)) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
     case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
@@ -36,7 +36,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     val request = ListBucketsRequest.builder.build
     client.listBuckets(request).buckets().asScala
       .flatMap {
-        Bucket.fromApiData(_, client, origin.awsRegionV2)
+        Bucket.fromApiData(_, client)
       }
   }
 }
@@ -45,20 +45,16 @@ object Bucket {
 
   private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
 
-  def fromApiData(bucket: AWSBucket, client: S3Client, originRegion: Region): Option[Bucket] = {
+  def fromApiData(bucket: AWSBucket, client: S3Client): Option[Bucket] = {
     val bucketName = bucket.name
     try {
       val bucketRegion = client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString
-      if (bucketRegion == originRegion.toString) {
-        Some(Bucket(
-          arn = arn(bucketName),
-          name = bucketName,
-          region = bucketRegion,
-          createdTime = Try(bucket.creationDate).toOption
-        ))
-      } else {
-        None
-      }
+      Some(Bucket(
+        arn = arn(bucketName),
+        name = bucketName,
+        region = bucketRegion,
+        createdTime = Try(bucket.creationDate).toOption
+      ))
     } catch {
       case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" => None
       case e:S3Exception if e.awsErrorDetails.errorCode == "AuthorizationHeaderMalformed" => None
