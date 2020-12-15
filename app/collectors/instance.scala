@@ -24,11 +24,11 @@ class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSe
 case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate, prism: Prism) extends Collector[Instance] with Logging {
 
   val client: Ec2Client = Ec2Client
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def getInstances:Iterable[(AwsReservation, AwsInstance)] = {
     val reservations = client.describeInstancesPaginator(DescribeInstancesRequest.builder.build).reservations.asScala

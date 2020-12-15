@@ -22,15 +22,15 @@ class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceT
 case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRate: CrawlRate) extends Collector[Image] with Logging {
 
   val client: Ec2Client = Ec2Client
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[Image] = {
-    val ownerIdFilter = Filter.builder().name("owner-id").values(origin.accountNumber.get).build()
-    val imageTypeFilter = Filter.builder().name("image-type").values("machine").build()
+    val ownerIdFilter = Filter.builder.name("owner-id").values(origin.accountNumber.get).build
+    val imageTypeFilter = Filter.builder.name("image-type").values("machine").build
     val result = client.describeImages(DescribeImagesRequest.builder
       .filters(
         ownerIdFilter,

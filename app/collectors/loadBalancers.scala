@@ -20,11 +20,11 @@ class LoadBalancerCollectorSet(accounts: Accounts) extends CollectorSet[LoadBala
 case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[LoadBalancer] with Logging {
 
   val client = ElasticLoadBalancingClient
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[LoadBalancer] = {
     client.describeLoadBalancersPaginator(DescribeLoadBalancersRequest.builder.build).loadBalancerDescriptions.asScala.map { elb =>

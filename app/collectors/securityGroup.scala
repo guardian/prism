@@ -49,16 +49,16 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType,
   }
 
   val client: Ec2Client = Ec2Client
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[SecurityGroup] = {
     //  get all existing groups to allow for cross referencing
     val existingGroups = prismController.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
-    val request = DescribeSecurityGroupsRequest.builder().build()
+    val request = DescribeSecurityGroupsRequest.builder.build
     client.describeSecurityGroupsPaginator(request).securityGroups.asScala.map(fromAWS(_, existingGroups))
   }
 }

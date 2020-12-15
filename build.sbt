@@ -11,8 +11,8 @@ resolvers ++= Seq(
   "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
 )
 
-val awsVersion = "1.11.887"
-val awsVersionTwo = "2.15.31"
+val awsVersion = "2.15.31"
+val awsVersionOne = "1.11.918"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
@@ -40,27 +40,19 @@ lazy val root = (project in file("."))
     buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "2.0.0",
-      "software.amazon.awssdk" % "lambda" % awsVersionTwo,
-      "software.amazon.awssdk" % "s3" % awsVersionTwo,
-      "software.amazon.awssdk" % "auth" % awsVersionTwo,
-      "software.amazon.awssdk" % "sts" % awsVersionTwo,
-      "software.amazon.awssdk" % "acm" % awsVersionTwo,
-      "software.amazon.awssdk" % "ec2" % awsVersionTwo,
-      "software.amazon.awssdk" % "autoscaling" % awsVersionTwo,
-      "software.amazon.awssdk" % "elasticloadbalancing" % awsVersionTwo,
-      "software.amazon.awssdk" % "route53" % awsVersionTwo,
-      "software.amazon.awssdk" % "iam" % awsVersionTwo,
-      "com.beust" % "jcommander" % "1.75", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommander
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-ec2" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-iam" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-sts" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-s3" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-lambda" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-acm" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-route53" % awsVersion,
-      "com.amazonaws" % "aws-java-sdk-elasticloadbalancing" % awsVersion,
+      "software.amazon.awssdk" % "lambda" % awsVersion,
+      "software.amazon.awssdk" % "s3" % awsVersion,
+      "software.amazon.awssdk" % "auth" % awsVersion,
+      "software.amazon.awssdk" % "sts" % awsVersion,
+      "software.amazon.awssdk" % "acm" % awsVersion,
+      "software.amazon.awssdk" % "ec2" % awsVersion,
+      "software.amazon.awssdk" % "autoscaling" % awsVersion,
+      "software.amazon.awssdk" % "elasticloadbalancing" % awsVersion,
+      "software.amazon.awssdk" % "route53" % awsVersion,
+      "software.amazon.awssdk" % "iam" % awsVersion,
+      "com.beust" % "jcommander" % "1.75", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
+      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
+      "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
       "com.typesafe.play" %% "play-json" % "2.9.1",
       "com.typesafe.play" %% "play-json-joda" % "2.9.1",
       ws,
@@ -68,7 +60,7 @@ lazy val root = (project in file("."))
       filters,
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "6.4" exclude("com.fasterxml.jackson.core", "jackson-databind"),
-      "com.gu" % "kinesis-logback-appender" % "1.4.4",
+      "com.gu" % "kinesis-logback-appender" % "2.0.1",
     ),
     scalacOptions ++= List(
       "-encoding", "utf8",

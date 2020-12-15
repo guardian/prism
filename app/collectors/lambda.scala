@@ -20,15 +20,15 @@ class LambdaCollectorSet(accounts: Accounts) extends CollectorSet[Lambda](Resour
 case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Lambda] with Logging {
 
   val client = LambdaClient
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[Lambda] = {
     client.listFunctionsPaginator().asScala.flatMap(_.functions.asScala).map { lambda =>
-      val tags = client.listTags(ListTagsRequest.builder().resource(lambda.functionArn).build()).tags.asScala.toMap
+      val tags = client.listTags(ListTagsRequest.builder.resource(lambda.functionArn).build).tags.asScala.toMap
       Thread.sleep(100) // this avoids ThrottlingException back from AWS
       Lambda.fromApiData(
         lambda,

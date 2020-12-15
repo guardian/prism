@@ -26,14 +26,14 @@ class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](Resour
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {
 
   val client = S3Client
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[Bucket] = {
-    val request = ListBucketsRequest.builder().build()
+    val request = ListBucketsRequest.builder.build
     client.listBuckets(request).buckets().asScala
       .flatMap {
         Bucket.fromApiData(_, client, origin.awsRegionV2)
@@ -48,7 +48,7 @@ object Bucket {
   def fromApiData(bucket: AWSBucket, client: S3Client, originRegion: Region): Option[Bucket] = {
     val bucketName = bucket.name
     try {
-      val bucketRegion = client.getBucketLocation(GetBucketLocationRequest.builder().bucket(bucketName).build()).locationConstraintAsString()
+      val bucketRegion = client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString
       if (bucketRegion == originRegion.toString) {
         Some(Bucket(
           arn = arn(bucketName),

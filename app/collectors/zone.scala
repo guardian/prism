@@ -21,11 +21,11 @@ class Route53ZoneCollectorSet(accounts: Accounts) extends CollectorSet[Route53Zo
 case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Route53Zone] with Logging {
 
   val client: Route53Client = Route53Client
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[Route53Zone] = {
      client.listHostedZonesPaginator(ListHostedZonesRequest.builder.build).hostedZones.asScala.map { zone =>

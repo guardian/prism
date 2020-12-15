@@ -22,11 +22,11 @@ class ReservationCollectorSet(accounts: Accounts) extends CollectorSet[Reservati
 case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Reservation] with Logging {
 
   val client = Ec2Client
-    .builder()
-    .credentialsProvider(origin.credentials.providerV2)
+    .builder
+    .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfigV2)
-    .build()
+    .overrideConfiguration(AWS.clientConfig)
+    .build
 
   def crawl: Iterable[Reservation] = {
     client.describeReservedInstances(DescribeReservedInstancesRequest.builder.build).reservedInstances.asScala.map {

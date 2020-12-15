@@ -1,12 +1,11 @@
 package conf
 
 import agent._
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.ec2.AmazonEC2AsyncClientBuilder
-import com.amazonaws.services.ec2.model.DescribeRegionsRequest
 import conf.PrismConfiguration.getCrawlRates
 import play.api.{Configuration, Mode}
 import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.ec2.Ec2Client
+import software.amazon.awssdk.services.ec2.model.DescribeRegionsRequest
 import utils.{Logging, UnnaturalOrdering}
 
 import scala.concurrent.duration.DurationInt
@@ -41,15 +40,15 @@ class PrismConfiguration(configuration: Configuration) extends Logging {
     lazy val prismServerRegion: String = configuration.getOptional[String]("accounts.aws.prismServerRegion").getOrElse(Region.EU_WEST_1.id)
 
     lazy val allRegions = {
-      val ec2Client = AmazonEC2AsyncClientBuilder.standard().withRegion(Regions.EU_WEST_1).build()
+      val ec2Client = Ec2Client.builder.region(Region.EU_WEST_1).build
       try {
-        val request = new DescribeRegionsRequest() 
+        val request = DescribeRegionsRequest.builder.build
         val response = ec2Client.describeRegions(request)
-        val regions = response.getRegions.asScala.toList.map(_.getRegionName)
+        val regions = response.regions.asScala.toList.map(_.regionName)
         regions
       }
       finally {
-        ec2Client.shutdown()
+        ec2Client.close
       }
     }
 
