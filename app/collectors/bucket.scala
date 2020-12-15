@@ -48,11 +48,11 @@ object Bucket {
   def fromApiData(bucket: AWSBucket, client: S3Client): Option[Bucket] = {
     val bucketName = bucket.name
     try {
-      val bucketRegion = client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString
+      val bucketRegion = Option(client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString)
       Some(Bucket(
         arn = arn(bucketName),
         name = bucketName,
-        region = bucketRegion,
+        region = bucketRegion.getOrElse(Region.US_EAST_1.id),
         createdTime = Try(bucket.creationDate).toOption
       ))
     } catch {
