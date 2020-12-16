@@ -34,18 +34,19 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
 
   def crawl: Iterable[Bucket] = {
     val request = ListBucketsRequest.builder.build
-    client.listBuckets(request).buckets().asScala
-      .flatMap {
-        Bucket.fromApiData(_, client)
+    val listBuckets = client.listBuckets(request).buckets().asScala.toList
+    log.info(s"Total number of buckets for account ${origin.account} ${listBuckets.length}")
+      listBuckets.flatMap {
+        Bucket.fromApiData(_, client, origin)
       }
   }
 }
 
-object Bucket {
+object Bucket extends Logging {
 
   private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
 
-  def fromApiData(bucket: AWSBucket, client: S3Client): Option[Bucket] = {
+  def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin): Option[Bucket] = {
     val bucketName = bucket.name
     try {
       val bucketRegion = Option(client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString)
@@ -56,8 +57,12 @@ object Bucket {
         createdTime = Try(bucket.creationDate).toOption
       ))
     } catch {
-      case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" => None
-      case e:S3Exception if e.awsErrorDetails.errorCode == "AuthorizationHeaderMalformed" => None
+      case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" =>
+        log.info(s"NoSuchBucket for $bucketName in account ${origin.account}", e)
+        None
+      case e:S3Exception if e.awsErrorDetails.errorCode == "AuthorizationHeaderMalformed" =>
+        log.info(s"AuthorizationHeaderMalformed for $bucketName in account ${origin.account}", e)
+        None
       case NonFatal(t) =>
         throw new IllegalStateException(s"Failed when building info for bucket $bucketName", t)
     }
