@@ -28,7 +28,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
   val client = S3Client
     .builder
     .credentialsProvider(origin.credentials.provider)
-    .region(origin.awsRegionV2)
+    .region(Region.US_EAST_1)
     .overrideConfiguration(AWS.clientConfig)
     .build
 
