@@ -39,7 +39,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     val request = ListBucketsRequest.builder.build
     val listBuckets = client.listBuckets(request).buckets().asScala.toList
     log.info(s"Total number of buckets for account ${origin.account} ${listBuckets.length}")
-      listBuckets.flatMap {
+      listBuckets.map {
         Bucket.fromApiData(_, client, origin)
       }
   }
@@ -49,16 +49,10 @@ object Bucket extends Logging {
 
   private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
 
-  def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin): Option[Bucket] = {
+  def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin): Bucket = {
     val bucketName = bucket.name
-    try {
-      val bucketRegion = Option(client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString)
-      Some(Bucket(
-        arn = arn(bucketName),
-        name = bucketName,
-        region = bucketRegion.getOrElse(Region.US_EAST_1.id),
-        createdTime = Try(bucket.creationDate).toOption
-      ))
+    val bucketRegion = try {
+      Option(client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString).orElse(Some(Region.US_EAST_1.id))
     } catch {
       case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" =>
         log.info(s"NoSuchBucket for $bucketName in account ${origin.account}", e)
@@ -69,14 +63,20 @@ object Bucket extends Logging {
       case NonFatal(t) =>
         throw new IllegalStateException(s"Failed when building info for bucket $bucketName", t)
     }
+    Bucket(
+      arn = arn(bucketName),
+      name = bucketName,
+      region = bucketRegion,
+      createdTime = bucket.creationDate
+    )
   }
 }
 
 case class Bucket(
   arn: String,
   name: String,
-  region: String,
-  createdTime: Option[Instant]
+  region: Option[String],
+  createdTime: Instant
 ) extends IndexedItem {
   override def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
 }
