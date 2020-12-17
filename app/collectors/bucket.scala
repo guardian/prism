@@ -7,7 +7,7 @@ import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.{S3Client, S3Configuration}
 import software.amazon.awssdk.services.s3.model.{GetBucketLocationRequest, ListBucketsRequest, S3Exception, Bucket => AWSBucket}
 import utils.Logging
 
@@ -25,11 +25,14 @@ class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](Resour
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {
 
+  val s3Configuration = S3Configuration.builder.useArnRegionEnabled(true).build
+
   val client = S3Client
     .builder
     .credentialsProvider(origin.credentials.provider)
-    .region(Region.US_EAST_1)
+    .region(origin.awsRegionV2)
     .overrideConfiguration(AWS.clientConfig)
+    .serviceConfiguration(s3Configuration)
     .build
 
   def crawl: Iterable[Bucket] = {
