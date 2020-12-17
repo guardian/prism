@@ -52,7 +52,11 @@ object Bucket extends Logging {
   def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin): Bucket = {
     val bucketName = bucket.name
     val bucketRegion = try {
-      Option(client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString).orElse(Some(Region.US_EAST_1.id))
+      Option(
+        client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString
+      )
+        .filterNot(region => "" == region)
+        .orElse(Some(Region.US_EAST_1.id))
     } catch {
       case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" =>
         log.info(s"NoSuchBucket for $bucketName in account ${origin.account}", e)
