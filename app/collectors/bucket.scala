@@ -7,13 +7,12 @@ import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.{S3Client, S3Configuration}
 import software.amazon.awssdk.services.s3.model.{GetBucketLocationRequest, ListBucketsRequest, S3Exception, Bucket => AWSBucket}
+import software.amazon.awssdk.services.s3.{S3Client, S3Configuration}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.language.{postfixOps, reflectiveCalls}
-import scala.util.Try
 import scala.util.control.NonFatal
 
 
@@ -35,13 +34,26 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     .serviceConfiguration(s3Configuration)
     .build
 
+  // We need to create a second S3 client to get the correct createdTime as documented here:
+  // https://stackoverflow.com/questions/54353373/getting-incorrect-creation-dates-using-aws-s3
+  val clientForCorrectCreatedTime = S3Client
+    .builder
+    .credentialsProvider(origin.credentials.provider)
+    .region(Region.US_EAST_1)
+    .build
+
   def crawl: Iterable[Bucket] = {
     val request = ListBucketsRequest.builder.build
+
     val listBuckets = client.listBuckets(request).buckets().asScala.toList
-    log.info(s"Total number of buckets for account ${origin.account} ${listBuckets.length}")
-      listBuckets.map {
-        Bucket.fromApiData(_, client, origin)
-      }
+    log.info(s"Total number of buckets with S3 Client region EU-WEST-1 for account ${origin.account} ${listBuckets.length}")
+
+    val listBucketsForCorrectCreatedTime = clientForCorrectCreatedTime.listBuckets(request).buckets.asScala.toList
+    log.info(s"Total number of buckets with S3 Client region US-EAST-1 for account ${origin.account} ${listBucketsForCorrectCreatedTime.length}")
+
+    listBuckets.zip(listBucketsForCorrectCreatedTime).map{ case (bucket, bucketWithCorrectCreatedTime) =>
+      Bucket.fromApiData(bucket, client, origin, bucketWithCorrectCreatedTime)
+    }
   }
 }
 
@@ -49,7 +61,7 @@ object Bucket extends Logging {
 
   private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
 
-  def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin): Bucket = {
+  def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin, bucketWithCorrectCreatedTime: AWSBucket): Bucket = {
     val bucketName = bucket.name
     val bucketRegion = try {
       Option(
@@ -71,7 +83,7 @@ object Bucket extends Logging {
       arn = arn(bucketName),
       name = bucketName,
       region = bucketRegion,
-      createdTime = bucket.creationDate
+      createdTime = bucketWithCorrectCreatedTime.creationDate
     )
   }
 }
