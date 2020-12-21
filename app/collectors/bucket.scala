@@ -38,7 +38,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     .serviceConfiguration(s3Configuration)
     .build
 
-  // We need to create a second S3 client to get the correct createdTime as documented here:
+  // This second S3 client, with a region of US-EAST-1, gives us the correct createdTime value as documented here:
   // https://stackoverflow.com/questions/54353373/getting-incorrect-creation-dates-using-aws-s3
   val clientForCorrectCreatedTime = S3Client
     .builder
