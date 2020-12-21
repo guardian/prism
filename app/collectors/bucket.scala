@@ -24,10 +24,12 @@ class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](Resour
 
 case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {
 
+  // The `useArnRegionEnabled` flag enables us to receive data on buckets in all available AWS regions
+  // https://stackoverflow.com/questions/46769493/how-enable-force-global-bucket-access-in-aws-s3-sdk-java-2-0
   val s3Configuration = S3Configuration.builder.useArnRegionEnabled(true).build
 
-  // We have hardcoded the region of the S3 Client, so that we can receive data on S3 buckets in all AWS regions
-  // https://stackoverflow.com/questions/46769493/how-enable-force-global-bucket-access-in-aws-s3-sdk-java-2-0 
+  // The region of the S3 Client is hardcoded to EU-WEST-1, because AWS-Global does not work with S3.
+  // We decided to hardcode this here, instead of creating another enum for simplicity 
   val client = S3Client
     .builder
     .credentialsProvider(origin.credentials.provider)
