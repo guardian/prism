@@ -28,7 +28,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
   // https://stackoverflow.com/questions/46769493/how-enable-force-global-bucket-access-in-aws-s3-sdk-java-2-0
   val s3Configuration = S3Configuration.builder.useArnRegionEnabled(true).build
 
-  // The region of the S3 Client is hardcoded to EU-WEST-1, because AWS-Global does not work with S3.
+  // The region of the S3 Client is hardcoded to EU-WEST-1, because AWS-Global and US-EAST-1 do not return all buckets.
   // We decided to hardcode this here, instead of creating another enum for simplicity 
   val client = S3Client
     .builder
@@ -38,8 +38,8 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     .serviceConfiguration(s3Configuration)
     .build
 
-  // This second S3 client, with a region of US-EAST-1, gives us the correct createdTime value as documented here:
-  // https://stackoverflow.com/questions/54353373/getting-incorrect-creation-dates-using-aws-s3
+  // This second S3 client, with a region of US-EAST-1, gives us the correct createdTime value unlike the other regions,
+  // as documented here: https://stackoverflow.com/questions/54353373/getting-incorrect-creation-dates-using-aws-s3
   val clientForCorrectCreatedTime = S3Client
     .builder
     .credentialsProvider(origin.credentials.provider)
