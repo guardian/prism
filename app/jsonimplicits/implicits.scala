@@ -5,6 +5,8 @@ import java.time.{Instant, ZoneId, ZoneOffset}
 
 import _root_.model.{Owner, SSA}
 import agent._
+import ai.x.play.json.Encoders.encoder
+import ai.x.play.json.Jsonx
 import collectors._
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -55,6 +57,8 @@ object model {
     implicit val recurringCharge: Writes[RecurringCharge] = Json.writes[RecurringCharge]
     Json.writes[Reservation]
   }
+  // this case class contains over 22 fields, which is more than Scala permits, so using the play-json-extensions library instead of the normal Json.writes
+  implicit val rdsWriter: Writes[Rds] = Jsonx.formatCaseClass[Rds]
 
   implicit val domainResourceRecordWriter: Writes[DomainResourceRecord] = Json.writes[DomainResourceRecord]
   implicit val domainValidationWriter: Writes[DomainValidation] = Json.writes[DomainValidation]

@@ -29,6 +29,7 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
   val elbAgent = new CollectorAgent[LoadBalancer](new LoadBalancerCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val bucketAgent = new CollectorAgent[Bucket](new BucketCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val reservationAgent = new CollectorAgent[Reservation](new ReservationCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val rdsAgent = new CollectorAgent[Rds](new RdsCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val allAgents = Seq(instanceAgent, lambdaAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
-    serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent)
+    serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent, rdsAgent)
 }
