@@ -57,8 +57,8 @@ GET        /data/keys                         controllers.Api.dataKeysList
 GET        /data/lookup/:key                  controllers.Api.dataLookup(key)
 GET        /data/:arn                         controllers.Api.data(arn)
 
-GET        /rds                               controllers.Api.rdsList
-GET        /rds/:arn                          controllers.Api.rds(arn)
+GET        /rds-instances                     controllers.Api.rdsList
+GET        /rds-instances/:arn                controllers.Api.rds(arn)
 
 # Map static resources from the /public folder to the /assets URL path
 

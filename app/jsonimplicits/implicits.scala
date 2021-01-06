@@ -57,6 +57,7 @@ object model {
     implicit val recurringCharge: Writes[RecurringCharge] = Json.writes[RecurringCharge]
     Json.writes[Reservation]
   }
+  // this case class contains over 22 fields, which is more than Scala permits, so using the play-json-extensions library instead of the normal Json.writes
   implicit val rdsWriter: Writes[Rds] = Jsonx.formatCaseClass[Rds]
 
   implicit val domainResourceRecordWriter: Writes[DomainResourceRecord] = Json.writes[DomainResourceRecord]

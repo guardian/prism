@@ -209,7 +209,7 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
     }
 
     def rdsList = Action.async { implicit request =>
-      Api.itemList(prismDataStore.rdsAgent, "rds")
+      Api.itemList(prismDataStore.rdsAgent, "rds-instances")
     }
     def rds(arn:String) = Action.async { implicit request =>
       Api.singleItem(prismDataStore.rdsAgent, arn)
