@@ -64,7 +64,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
   def init():Unit = {
     log.info(s"Starting agent for collectors: $collectors")
 
-    datumAgents = collectors.map { collector =>
+    datumAgents = collectors.flatMap { collector =>
       val initial = if (lazyStartup) {
         val startupData = Datum.empty[T](collector)
         sourceStatusAgent.update(startupData.label)
@@ -77,10 +77,16 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
       val randomDelay = new Random().nextInt(60)
 
-      val agent = ScheduledAgent[Datum[T]](randomDelay seconds, collector.crawlRate.refreshPeriod, initial){ previous =>
-        update(collector, previous)
+      val agent: Option[ScheduledAgent[Datum[T]]] = Some(collector.crawlRate.refreshPeriod).collect {
+        case fd: FiniteDuration =>
+          ScheduledAgent[Datum[T]](randomDelay seconds, fd, initial){ previous =>
+            update(collector, previous)
+          }
       }
-      collector -> agent
+      if (agent.isEmpty) {
+        log.warn(s"The crawl rate period for $collector is ${collector.crawlRate.refreshPeriod}. This is not a finite duration so we are not initialising an agent.")
+      }
+      agent.map(collector -> _)
     }.toMap
 
     log.info(s"Started agent for collectors: $collectors")
@@ -153,13 +159,10 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
     }
   }
 
+  val bootTime = new DateTime()
+
   def sources:Datum[SourceStatus] = {
     val statusList = sourceStatusAgent().values
-    val statusDates = statusList.map(_.latest.createdAt)
-    val oldestDate = statusDates.toList.sortBy(_.getMillis).headOption.getOrElse(new DateTime(0))
-    val smallestDuration = statusList.flatMap{ status =>
-      status.latest.origin.crawlRate.values.toList.map(_.shelfLife)
-    }.minBy(_.toSeconds)
 
     val label = Label(
       ResourceType("sources"),
@@ -167,13 +170,13 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
         val vendor = "prism"
         val account = "prism"
         val resources = Set("sources")
-        val crawlRate = Map(("sources" -> CrawlRate(smallestDuration, smallestDuration)))
+        val crawlRate = Map(("sources" -> CrawlRate(Duration.Inf, Duration.Undefined)))
         val jsonFields = Map.empty[String, String]
 
         override def toMarkerMap: Map[String, Any] = jsonFields
       },
       statusList.size,
-      oldestDate
+      bootTime
     )
     Datum(label, statusList.toSeq)
   }

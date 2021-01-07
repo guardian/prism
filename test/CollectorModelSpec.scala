@@ -20,6 +20,10 @@ class CollectorModelSpec extends Specification {
       val bb = BestBefore(new DateTime, 30 seconds, error = false)
       bb.isStale should beFalse
     }
+    "say it is not stale if shelf life is infinite" in {
+      val bb = BestBefore(new DateTime, Duration.Inf, error = false)
+      bb.isStale should beFalse
+    }
   }
 
 }

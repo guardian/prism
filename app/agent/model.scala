@@ -1,6 +1,6 @@
 package agent
 
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.{DateTime, DateTimeZone, Duration => JodaDuration}
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -99,12 +99,17 @@ case class Label(resourceType: ResourceType, origin:Origin, itemCount:Int, creat
 
 case class ResourceType(name: String)
 
-case class CrawlRate(shelfLife: FiniteDuration, refreshPeriod: FiniteDuration)
+case class CrawlRate(shelfLife: Duration, refreshPeriod: Duration)
 
-case class BestBefore(created:DateTime, shelfLife:FiniteDuration, error:Boolean) {
-  val bestBefore:DateTime = created plus Duration.millis(shelfLife.toMillis)
+case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
+  val isFiniteShelfLife: Boolean = shelfLife.isFinite
+  val bestBefore:DateTime = if (isFiniteShelfLife) {
+    created plus JodaDuration.millis(shelfLife.toMillis)
+  } else {
+    new DateTime( 9999, 1, 1, 0, 0, 0, DateTimeZone.UTC )
+  }
   def isStale:Boolean = error || (new DateTime() compareTo bestBefore) >= 0
-  def age:Duration = new Duration(created, new DateTime)
+  def age:JodaDuration = new JodaDuration(created, new DateTime)
 }
 
 trait JsonCollector[T] extends JsonCollectorTranslator[T,T] with Logging {
