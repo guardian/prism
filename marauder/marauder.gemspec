@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description   = "Command line tool to find services in Prism based on simple queries"
   s.authors       = ["Sébastien Cevey", "Simon Hildrew"]
   s.email         = 'seb@cine7.net'
-  s.homepage      = 'https://github.com/guardian/prism/tree/master/marauder#readme'
+  s.homepage      = 'https://github.com/guardian/prism/tree/main/marauder#readme'
   s.license       = 'GPL'
 
   s.files         = `git ls-files`.split($/).grep(%r{(bin|lib)/})
