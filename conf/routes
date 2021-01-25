@@ -61,7 +61,7 @@ GET        /rds-instances                     controllers.Api.rdsList
 GET        /rds-instances/:arn                controllers.Api.rds(arn)
 
 GET        /vpcs                              controllers.Api.vpcList
-GET        /vpcs/:arn                        controllers.Api.vpcs(arn)
+GET        /vpcs/:arn                         controllers.Api.vpcs(arn)
 
 # Map static resources from the /public folder to the /assets URL path
 

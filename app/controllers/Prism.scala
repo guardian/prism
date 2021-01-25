@@ -32,5 +32,5 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
   val rdsAgent = new CollectorAgent[Rds](new RdsCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val vpcAgent = new CollectorAgent[Vpc](new VpcCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val allAgents = Seq(instanceAgent, lambdaAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
-    serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent, rdsAgent)
+    serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent, rdsAgent, vpcAgent)
 }

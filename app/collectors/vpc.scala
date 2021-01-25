@@ -46,15 +46,6 @@ object Vpc {
     accountId = vpc.ownerId,
     state = vpc.stateAsString,
     cidrBlock = vpc.cidrBlock,
-    cidrBlockAssociationSet = vpc.cidrBlockAssociationSet.asScala.toList.map{ c =>
-      CidrBlockAssociation(c.cidrBlock, c.associationId, c.cidrBlockState.stateAsString)
-    },
-    dhcpOptionsId = vpc.dhcpOptionsId,
-    instanceTenancy = vpc.instanceTenancyAsString,
-    ipv6CidrBlockAssociationSet = vpc.ipv6CidrBlockAssociationSet.asScala.toList.map{ c =>
-      Ipv6CidrBlockAssociation(c.associationId, c.ipv6CidrBlock, c.ipv6CidrBlockState.stateAsString, c.networkBorderGroup, c.ipv6Pool)
-    },
-    isDefault = vpc.isDefault,
     subnets = subnets.toList.map{s =>
       Subnet(
         s.subnetArn,
