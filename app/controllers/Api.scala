@@ -215,6 +215,14 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
       Api.singleItem(prismDataStore.rdsAgent, arn)
     }
 
+    def vpcList = Action.async { implicit request =>
+      Api.itemList(prismDataStore.vpcAgent, "vpcs")
+    }
+
+    def vpcs(arn: String) = Action.async { implicit request =>
+      Api.singleItem(prismDataStore.vpcAgent, arn)
+    }
+
     private def stackExtractor(i: IndexedItemWithStack) = i.stack.map(Json.toJson(_))
     private def stageExtractor(i: IndexedItemWithStage) = i.stage.map(Json.toJson(_))
     def roleList = summary[Instance](prismDataStore.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
