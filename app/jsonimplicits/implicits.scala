@@ -68,6 +68,9 @@ object model {
   implicit val route53RecordWriter: Writes[Route53Record] = Json.writes[Route53Record]
   implicit val route53ZoneWriter: Writes[Route53Zone] = Json.writes[Route53Zone]
 
+  implicit val subnetWriter: Writes[Subnet] = Json.writes[Subnet]
+  implicit val vpcWriter: Writes[Vpc] = Json.writes[Vpc]
+
   implicit val loadBalancerWriter: Writes[LoadBalancer] = Json.writes[LoadBalancer]
 
   implicit val awsAccountWrites = Json.writes[AWSAccount]
