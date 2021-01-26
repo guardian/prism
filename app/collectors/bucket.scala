@@ -95,7 +95,6 @@ object Bucket extends Logging {
 case class Bucket(
   arn: String,
   name: String,
-  //TODO - check we want to keep the region field given S3 is a pseudo global service?
   region: Option[String],
   createdTime: Instant
 ) extends IndexedItem {
