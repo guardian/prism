@@ -67,7 +67,7 @@ object Owners extends Owners {
     "infosec.ops" -> SSA(stack = "infosec"),
     "infosec.ops" -> SSA(stack = "nessus"),
     "infosec.ops" -> SSA(stack = "secure-contact"),
-    "data.technology" -> SSA(stack = "ophan"),
+    "ophan.dev" -> SSA(stack = "ophan"),
     "data.technology" -> SSA(stack = "ophan-data-lake"),
     "reader.revenue.dev" -> SSA(stack = "membership"),
     "reader.revenue.dev" -> SSA(stack = "subscriptions"),
