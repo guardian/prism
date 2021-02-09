@@ -11,7 +11,7 @@ deployments:
     type: ami-cloudformation-parameter
     app: prism
     parameters:
-      amiParameter: MachineImageAMI
+      amiParameter: AMI
       amiEncrypted: true
       amiTags:
         Recipe: bionic-java8-deploy-infrastructure
