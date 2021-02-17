@@ -3,8 +3,4 @@
 set -e
 
 yarn build
-
-for file in bin/*; do
-  stackName=$(basename "$file" ".ts")
-  yarn generate "$stackName"
-done
+yarn generate
