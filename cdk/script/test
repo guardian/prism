@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -e
+
+yarn lint
+yarn test
+
+for file in bin/*; do
+  stackName=$(basename "$file" ".ts")
+  yarn generate "$stackName"
+done

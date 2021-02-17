@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`The Prism stack matches the snapshot 1`] = `
+Object {
+  "Parameters": Object {
+    "Stack": Object {
+      "Default": "deploy",
+      "Description": "Name of this stack",
+      "Type": "String",
+    },
+    "Stage": Object {
+      "AllowedValues": Array [
+        "CODE",
+        "PROD",
+      ],
+      "Default": "CODE",
+      "Description": "Stage name",
+      "Type": "String",
+    },
+  },
+}
+`;

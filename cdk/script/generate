@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -e
+
+APP=$1
+STACK=$2
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+ROOT_DIR="${DIR}/.."
+OUTPUT_DIR="${ROOT_DIR}/cdk.out"
+
+
+if [[ -z $APP ]]; then
+  echo -e "\033[31mPass the app you'd like to generate Cloudformation for to this script"
+  exit 1
+fi
+
+pushd "${ROOT_DIR}" > /dev/null || exit
+yarn --silent cdk synth --app="ts-node ${ROOT_DIR}/bin/${APP}.ts"  -o "${OUTPUT_DIR}" --path-metadata false --version-reporting false ${STACK}
+popd > /dev/null
