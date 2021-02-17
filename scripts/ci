@@ -3,3 +3,8 @@
 set -e
 
 sbt clean compile test riffRaffNotifyTeamcity
+
+(
+  cd cdk
+  ./script/ci
+)
