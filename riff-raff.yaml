@@ -1,19 +1,20 @@
 regions: [eu-west-1]
 stacks: [deploy]
 deployments:
-  prism:
-    type: autoscaling
-    parameters:
-      bucket: deploy-tools-dist
-    dependencies:
-      - update-ami
-  update-ami:
-    type: ami-cloudformation-parameter
+  cloudformation:
+    type: cloud-formation
     app: prism
     parameters:
+      templatePath: Prism.template.json
       amiParameter: AMI
       amiEncrypted: true
       amiTags:
         Recipe: bionic-java8-deploy-infrastructure
         AmigoStage: PROD
         BuiltBy: amigo
+  prism:
+    type: autoscaling
+    parameters:
+      bucket: deploy-tools-dist
+    dependencies:
+      - cloudformation

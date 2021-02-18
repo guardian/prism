@@ -24,7 +24,8 @@ lazy val root = (project in file("."))
     riffRaffPackageType := (packageBin in Debian).value,
     riffRaffArtifactResources  := Seq(
       riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
-      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml"
+      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml",
+      baseDirectory.value / "cdk/cdk.out/Prism.template.json" -> "cloudformation/Prism.template.json"
     ),
     buildInfoKeys := {
       lazy val buildInfo = BuildInfo(baseDirectory.value)
