@@ -1,0 +1,111 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`The PrismAccess stack matches the snapshot 1`] = `
+Object {
+  "Outputs": Object {
+    "Role": Object {
+      "Description": "Prism Role",
+      "Value": Object {
+        "Fn::GetAtt": Array [
+          "PrismRole",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": Object {
+    "PrismAccount": Object {
+      "AllowedPattern": "arn:aws:[a-z0-9]*:[a-z0-9\\\\-]*:[0-9]{12}:.*",
+      "ConstraintDescription": "Must be a valid ARN, eg: arn:partition:service:region:account-id:resource-id",
+      "Description": "The ARN of the account in which Prism is running - looks like arn:aws:iam::<account-number>:root",
+      "Type": "String",
+    },
+    "Stage": Object {
+      "AllowedValues": Array [
+        "CODE",
+        "PROD",
+      ],
+      "Default": "CODE",
+      "Description": "Stage name",
+      "Type": "String",
+    },
+  },
+  "Resources": Object {
+    "PrismPolicyF951F5B3": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "ec2:Describe*",
+                "iam:Get*",
+                "iam:List*",
+                "autoscaling:Describe*",
+                "s3:ListAllMyBuckets",
+                "s3:GetBucketLocation",
+                "acm:ListCertificates",
+                "acm:DescribeCertificate",
+                "route53:List*",
+                "route53:Get*",
+                "elasticloadbalancing:Describe*",
+                "lambda:ListFunctions",
+                "lambda:ListTags",
+                "rds:Describe*",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PrismCollection",
+        "Roles": Array [
+          Object {
+            "Ref": "PrismRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PrismRole": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "AWS": Object {
+                  "Ref": "PrismAccount",
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "App",
+            "Value": "prism",
+          },
+          Object {
+            "Key": "gu:cdk:version",
+            "Value": "0.35.0",
+          },
+          Object {
+            "Key": "Stack",
+            "Value": "deploy",
+          },
+          Object {
+            "Key": "Stage",
+            "Value": Object {
+              "Ref": "Stage",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+  },
+}
+`;
