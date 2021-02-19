@@ -3,6 +3,7 @@ import { Peer } from "@aws-cdk/aws-ec2";
 import type { App } from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import { GuAutoScalingGroup } from "@guardian/cdk/lib/constructs/autoscaling";
+import { GuDistributionBucketParameter } from "@guardian/cdk/lib/constructs/core";
 import type { GuStackProps } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuStack } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuSecurityGroup, GuVpc } from "@guardian/cdk/lib/constructs/ec2";
@@ -46,7 +47,7 @@ export class PrismStack extends GuStack {
       overrideId: true,
     });
 
-    const distBucket: string = this.getParam("DistributionBucketName").valueAsString;
+    const distBucket: string = this.getParam(GuDistributionBucketParameter.parameterName).valueAsString;
     const s3Key = [distBucket, this.stack, this.stage, this.app, `${this.app}.deb`].join("/");
 
     // TODO move to UserData.forLinux
