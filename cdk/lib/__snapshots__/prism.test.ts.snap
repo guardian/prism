@@ -97,6 +97,27 @@ Object {
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
+    "AppServerSecurityGroupfromprismLoadBalancerSecurityGroupA5954B5A90003B574E9E": Object {
+      "Properties": Object {
+        "Description": "Port 9000 LB to fleet",
+        "FromPort": 9000,
+        "GroupId": Object {
+          "Fn::GetAtt": Array [
+            "AppServerSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": Object {
+          "Fn::GetAtt": Array [
+            "LoadBalancerSecurityGroupA28D6DD7",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
     "AutoscalingGroup": Object {
       "Properties": Object {
         "HealthCheckGracePeriod": 500,
@@ -645,6 +666,27 @@ dpkg -i /prism/prism.deb",
         },
       },
       "Type": "AWS::EC2::SecurityGroup",
+    },
+    "LoadBalancerSecurityGrouptoprismAppServerSecurityGroupA7BC420F9000EAD950C6": Object {
+      "Properties": Object {
+        "Description": "Port 9000 LB to fleet",
+        "DestinationSecurityGroupId": Object {
+          "Fn::GetAtt": Array [
+            "AppServerSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "FromPort": 9000,
+        "GroupId": Object {
+          "Fn::GetAtt": Array [
+            "LoadBalancerSecurityGroupA28D6DD7",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
     },
     "LoadBalancerSecurityGrouptoprismGuHttpsEgressSecurityGroupD1B6EFA19000A7BEFB95": Object {
       "Properties": Object {

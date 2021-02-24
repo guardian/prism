@@ -1,5 +1,5 @@
 import { BlockDeviceVolume, EbsDeviceVolumeType, HealthCheck } from "@aws-cdk/aws-autoscaling";
-import { Peer } from "@aws-cdk/aws-ec2";
+import { Peer, Port } from "@aws-cdk/aws-ec2";
 import type { App } from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import { Stage } from "@guardian/cdk/lib/constants";
@@ -86,7 +86,7 @@ export class PrismStack extends GuStack {
       ],
     });
 
-    new GuHttpsClassicLoadBalancer(this, "LoadBalancer", {
+    const loadBalancer = new GuHttpsClassicLoadBalancer(this, "LoadBalancer", {
       vpc,
       crossZone: true,
       subnetSelection: { subnets },
@@ -101,5 +101,7 @@ export class PrismStack extends GuStack {
         allowConnectionsFrom: [Peer.ipv4("10.0.0.0/8")],
       },
     });
+
+    appServerSecurityGroup.connections.allowFrom(loadBalancer, Port.tcp(9000), "Port 9000 LB to fleet");
   }
 }
