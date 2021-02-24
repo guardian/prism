@@ -2,7 +2,8 @@ import { BlockDeviceVolume, EbsDeviceVolumeType, HealthCheck } from "@aws-cdk/aw
 import { Peer } from "@aws-cdk/aws-ec2";
 import type { App } from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
-import { GuAutoScalingGroup } from "@guardian/cdk/lib/constructs/autoscaling";
+import { Stage } from "@guardian/cdk/lib/constants";
+import { GuAutoScalingGroup, GuUserData } from "@guardian/cdk/lib/constructs/autoscaling";
 import { GuDistributionBucketParameter } from "@guardian/cdk/lib/constructs/core";
 import type { GuStackProps } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuStack } from "@guardian/cdk/lib/constructs/core/stack";
@@ -48,27 +49,33 @@ export class PrismStack extends GuStack {
     });
 
     const distBucket: string = this.getParam(GuDistributionBucketParameter.parameterName).valueAsString;
-    const s3Key = [distBucket, this.stack, this.stage, this.app, `${this.app}.deb`].join("/");
 
-    // TODO move to UserData.forLinux
-    const userData = `#!/bin/bash -ev
-
-      aws --region ${this.region} s3 cp s3://${s3Key} /tmp/
-      dpkg -i /tmp/prism.deb`;
+    const userData = new GuUserData(this, {
+      distributable: {
+        bucketName: distBucket,
+        fileName: "prism.deb",
+        executionStatement: `dpkg -i /${this.app}/prism.deb`,
+      },
+    });
 
     const asg = new GuAutoScalingGroup(this, "AutoscalingGroup", {
       overrideId: true,
       vpc,
       vpcSubnets: { subnets },
       role: role,
-      userData: userData,
-      minCapacity: 2,
-      maxCapacity: 4,
-      desiredCapacity: 2,
+      userData: userData.userData,
+      stageDependentProps: {
+        [Stage.CODE]: {
+          minimumInstances: 2,
+        },
+        [Stage.PROD]: {
+          minimumInstances: 2,
+        },
+      },
       healthCheck: HealthCheck.elb({
         grace: Duration.seconds(500),
       }),
-      securityGroup: appServerSecurityGroup,
+      additionalSecurityGroups: [appServerSecurityGroup],
       blockDevices: [
         {
           deviceName: "/dev/sda1",
