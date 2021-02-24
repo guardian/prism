@@ -6,7 +6,6 @@ deployments:
     app: prism
     parameters:
       templatePath: Prism.template.json
-      amiParameter: AMI
       amiEncrypted: true
       amiTags:
         Recipe: bionic-java8-deploy-infrastructure
