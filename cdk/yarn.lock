@@ -1053,10 +1053,10 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@guardian/cdk@0.37.0":
-  version "0.37.0"
-  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-0.37.0.tgz#7a1fd2c5dd44a5bc36f288087369e1b86ef0b5f6"
-  integrity sha512-s7dMyQGRxaasJXTI7dfnPIguhDqQ1l9SghRPfCVrbQlCg0/o988HP6rYMpNtAQJe5P5pjGxapJPDApN/4kUdAA==
+"@guardian/cdk@0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-0.38.0.tgz#4686e75f39330ed1d5d311dfa504aba5309256a5"
+  integrity sha512-oTowfGSW0lFrsio2yPRYjC9h/H8X26KNvIXhpF7nl4dAHIo/y75eidbIlKLoQDZvu+XAW4onqyXKSvGja34Big==
   dependencies:
     "@aws-cdk/assert" "1.90.0"
     "@aws-cdk/aws-apigateway" "1.90.0"
