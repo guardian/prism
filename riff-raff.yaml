@@ -9,7 +9,7 @@ deployments:
       amiParameter: AMI
       amiEncrypted: true
       amiTags:
-        Recipe: bionic-java8-deploy-infrastructure
+        Recipe: arm64-bionic-java8-deploy-infrastructure
         AmigoStage: PROD
         BuiltBy: amigo
   prism:
