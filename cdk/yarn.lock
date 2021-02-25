@@ -1053,10 +1053,10 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@guardian/cdk@0.37.0":
-  version "0.37.0"
-  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-0.37.0.tgz#7a1fd2c5dd44a5bc36f288087369e1b86ef0b5f6"
-  integrity sha512-s7dMyQGRxaasJXTI7dfnPIguhDqQ1l9SghRPfCVrbQlCg0/o988HP6rYMpNtAQJe5P5pjGxapJPDApN/4kUdAA==
+"@guardian/cdk@0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-0.38.0.tgz#4686e75f39330ed1d5d311dfa504aba5309256a5"
+  integrity sha512-oTowfGSW0lFrsio2yPRYjC9h/H8X26KNvIXhpF7nl4dAHIo/y75eidbIlKLoQDZvu+XAW4onqyXKSvGja34Big==
   dependencies:
     "@aws-cdk/assert" "1.90.0"
     "@aws-cdk/aws-apigateway" "1.90.0"
@@ -1390,10 +1390,10 @@
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha1-7ihweulOEdK4J7y+UnC86n8+ce4=
 
-"@types/node@*", "@types/node@14.14.30":
-  version "14.14.30"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.30.tgz#7d5162eec085ba34f8cb9011e9ba12119f76f961"
-  integrity sha512-gUWhy8s45fQp4PqqKecsnOkdW0kt1IaKjgOIR3HPokkzTmQj9ji2wWFID5THu1MKrtO+d4s2lVrlEhXUsPXSvg==
+"@types/node@*", "@types/node@14.14.31":
+  version "14.14.31"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.31.tgz#72286bd33d137aa0d152d47ec7c1762563d34055"
+  integrity sha512-vFHy/ezP5qI0rFgJ7aQnjDXwAMrG0KqqIH7tQG5PPv3BWBayOPIQNBjVc/P6hhdZfMx51REc6tfDNXHUio893g==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
