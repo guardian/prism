@@ -2,6 +2,18 @@
 
 exports[`The Prism stack matches the snapshot 1`] = `
 Object {
+  "Mappings": Object {
+    "stagemapping": Object {
+      "CODE": Object {
+        "maxInstances": 4,
+        "minInstances": 2,
+      },
+      "PROD": Object {
+        "maxInstances": 4,
+        "minInstances": 2,
+      },
+    },
+  },
   "Parameters": Object {
     "AMI": Object {
       "Description": "AMI ID",
@@ -66,7 +78,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.37.0",
+            "Value": "0.38.0",
           },
           Object {
             "Key": "Stack",
@@ -108,7 +120,6 @@ Object {
     },
     "AutoscalingGroup": Object {
       "Properties": Object {
-        "DesiredCapacity": "2",
         "HealthCheckGracePeriod": 500,
         "HealthCheckType": "ELB",
         "LaunchConfigurationName": Object {
@@ -119,8 +130,24 @@ Object {
             "Ref": "LoadBalancer",
           },
         ],
-        "MaxSize": "4",
-        "MinSize": "2",
+        "MaxSize": Object {
+          "Fn::FindInMap": Array [
+            "stagemapping",
+            Object {
+              "Ref": "Stage",
+            },
+            "maxInstances",
+          ],
+        },
+        "MinSize": Object {
+          "Fn::FindInMap": Array [
+            "stagemapping",
+            Object {
+              "Ref": "Stage",
+            },
+            "minInstances",
+          ],
+        },
         "Tags": Array [
           Object {
             "Key": "App",
@@ -130,7 +157,7 @@ Object {
           Object {
             "Key": "gu:cdk:version",
             "PropagateAtLaunch": true,
-            "Value": "0.37.0",
+            "Value": "0.38.0",
           },
           Object {
             "Key": "Name",
@@ -192,6 +219,12 @@ Object {
         "SecurityGroups": Array [
           Object {
             "Fn::GetAtt": Array [
+              "GuHttpsEgressSecurityGroupF63CDA96",
+              "GroupId",
+            ],
+          },
+          Object {
+            "Fn::GetAtt": Array [
               "AppServerSecurityGroup",
               "GroupId",
             ],
@@ -202,13 +235,9 @@ Object {
             "Fn::Join": Array [
               "",
               Array [
-                "#!/bin/bash -ev
-
-      aws --region ",
-                Object {
-                  "Ref": "AWS::Region",
-                },
-                " s3 cp s3://",
+                "#!/bin/bash
+mkdir -p $(dirname '/prism/prism.deb')
+aws s3 cp 's3://",
                 Object {
                   "Ref": "DistributionBucketName",
                 },
@@ -216,8 +245,8 @@ Object {
                 Object {
                   "Ref": "Stage",
                 },
-                "/prism/prism.deb /tmp/
-      dpkg -i /tmp/prism.deb",
+                "/prism/prism.deb' '/prism/prism.deb'
+dpkg -i /prism/prism.deb",
               ],
             ],
           },
@@ -395,6 +424,65 @@ Object {
       },
       "Type": "AWS::IAM::Policy",
     },
+    "GuHttpsEgressSecurityGroupF63CDA96": Object {
+      "Properties": Object {
+        "GroupDescription": "Allow all outbound traffic on port 443",
+        "SecurityGroupEgress": Array [
+          Object {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "from 0.0.0.0/0:443",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "App",
+            "Value": "prism",
+          },
+          Object {
+            "Key": "gu:cdk:version",
+            "Value": "0.38.0",
+          },
+          Object {
+            "Key": "Stack",
+            "Value": "deploy",
+          },
+          Object {
+            "Key": "Stage",
+            "Value": Object {
+              "Ref": "Stage",
+            },
+          },
+        ],
+        "VpcId": Object {
+          "Ref": "VpcId",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "GuHttpsEgressSecurityGroupfromprismLoadBalancerSecurityGroupA5954B5A900093548ACB": Object {
+      "Properties": Object {
+        "Description": "Port 9000 LB to fleet",
+        "FromPort": 9000,
+        "GroupId": Object {
+          "Fn::GetAtt": Array [
+            "GuHttpsEgressSecurityGroupF63CDA96",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": Object {
+          "Fn::GetAtt": Array [
+            "LoadBalancerSecurityGroupA28D6DD7",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
     "GuLogShippingPolicy981BFE5A": Object {
       "Properties": Object {
         "PolicyDocument": Object {
@@ -469,7 +557,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.37.0",
+            "Value": "0.38.0",
           },
           Object {
             "Key": "Stack",
@@ -525,7 +613,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.37.0",
+            "Value": "0.38.0",
           },
           Object {
             "Key": "Stack",
@@ -560,7 +648,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.37.0",
+            "Value": "0.38.0",
           },
           Object {
             "Key": "Stack",
@@ -585,6 +673,27 @@ Object {
         "DestinationSecurityGroupId": Object {
           "Fn::GetAtt": Array [
             "AppServerSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "FromPort": 9000,
+        "GroupId": Object {
+          "Fn::GetAtt": Array [
+            "LoadBalancerSecurityGroupA28D6DD7",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "LoadBalancerSecurityGrouptoprismGuHttpsEgressSecurityGroupD1B6EFA19000A7BEFB95": Object {
+      "Properties": Object {
+        "Description": "Port 9000 LB to fleet",
+        "DestinationSecurityGroupId": Object {
+          "Fn::GetAtt": Array [
+            "GuHttpsEgressSecurityGroupF63CDA96",
             "GroupId",
           ],
         },
