@@ -66,7 +66,7 @@ export class PrismStack extends GuStack {
       userData: userData.userData,
       stageDependentProps: {
         [Stage.CODE]: {
-          minimumInstances: 2,
+          minimumInstances: 1,
         },
         [Stage.PROD]: {
           minimumInstances: 2,
