@@ -78,11 +78,9 @@ lazy val root = (project in file("."))
 
 javaOptions in Universal ++= Seq(
   "-Dpidfile.path=/dev/null",
-  "-J-XX:MaxRAMFraction=2",
-  "-J-XX:InitialRAMFraction=2",
+  "-J-XX:MaxRAMPercentage=60",
+  "-J-XX:InitialRAMPercentage=60",
   "-J-XX:MaxMetaspaceSize=300m",
-  "-J-XX:+PrintGCDetails",
-  "-J-XX:+PrintGCDateStamps",
-  s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
+  s"-J-Xlog:gc*:file=/var/log/${packageName.value}/gc.log:time:filecount=5,filesize=1024K"
 )
 
