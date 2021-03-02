@@ -5,8 +5,8 @@ Object {
   "Mappings": Object {
     "stagemapping": Object {
       "CODE": Object {
-        "maxInstances": 4,
-        "minInstances": 2,
+        "maxInstances": 2,
+        "minInstances": 1,
       },
       "PROD": Object {
         "maxInstances": 4,
