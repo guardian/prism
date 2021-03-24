@@ -13,6 +13,8 @@ resolvers ++= Seq(
 
 val awsVersion = "2.16.25"
 val awsVersionOne = "1.11.981"
+val playJsonVersion = "2.9.2"
+val jacksonVersion = "2.10.1"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
@@ -55,13 +57,14 @@ lazy val root = (project in file("."))
       "com.beust" % "jcommander" % "1.75", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
-      "com.typesafe.play" %% "play-json" % "2.9.1",
-      "com.typesafe.play" %% "play-json-joda" % "2.9.1",
+      "com.typesafe.play" %% "play-json" % playJsonVersion,
+      "com.typesafe.play" %% "play-json-joda" % playJsonVersion,
       "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.9.1",
       filters,
       specs2 % "test",
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "6.4" exclude("com.fasterxml.jackson.core", "jackson-databind"),
       "com.gu" % "kinesis-logback-appender" % "2.0.1",
     ),
