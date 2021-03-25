@@ -2,7 +2,7 @@ package collectors
 
 import agent._
 import software.amazon.awssdk.services.lambda.LambdaClient
-import software.amazon.awssdk.services.lambda.model.{FunctionConfiguration, ListTagsRequest}
+import software.amazon.awssdk.services.lambda.model.{FunctionConfiguration, ListTagsRequest, Runtime}
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
@@ -39,13 +39,29 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, craw
   }
 }
 
-object Lambda {
+object Lambda extends Logging{
+  private def getRuntime(lambda: FunctionConfiguration): String = {
+    if(lambda.runtime == Runtime.UNKNOWN_TO_SDK_VERSION) {
+      log.warn(s"Lambda runtime ${lambda.runtimeAsString} isn't recognised in the AWS SDK. Is there a later version of the AWS SDK available?")
+    }
+
+    /*
+    From the docs:
+      If the service returns an enum value that is not available in the current SDK version, runtime will return Runtime.UNKNOWN_TO_SDK_VERSION.
+      The raw value returned by the service is available from runtimeAsString.
+
+    That is `runtimeAsString` is the safest string representation of a lambda runtime as `Runtime.UNKNOWN_TO_SDK_VERSION.toString` yields a NPE.
+
+    See: https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/lambda/model/FunctionConfiguration.html#runtimeAsString--
+     */
+    lambda.runtimeAsString
+  }
 
   def fromApiData(lambda: FunctionConfiguration, region: String, tags: Map[String, String]): Lambda = Lambda(
     arn = lambda.functionArn(),
     name = lambda.functionName,
     region,
-    runtime = lambda.runtime.toString,
+    runtime = getRuntime(lambda),
     tags,
     stage = tags.get("Stage"),
     stack = tags.get("Stack")
