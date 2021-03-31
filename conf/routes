@@ -10,6 +10,7 @@ GET        /sources/accounts                  controllers.Api.sourceAccounts
 GET        /management/healthcheck            controllers.Api.healthCheck
 
 GET        /apps                              controllers.Api.appList
+GET        /apps-with-cdk-version             controllers.Api.appsWithCdkVersion
 GET        /stacks                            controllers.Api.stackList
 GET        /stages                            controllers.Api.stageList
 

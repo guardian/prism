@@ -19,6 +19,20 @@ trait IndexedItem {
   def fieldIndex: Map[String, String] = Map("arn" -> arn)
 }
 
+trait IndexedItemWithCoreTags extends
+  IndexedItemWithApp with
+  IndexedItemWithGuCdkVersion with
+  IndexedItemWithStage with
+  IndexedItemWithStack
+
+trait IndexedItemWithApp extends IndexedItem {
+  val app: List[String] = Nil
+}
+
+trait IndexedItemWithGuCdkVersion extends IndexedItem {
+  val guCdkVersion: Option[String] = None
+}
+
 trait IndexedItemWithStage extends IndexedItem {
   val stage: Option[String] = None
 }

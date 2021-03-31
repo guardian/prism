@@ -63,6 +63,8 @@ object Lambda extends Logging{
     region,
     runtime = getRuntime(lambda),
     tags,
+    app = tags.get("App").map(_.split(",").toList).getOrElse(Nil),
+    guCdkVersion = tags.get("gu:cdk:version"),
     stage = tags.get("Stage"),
     stack = tags.get("Stack")
   )
@@ -74,8 +76,10 @@ case class Lambda(
   region: String,
   runtime: String,
   tags: Map[String, String],
+  override val app: List[String],
+  override val guCdkVersion: Option[String],
   override val stage: Option[String],
   override val stack: Option[String]
-) extends IndexedItemWithStage with IndexedItemWithStack {
+) extends IndexedItemWithCoreTags {
   override def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
 }

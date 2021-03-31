@@ -231,10 +231,35 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
     def stageList = summaryFromTwo[Instance, Lambda](prismDataStore.instanceAgent, stageExtractor, prismDataStore.lambdaAgent, stageExtractor, "stages")(prismConfiguration.stages.ordering)
     def regionList = summary[Instance](prismDataStore.instanceAgent, i => Some(Json.toJson(i.region)), "regions")
     def vendorList = summary[Instance](prismDataStore.instanceAgent, i => Some(Json.toJson(i.vendor)), "vendors")
-    def appList = summary[Instance](
+
+    private def appListExtractor(i: IndexedItemWithCoreTags) = i.app.flatMap { app =>
+      i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app)))
+    }
+    def appList = summaryFromTwo[Instance, Lambda](
       prismDataStore.instanceAgent,
-      i => i.app.flatMap{ app => i.stack.map(stack => Json.toJson(Map("stack" -> stack, "app" -> app))) },
+      appListExtractor,
+      prismDataStore.lambdaAgent,
+      appListExtractor,
       "app",
+      enableFilter = true
+    )
+
+    private def appsWithCdkVersionExtractor(i: IndexedItemWithCoreTags) = i.app.map { app =>
+      Json.toJson(
+        Map(
+          "app" -> app,
+          "stack" -> i.stack.getOrElse("unknown"),
+          "stage" -> i.stage.getOrElse("unknown"),
+          "guCdkVersion" -> i.guCdkVersion.getOrElse("n/a")
+        )
+      )
+    }
+    def appsWithCdkVersion = summaryFromTwo[Instance, Lambda](
+      prismDataStore.instanceAgent,
+      appsWithCdkVersionExtractor,
+      prismDataStore.lambdaAgent,
+      appsWithCdkVersionExtractor,
+      "apps-with-cdk-version",
       enableFilter = true
     )
 
