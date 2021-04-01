@@ -101,10 +101,11 @@ object Instance {
       stage = tags.get("Stage"),
       stack = stack,
       app = app,
+      guCdkVersion = tags.get("gu:cdk:version"),
       mainclasses = tags.get("Mainclass").map(_.split(",").toList).orElse(stack.map(stack => app.map(a => s"$stack::$a"))).getOrElse(Nil),
       role = tags.get("Role"),
       management = ManagementEndpoint.fromTag(addresses.primary.dnsName, tags.get("Management")),
-      Some(specs)
+      specification = Some(specs)
     )
   }
 }
@@ -174,12 +175,13 @@ case class Instance(
                  tags: Map[String, String] = Map.empty,
                  override val stage: Option[String],
                  override val stack: Option[String],
-                 app: List[String],
+                 override val app: List[String],
+                 override val guCdkVersion: Option[String],
                  mainclasses: List[String],
                  role: Option[String],
                  management:Option[Seq[ManagementEndpoint]],
                  specification:Option[InstanceSpecification]
-                ) extends IndexedItemWithStage with IndexedItemWithStack {
+                ) extends IndexedItemWithCoreTags {
 
   def callFromArn: String => Call = arn => routes.Api.instance(arn)
   override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
