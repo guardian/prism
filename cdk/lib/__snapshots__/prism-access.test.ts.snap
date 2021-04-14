@@ -85,6 +85,10 @@ Object {
         },
         "Tags": Array [
           Object {
+            "Key": "App",
+            "Value": "prism",
+          },
+          Object {
             "Key": "gu:cdk:version",
             "Value": "8.2.0",
           },

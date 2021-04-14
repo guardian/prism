@@ -5,7 +5,7 @@ import { Duration } from "@aws-cdk/core";
 import { Stage } from "@guardian/cdk/lib/constants";
 import { GuAutoScalingGroup, GuUserData } from "@guardian/cdk/lib/constructs/autoscaling";
 import { GuDistributionBucketParameter } from "@guardian/cdk/lib/constructs/core";
-import type { AppIdentity } from "@guardian/cdk/lib/constructs/core/identity";
+import { AppIdentity } from "@guardian/cdk/lib/constructs/core/identity";
 import type { GuStackProps } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuStack } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuSecurityGroup, GuVpc } from "@guardian/cdk/lib/constructs/ec2";
@@ -25,6 +25,14 @@ export class PrismStack extends GuStack {
 
   constructor(scope: App, id: string, props: GuStackProps) {
     super(scope, id, props);
+
+    /*
+    Looks like some @guardian/cdk constructs are not applying the App tag.
+    I suspect since https://github.com/guardian/cdk/pull/326.
+    Until that is fixed, we can safely, manually apply it to all constructs in tree from `this` as it's a single app stack.
+    TODO: remove this once @guardian/cdk has been fixed.
+     */
+    AppIdentity.taggedConstruct(PrismStack.app, this);
 
     const vpc = GuVpc.fromIdParameter(this, "vpc");
     const subnets = GuVpc.subnetsfromParameter(this);

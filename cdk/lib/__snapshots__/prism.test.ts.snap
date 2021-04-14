@@ -608,6 +608,10 @@ dpkg -i /prism/prism.deb",
         },
         "Tags": Array [
           Object {
+            "Key": "App",
+            "Value": "prism",
+          },
+          Object {
             "Key": "gu:cdk:version",
             "Value": "8.2.0",
           },
@@ -638,6 +642,10 @@ dpkg -i /prism/prism.deb",
           },
         ],
         "Tags": Array [
+          Object {
+            "Key": "App",
+            "Value": "prism",
+          },
           Object {
             "Key": "gu:cdk:version",
             "Value": "8.2.0",
