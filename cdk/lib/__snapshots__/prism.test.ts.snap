@@ -127,7 +127,7 @@ Object {
         },
         "LoadBalancerNames": Array [
           Object {
-            "Ref": "LoadBalancerBE9EEC3A",
+            "Ref": "LoadBalancer",
           },
         ],
         "MaxSize": Object {
@@ -573,7 +573,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::IAM::Role",
     },
-    "LoadBalancerBE9EEC3A": Object {
+    "LoadBalancer": Object {
       "Properties": Object {
         "CrossZone": true,
         "HealthCheck": Object {

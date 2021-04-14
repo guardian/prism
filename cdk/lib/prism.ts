@@ -114,6 +114,7 @@ export class PrismStack extends GuStack {
       listener: {
         allowConnectionsFrom: [Peer.ipv4("10.0.0.0/8")],
       },
+      existingLogicalId: "LoadBalancer",
     });
 
     appServerSecurityGroup.connections.allowFrom(loadBalancer, Port.tcp(9000), "Port 9000 LB to fleet");
