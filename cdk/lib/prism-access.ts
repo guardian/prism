@@ -16,7 +16,6 @@ export class PrismAccess extends GuStack {
     };
 
     const prismRole = new GuRole(this, "PrismRole", {
-      overrideId: true,
       assumedBy: new ArnPrincipal(parameters.PrismAccount.valueAsString),
     });
 

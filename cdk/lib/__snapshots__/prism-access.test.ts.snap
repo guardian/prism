@@ -7,7 +7,7 @@ Object {
       "Description": "Prism Role",
       "Value": Object {
         "Fn::GetAtt": Array [
-          "PrismRole",
+          "PrismRole8A6E0025",
           "Arn",
         ],
       },
@@ -61,13 +61,13 @@ Object {
         "PolicyName": "PrismCollection",
         "Roles": Array [
           Object {
-            "Ref": "PrismRole",
+            "Ref": "PrismRole8A6E0025",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "PrismRole": Object {
+    "PrismRole8A6E0025": Object {
       "Properties": Object {
         "AssumeRolePolicyDocument": Object {
           "Statement": Array [
@@ -85,12 +85,8 @@ Object {
         },
         "Tags": Array [
           Object {
-            "Key": "App",
-            "Value": "prism",
-          },
-          Object {
             "Key": "gu:cdk:version",
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Stack",

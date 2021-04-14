@@ -15,8 +15,8 @@ Object {
     },
   },
   "Parameters": Object {
-    "AMI": Object {
-      "Description": "AMI ID",
+    "AMIPrism": Object {
+      "Description": "Amazon Machine Image ID for the app prism. Use this in conjunction with AMIgo to keep AMIs up to date.",
       "Type": "AWS::EC2::Image::Id",
     },
     "CertificateARN": Object {
@@ -30,9 +30,9 @@ Object {
       "Description": "SSM parameter containing the S3 bucket name holding distribution artifacts",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
-    "InstanceType": Object {
+    "InstanceTypePrism": Object {
       "Default": "t3.small",
-      "Description": "EC2 Instance Type",
+      "Description": "EC2 Instance Type for the app prism",
       "Type": "String",
     },
     "LoggingStreamName": Object {
@@ -78,7 +78,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Stack",
@@ -97,7 +97,7 @@ Object {
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "AppServerSecurityGroupfromprismLoadBalancerSecurityGroupA5954B5A90003B574E9E": Object {
+    "AppServerSecurityGroupPrismfromprismLoadBalancerSecurityGroupA5954B5A90002D5FC675": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "FromPort": 9000,
@@ -123,11 +123,11 @@ Object {
         "HealthCheckGracePeriod": 500,
         "HealthCheckType": "ELB",
         "LaunchConfigurationName": Object {
-          "Ref": "AutoscalingGroupLaunchConfigEBD75746",
+          "Ref": "AutoscalingGroupPrismLaunchConfig69D33207",
         },
         "LoadBalancerNames": Array [
           Object {
-            "Ref": "LoadBalancer",
+            "Ref": "LoadBalancerBE9EEC3A",
           },
         ],
         "MaxSize": Object {
@@ -157,12 +157,12 @@ Object {
           Object {
             "Key": "gu:cdk:version",
             "PropagateAtLaunch": true,
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Name",
             "PropagateAtLaunch": true,
-            "Value": "prism/AutoscalingGroup",
+            "Value": "prism/AutoscalingGroupPrism",
           },
           Object {
             "Key": "Stack",
@@ -183,19 +183,19 @@ Object {
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup",
     },
-    "AutoscalingGroupInstanceProfile010878FF": Object {
+    "AutoscalingGroupPrismInstanceProfileFBD8E2A6": Object {
       "Properties": Object {
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
       "Type": "AWS::IAM::InstanceProfile",
     },
-    "AutoscalingGroupLaunchConfigEBD75746": Object {
+    "AutoscalingGroupPrismLaunchConfig69D33207": Object {
       "DependsOn": Array [
-        "InstanceRole",
+        "InstanceRolePrism96D154B7",
       ],
       "Properties": Object {
         "BlockDeviceMappings": Array [
@@ -208,18 +208,18 @@ Object {
           },
         ],
         "IamInstanceProfile": Object {
-          "Ref": "AutoscalingGroupInstanceProfile010878FF",
+          "Ref": "AutoscalingGroupPrismInstanceProfileFBD8E2A6",
         },
         "ImageId": Object {
-          "Ref": "AMI",
+          "Ref": "AMIPrism",
         },
         "InstanceType": Object {
-          "Ref": "InstanceType",
+          "Ref": "InstanceTypePrism",
         },
         "SecurityGroups": Array [
           Object {
             "Fn::GetAtt": Array [
-              "GuHttpsEgressSecurityGroupF63CDA96",
+              "GuHttpsEgressSecurityGroupPrism4A68FA56",
               "GroupId",
             ],
           },
@@ -290,7 +290,7 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "ConfigPolicyA2EB9456",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
@@ -314,13 +314,13 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "CrawlerPolicyB8C49604",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "DataPolicy": Object {
+    "DataPolicyCE0B28AE": Object {
       "Properties": Object {
         "PolicyDocument": Object {
           "Statement": Array [
@@ -332,10 +332,10 @@ dpkg -i /prism/prism.deb",
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "DataPolicy",
+        "PolicyName": "DataPolicyCE0B28AE",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
@@ -356,7 +356,7 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "DescribeEC2BonusPolicy6E2176D6",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
@@ -382,13 +382,13 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "describe-ec2-policy",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "GetDistributablePolicyC6B4A871": Object {
+    "GetDistributablePolicyPrismBDF1EF88": Object {
       "Properties": Object {
         "PolicyDocument": Object {
           "Statement": Array [
@@ -415,22 +415,22 @@ dpkg -i /prism/prism.deb",
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "GetDistributablePolicyC6B4A871",
+        "PolicyName": "GetDistributablePolicyPrismBDF1EF88",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "GuHttpsEgressSecurityGroupF63CDA96": Object {
+    "GuHttpsEgressSecurityGroupPrism4A68FA56": Object {
       "Properties": Object {
-        "GroupDescription": "Allow all outbound traffic on port 443",
+        "GroupDescription": "Allow all outbound HTTPS traffic",
         "SecurityGroupEgress": Array [
           Object {
             "CidrIp": "0.0.0.0/0",
-            "Description": "from 0.0.0.0/0:443",
+            "Description": "Allow all outbound HTTPS traffic",
             "FromPort": 443,
             "IpProtocol": "tcp",
             "ToPort": 443,
@@ -443,7 +443,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Stack",
@@ -462,13 +462,13 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "GuHttpsEgressSecurityGroupfromprismLoadBalancerSecurityGroupA5954B5A900093548ACB": Object {
+    "GuHttpsEgressSecurityGroupPrismfromprismLoadBalancerSecurityGroupA5954B5A900062FECC6D": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "FromPort": 9000,
         "GroupId": Object {
           "Fn::GetAtt": Array [
-            "GuHttpsEgressSecurityGroupF63CDA96",
+            "GuHttpsEgressSecurityGroupPrism4A68FA56",
             "GroupId",
           ],
         },
@@ -519,13 +519,13 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "GuLogShippingPolicy981BFE5A",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "InstanceRole": Object {
+    "InstanceRolePrism96D154B7": Object {
       "Properties": Object {
         "AssumeRolePolicyDocument": Object {
           "Statement": Array [
@@ -557,7 +557,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Stack",
@@ -573,7 +573,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::IAM::Role",
     },
-    "LoadBalancer": Object {
+    "LoadBalancerBE9EEC3A": Object {
       "Properties": Object {
         "CrossZone": true,
         "HealthCheck": Object {
@@ -608,12 +608,8 @@ dpkg -i /prism/prism.deb",
         },
         "Tags": Array [
           Object {
-            "Key": "App",
-            "Value": "prism",
-          },
-          Object {
             "Key": "gu:cdk:version",
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Stack",
@@ -643,12 +639,8 @@ dpkg -i /prism/prism.deb",
         ],
         "Tags": Array [
           Object {
-            "Key": "App",
-            "Value": "prism",
-          },
-          Object {
             "Key": "gu:cdk:version",
-            "Value": "0.38.0",
+            "Value": "8.2.0",
           },
           Object {
             "Key": "Stack",
@@ -667,7 +659,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "LoadBalancerSecurityGrouptoprismAppServerSecurityGroupA7BC420F9000EAD950C6": Object {
+    "LoadBalancerSecurityGrouptoprismAppServerSecurityGroupPrismF277483B9000E90B82F6": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "DestinationSecurityGroupId": Object {
@@ -688,12 +680,12 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "LoadBalancerSecurityGrouptoprismGuHttpsEgressSecurityGroupD1B6EFA19000A7BEFB95": Object {
+    "LoadBalancerSecurityGrouptoprismGuHttpsEgressSecurityGroupPrismF365BAA79000CA697FB8": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "DestinationSecurityGroupId": Object {
           "Fn::GetAtt": Array [
-            "GuHttpsEgressSecurityGroupF63CDA96",
+            "GuHttpsEgressSecurityGroupPrism4A68FA56",
             "GroupId",
           ],
         },
@@ -709,7 +701,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "ParameterStoreRead9D2F4FAB": Object {
+    "ParameterStoreReadPrism8EED3EF6": Object {
       "Properties": Object {
         "PolicyDocument": Object {
           "Statement": Array [
@@ -743,7 +735,7 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "parameter-store-read-policy",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
@@ -779,7 +771,7 @@ dpkg -i /prism/prism.deb",
         "PolicyName": "ssm-run-command-policy",
         "Roles": Array [
           Object {
-            "Ref": "InstanceRole",
+            "Ref": "InstanceRolePrism96D154B7",
           },
         ],
       },
