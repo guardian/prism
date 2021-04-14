@@ -6,7 +6,7 @@ import { PrismStack } from "./prism";
 describe("The Prism stack", () => {
   it("matches the snapshot", () => {
     const app = new App();
-    const stack = new PrismStack(app, "prism", { app: "prism", migratedFromCloudFormation: true, stack: "deploy" });
+    const stack = new PrismStack(app, "prism", { migratedFromCloudFormation: true, stack: "deploy" });
 
     expect(SynthUtils.toCloudFormation(stack)).toMatchSnapshot();
   });
