@@ -78,7 +78,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Stack",
@@ -157,7 +157,7 @@ Object {
           Object {
             "Key": "gu:cdk:version",
             "PropagateAtLaunch": true,
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Name",
@@ -443,7 +443,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Stack",
@@ -557,7 +557,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Stack",
@@ -613,7 +613,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Stack",
@@ -648,7 +648,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Stack",
