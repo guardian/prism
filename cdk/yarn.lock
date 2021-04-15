@@ -1085,10 +1085,10 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@guardian/cdk@8.2.0":
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-8.2.0.tgz#639c1d3175534e72fb82a126737eeb21826f79bb"
-  integrity sha512-4hJDgbojDW4pIbuwh745sPuN30fLMtlruy0i3FbdtMvt/1DsVD9fhLjrWufpXq+qw/Cq6e6iJM7rDM3D7/QDoQ==
+"@guardian/cdk@8.4.0":
+  version "8.4.0"
+  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-8.4.0.tgz#988d654223d8c79cb855c532f9cb8ca22394cc80"
+  integrity sha512-O+p1Tsseuoq/OQCgjcTiMPh5pZlEqI2n4p0kiElSJ3sX1DKGNPqKUFUv9/kexh0+iGmtbCqdEUGxQNOLtN3yKg==
   dependencies:
     "@aws-cdk/assert" "1.97.0"
     "@aws-cdk/aws-apigateway" "1.97.0"

@@ -90,7 +90,7 @@ Object {
           },
           Object {
             "Key": "gu:cdk:version",
-            "Value": "8.2.0",
+            "Value": "TEST",
           },
           Object {
             "Key": "Stack",
