@@ -2,7 +2,7 @@ package collectors
 
 import agent._
 import software.amazon.awssdk.services.lambda.LambdaClient
-import software.amazon.awssdk.services.lambda.model.{FunctionConfiguration, ListTagsRequest, Runtime}
+import software.amazon.awssdk.services.lambda.model.{FunctionConfiguration, ListTagsRequest, PackageType, Runtime}
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
@@ -60,11 +60,20 @@ object Lambda extends Logging{
     safeNull(lambda.runtimeAsString)
   }
 
+  private def getPackageType(lambda: FunctionConfiguration): String = {
+    if(lambda.packageType == PackageType.UNKNOWN_TO_SDK_VERSION){
+      log.warn(s"Lambda package type ${lambda.packageTypeAsString} isn't recognised in the AWS SDK. Is there a later version of the AWS SDK available?")
+    }
+
+    safeNull(lambda.packageTypeAsString)
+  }
+
   def fromApiData(lambda: FunctionConfiguration, region: String, tags: Map[String, String]): Lambda = Lambda(
     arn = lambda.functionArn(),
     name = lambda.functionName,
     region,
     runtime = getRuntime(lambda),
+    packageType = getPackageType(lambda),
     tags,
     app = tags.get("App").map(_.split(",").toList).getOrElse(Nil),
     guCdkVersion = tags.get("gu:cdk:version"),
@@ -78,6 +87,7 @@ case class Lambda(
   name: String,
   region: String,
   runtime: String,
+  packageType: String,
   tags: Map[String, String],
   override val app: List[String],
   override val guCdkVersion: Option[String],
