@@ -40,10 +40,7 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, craw
 }
 
 object Lambda extends Logging{
-  // converts `null` to `"unknown"`
-  private def safeNull(string: String) = Option(string).getOrElse("unknown")
-
-  private def getRuntime(lambda: FunctionConfiguration): String = {
+  private def getRuntime(lambda: FunctionConfiguration): Option[String] = {
     if(lambda.runtime == Runtime.UNKNOWN_TO_SDK_VERSION) {
       log.warn(s"Lambda runtime ${lambda.runtimeAsString} isn't recognised in the AWS SDK. Is there a later version of the AWS SDK available?")
     }
@@ -57,15 +54,15 @@ object Lambda extends Logging{
 
     See: https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/lambda/model/FunctionConfiguration.html#runtimeAsString--
      */
-    safeNull(lambda.runtimeAsString)
+    Option(lambda.runtimeAsString) // remove `null`s
   }
 
-  private def getPackageType(lambda: FunctionConfiguration): String = {
+  private def getPackageType(lambda: FunctionConfiguration): Option[String] = {
     if(lambda.packageType == PackageType.UNKNOWN_TO_SDK_VERSION){
       log.warn(s"Lambda package type ${lambda.packageTypeAsString} isn't recognised in the AWS SDK. Is there a later version of the AWS SDK available?")
     }
 
-    safeNull(lambda.packageTypeAsString)
+    Option(lambda.packageTypeAsString) // remove `null`s
   }
 
   def fromApiData(lambda: FunctionConfiguration, region: String, tags: Map[String, String]): Lambda = Lambda(
@@ -86,8 +83,8 @@ case class Lambda(
   arn: String,
   name: String,
   region: String,
-  runtime: String,
-  packageType: String,
+  runtime: Option[String],
+  packageType: Option[String],
   tags: Map[String, String],
   override val app: List[String],
   override val guCdkVersion: Option[String],
