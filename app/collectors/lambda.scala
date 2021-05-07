@@ -40,6 +40,9 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, craw
 }
 
 object Lambda extends Logging{
+  // converts `null` to `"unknown"`
+  private def safeNull(string: String) = Option(string).getOrElse("unknown")
+
   private def getRuntime(lambda: FunctionConfiguration): String = {
     if(lambda.runtime == Runtime.UNKNOWN_TO_SDK_VERSION) {
       log.warn(s"Lambda runtime ${lambda.runtimeAsString} isn't recognised in the AWS SDK. Is there a later version of the AWS SDK available?")
@@ -54,7 +57,7 @@ object Lambda extends Logging{
 
     See: https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/lambda/model/FunctionConfiguration.html#runtimeAsString--
      */
-    lambda.runtimeAsString
+    safeNull(lambda.runtimeAsString)
   }
 
   def fromApiData(lambda: FunctionConfiguration, region: String, tags: Map[String, String]): Lambda = Lambda(
