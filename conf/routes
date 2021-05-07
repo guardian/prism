@@ -64,6 +64,10 @@ GET        /rds-instances/:arn                controllers.Api.rds(arn)
 GET        /vpcs                              controllers.Api.vpcList
 GET        /vpcs/:arn                         controllers.Api.vpcs(arn)
 
+GET        /cloudformationStacks              controllers.Api.cloudformationStackList
+GET        /cloudformationStacks/:arn         controllers.Api.cloudformationStack(arn)
+
+
 # Map static resources from the /public folder to the /assets URL path
 
 GET        /assets/*file                      controllers.Assets.versioned(path="/public", file: Asset)
