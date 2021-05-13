@@ -4,7 +4,8 @@ version: 2
 updates:
   - package-ecosystem: 'npm'
     schedule:
-      interval: 'weekly'
+      # The CDK project does not run in a PROD environment, only CI, so we can afford to use old versions of libraries for a short time. Run Dependabot once a month to reduce the frequency of PRs.
+      interval: 'monthly'
     commit-message:
       prefix: "chore(deps): "
     directory: '/cdk'
