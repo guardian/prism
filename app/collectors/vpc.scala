@@ -10,6 +10,7 @@ import utils.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
+import scala.util.Try
 
 class VpcCollectorSet(accounts: Accounts) extends CollectorSet[Vpc](ResourceType("Vpc"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Vpc]] = {
@@ -38,14 +39,27 @@ case class AWSVpcCollector(origin:AmazonOrigin, resource: ResourceType, crawlRat
 }
 
 object Vpc {
-  def arn(region: String, account: String, vpcId: String) = s"arn:aws:ec2:$region:$account:vpc/$vpcId"
+  val UNUSABLE_IPS_IN_CIDR_BLOCK = 5
+
+  def countFromCidr(cidr: String): Option[Long] = {
+    cidr.split("/").tail.headOption.flatMap { mask =>
+      val hostBits = 32 - mask.toInt
+      Try {
+        math.pow(2, hostBits).toLong - UNUSABLE_IPS_IN_CIDR_BLOCK
+      }.toOption
+    }
+  }
+
+  def arn(region: String, accountNumber: String, vpcId: String) = s"arn:aws:ec2:$region:$accountNumber:vpc/$vpcId"
 
   def fromApiData(vpc: AwsVpc, subnets: Iterable[AwsSubnet], origin: AmazonOrigin): Vpc = Vpc(
-    arn = arn(origin.region, origin.account, vpc.vpcId),
+    arn = arn(origin.region, vpc.ownerId, vpc.vpcId),
     vpcId = vpc.vpcId,
     accountId = vpc.ownerId,
     state = vpc.stateAsString,
     cidrBlock = vpc.cidrBlock,
+    default = vpc.isDefault,
+    tenancy = vpc.instanceTenancyAsString,
     subnets = subnets.toList.map{s =>
       Subnet(
         s.subnetArn,
@@ -54,8 +68,15 @@ object Vpc {
         s.stateAsString,
         s.subnetId,
         s.ownerId,
+        s.availableIpAddressCount,
+        capacityIpAddressCount = countFromCidr(s.cidrBlock),
         s.tags.asScala.map(t => t.key -> t.value).toMap
       )
+    },
+    availableIpAddressSum = subnets.map(_.availableIpAddressCount.toLong).sum,
+    capacityIpAddressSum = {
+      val counts = subnets.map(_.cidrBlock).flatMap(countFromCidr)
+      if (counts.nonEmpty) Some(counts.sum) else None
     },
     tags = vpc.tags.asScala.map(t => t.key -> t.value).toMap
   )
@@ -68,6 +89,8 @@ case class Subnet(
                    state: String,
                    subnetId: String,
                    ownerId: String,
+                   availableIpAddressCount: Int,
+                   capacityIpAddressCount: Option[Long],
                    tags: Map[String, String] = Map.empty,
                  )
 
@@ -77,7 +100,11 @@ case class Vpc(
                 accountId: String,
                 state: String,
                 cidrBlock: String,
+                default: Boolean,
+                tenancy: String,
                 subnets: List[Subnet],
+                availableIpAddressSum: Long,
+                capacityIpAddressSum: Option[Long],
                 tags: Map[String, String] = Map.empty,
               ) extends IndexedItemWithStage with IndexedItemWithStack {
   def callFromArn: String => Call = arn => routes.Api.vpcs(arn)
