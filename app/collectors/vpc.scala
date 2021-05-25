@@ -39,10 +39,14 @@ case class AWSVpcCollector(origin:AmazonOrigin, resource: ResourceType, crawlRat
 }
 
 object Vpc {
+  val UNUSABLE_IPS_IN_CIDR_BLOCK = 5
+
   def countFromCidr(cidr: String): Option[Long] = {
     cidr.split("/").tail.headOption.flatMap { mask =>
       val hostBits = 32 - mask.toInt
-      Try(math.pow(2, hostBits).toLong).toOption
+      Try {
+        math.pow(2, hostBits).toLong - UNUSABLE_IPS_IN_CIDR_BLOCK
+      }.toOption
     }
   }
 
@@ -65,12 +69,15 @@ object Vpc {
         s.subnetId,
         s.ownerId,
         s.availableIpAddressCount,
-        countFromCidr(s.cidrBlock),
+        capacityIpAddressCount = countFromCidr(s.cidrBlock),
         s.tags.asScala.map(t => t.key -> t.value).toMap
       )
     },
-    availableIpAddressSum = subnets.map(_.availableIpAddressCount.toInt).sum,
-    cidrIpAddressSize = countFromCidr(vpc.cidrBlock),
+    availableIpAddressSum = subnets.map(_.availableIpAddressCount.toLong).sum,
+    capacityIpAddressSum = {
+      val counts = subnets.map(_.cidrBlock).flatMap(countFromCidr)
+      if (counts.nonEmpty) Some(counts.sum) else None
+    },
     tags = vpc.tags.asScala.map(t => t.key -> t.value).toMap
   )
 }
@@ -83,7 +90,7 @@ case class Subnet(
                    subnetId: String,
                    ownerId: String,
                    availableIpAddressCount: Int,
-                   cidrIpAddressSize: Option[Long],
+                   capacityIpAddressCount: Option[Long],
                    tags: Map[String, String] = Map.empty,
                  )
 
@@ -96,8 +103,8 @@ case class Vpc(
                 default: Boolean,
                 tenancy: String,
                 subnets: List[Subnet],
-                availableIpAddressSum: Int,
-                cidrIpAddressSize: Option[Long],
+                availableIpAddressSum: Long,
+                capacityIpAddressSum: Option[Long],
                 tags: Map[String, String] = Map.empty,
               ) extends IndexedItemWithStage with IndexedItemWithStack {
   def callFromArn: String => Call = arn => routes.Api.vpcs(arn)
