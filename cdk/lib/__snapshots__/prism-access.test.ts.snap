@@ -7,7 +7,7 @@ Object {
       "Description": "Prism Role",
       "Value": Object {
         "Fn::GetAtt": Array [
-          "PrismRole8A6E0025",
+          "PrismRole",
           "Arn",
         ],
       },
@@ -61,13 +61,13 @@ Object {
         "PolicyName": "PrismCollection",
         "Roles": Array [
           Object {
-            "Ref": "PrismRole8A6E0025",
+            "Ref": "PrismRole",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "PrismRole8A6E0025": Object {
+    "PrismRole": Object {
       "Properties": Object {
         "AssumeRolePolicyDocument": Object {
           "Statement": Array [
@@ -83,6 +83,7 @@ Object {
           ],
           "Version": "2012-10-17",
         },
+        "Description": "Role Prism uses to crawl resources in this account",
         "Tags": Array [
           Object {
             "Key": "App",

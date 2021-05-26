@@ -28,7 +28,12 @@ export class PrismAccess extends GuStack {
       }),
     };
 
+    /*
+     * This is the external prism role in each account which is used by prism to crawl data from that account.
+     */
     const prismRole = new GuRole(this, "PrismRole", {
+      existingLogicalId: "PrismRole", // we override this to ensure that we do not replace the existing resource
+      description: "Role Prism uses to crawl resources in this account",
       assumedBy: new ArnPrincipal(parameters.PrismAccount.valueAsString),
     });
 
