@@ -43,6 +43,8 @@
             <tr><td><code>stage!=TEST</code></td><td>invert - return objects whose stage field does not have the value of TEST</td></tr>
             <tr><td><code>role~=id.*</code></td><td>regexs - return objects whose role field matches the regular expression id.* (i.e. starts with id)</td></tr>
             <tr><td><code>role!~=id.*</code></td><td>inverted regex - return objects whose role field does not match the regular expression</td></tr>
+            <tr><td><code>tags.Name=</code></td><td>existence (when value is empty) - return objects whose <code>tags.Name</code> field exists in the output</td></tr>
+            <tr><td><code>tags.Name!=</code></td><td>inverted existence - return objects whose <code>tags.Name</code> field does not exist</td></tr>
             <tr><td><code>stage=TEST&role~=id.*</code></td><td>multiple fields - an exact match of stage and a regex match of role; this returns objects whose stage field has value of TEST <strong>AND</strong> whose role field matches the regular expression</td></tr>
             <tr><td><code>stage=TEST&stage=CODE&nbsp;&nbsp;</code></td><td>fields can be specified twice - here we return objects whose stage field has the value of TEST <strong>OR</strong> CODE</td></tr>
             <tr><td><code>stage!=TEST&stage!=CODE&nbsp;&nbsp;</code></td><td><strong>this makes no sense</strong> - here we return objects whose stage field has a value that is not TEST <strong>OR</strong> not CODE (i.e. all objects)</td></tr>

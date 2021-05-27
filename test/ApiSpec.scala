@@ -67,7 +67,7 @@ object ApiSpec extends PlaySpecification with Results {
     }
   }
 
-  case class TestItem(arn: String, name: String, region: String, tags: Map[String, String] = Map.empty) extends IndexedItem {
+  case class TestItem(arn: String, name: String, region: String, tags: Map[String, String] = Map.empty, flag: Boolean = false, optionalMap: Option[Map[String, String]] = None) extends IndexedItem {
     def callFromArn: String => Call = _ => Call("GET", "localhost")
   }
 
@@ -87,22 +87,27 @@ object ApiSpec extends PlaySpecification with Results {
     override def toMarkerMap: Map[String, Any] = jsonFields
   }
 
+  val defaultItems = Seq(
+    TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD"), flag=true),
+    TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD"), flag=false),
+    TestItem("arn", "name", "eu-west-2", Map("stage" -> "CODE"), flag=true)
+  )
 
-  class TestCollectorAgent extends CollectorAgentTrait[TestItem] {
+  class TestCollectorAgent(items: Seq[TestItem] = defaultItems) extends CollectorAgentTrait[TestItem] {
     private val resourceType = ResourceType("test")
     private val label = Label(resourceType, new TestOrigin, 1)
 
-    def get(collector: Collector[TestItem]): Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
+    def get(collector: Collector[TestItem]): Datum[TestItem] = ???
 
-    def get(): Iterable[Datum[TestItem]] = Seq(Datum(label, Seq(TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-2", Map("stage" -> "CODE")))))
+    def get(): Iterable[Datum[TestItem]] = Seq(Datum(label, items))
 
-    def getTuples: Iterable[(Label, TestItem)] = Seq((label, TestItem("arn", "name", "region") ))
+    def getTuples: Iterable[(Label, TestItem)] = ???
 
     def getLabels: Seq[Label] = Seq(label)
 
     def size: Int = 1
 
-    def update(collector: Collector[TestItem], previous:Datum[TestItem]):Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
+    def update(collector: Collector[TestItem], previous:Datum[TestItem]):Datum[TestItem] = ???
 
     def init():Unit = {}
 
@@ -169,5 +174,94 @@ object ApiSpec extends PlaySpecification with Results {
       jsonInstances must beLike { case JsArray(_) => ok }
       jsonInstances.as[JsArray].value.length mustEqual 2
     }
+
+    "filter a list of instances by boolean field is true" in {
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(),
+        "objectKey",
+      )(FakeRequest(GET, "/objectKey?flag=true"), TestItem.testItemWrites, ExecutionContext.global)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 2
+    }
+
+    "filter a list of instances by boolean field is false" in {
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(),
+        "objectKey",
+      )(FakeRequest(GET, "/objectKey?flag=false"), TestItem.testItemWrites, ExecutionContext.global)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 1
+    }
+
+    "filter a list of instances by existence of an object" in {
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(Seq(
+          TestItem("arn", "name", "eu-west-1", optionalMap = None),
+          TestItem("arn", "name", "eu-west-1", optionalMap = Some(Map("banana" -> "mashed"))),
+          TestItem("arn", "name", "eu-west-2", optionalMap = Some(Map("apple" -> "boiled")))
+        )),
+        "objectKey",
+      )(FakeRequest(GET, "/objectKey?optionalMap="), TestItem.testItemWrites, ExecutionContext.global)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 2
+    }
+
+    "filter a list of instances by absence of an object" in {
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(Seq(
+          TestItem("arn", "name", "eu-west-1", optionalMap = None),
+          TestItem("arn", "name", "eu-west-1", optionalMap = Some(Map("banana" -> "mashed"))),
+          TestItem("arn", "name", "eu-west-2", optionalMap = Some(Map("apple" -> "boiled")))
+        )),
+        "objectKey",
+      )(FakeRequest(GET, "/objectKey?optionalMap!="), TestItem.testItemWrites, ExecutionContext.global)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 1
+    }
+
+    "filter a list of instances by absence of an map entry" in {
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(Seq(
+          TestItem("arn", "name", "eu-west-1", optionalMap = None),
+          TestItem("arn", "name", "eu-west-1", optionalMap = Some(Map("banana" -> "mashed"))),
+          TestItem("arn", "name", "eu-west-2", optionalMap = Some(Map("apple" -> "boiled")))
+        )),
+        "objectKey",
+      )(FakeRequest(GET, "/objectKey?optionalMap.banana!="), TestItem.testItemWrites, ExecutionContext.global)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 2
+    }
+
+    "filter a list of instances by presence of an map entry" in {
+      val result: Future[Result] = Api.itemList(
+        new TestCollectorAgent(Seq(
+          TestItem("arn", "name", "eu-west-1", optionalMap = None),
+          TestItem("arn", "name", "eu-west-1", optionalMap = Some(Map("banana" -> "mashed"))),
+          TestItem("arn", "name", "eu-west-2", optionalMap = Some(Map("apple" -> "boiled")))
+        )),
+        "objectKey",
+      )(FakeRequest(GET, "/objectKey?optionalMap.banana="), TestItem.testItemWrites, ExecutionContext.global)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      val jsonInstances: JsValue = (contentAsJson(result) \ "data" \ "objectKey").get
+      jsonInstances must beLike { case JsArray(_) => ok }
+      jsonInstances.as[JsArray].value.length mustEqual 1
+    }
+
   }
 }
