@@ -75,7 +75,9 @@ object CloudformationStack {
       },
       parameters = Option(stack.parameters).toList.flatMap(_.asScala).map { param =>
         CloudformationStackParameter(
-          key = Option(param.parameterKey)
+          key = Option(param.parameterKey),
+          value = None,
+          resolvedValue = None
 // commented out whilst we figure out whether it's safe to display all values in case more secrets are added without NoEcho
 //          value = Option(param.parameterValue),
 //          resolvedValue = Option(param.resolvedValue)
@@ -120,8 +122,9 @@ case class CloudformationStackOutput(
 
 case class CloudformationStackParameter(
   key: Option[String],
-//  value: Option[String],
-//  resolvedValue: Option[String]
+// commented out whilst we figure out whether it's safe to display all values in case more secrets are added without NoEcho
+  value: Option[String],
+  resolvedValue: Option[String]
 )
 
 case class CloudformationStackResource(
