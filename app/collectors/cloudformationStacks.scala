@@ -69,8 +69,11 @@ object CloudformationStack {
         CloudformationStackOutput(
           description = Option(output.description),
           exportName = Option(output.exportName),
-          key = Option(output.outputKey),
-          value = Option(output.outputValue)
+          key = None,
+          value = None,
+          // commented out whilst we figure out whether it's safe to display all values
+          // key = Option(output.outputKey),
+          // value = Option(output.outputValue)
         )
       },
       parameters = Option(stack.parameters).toList.flatMap(_.asScala).map { param =>
