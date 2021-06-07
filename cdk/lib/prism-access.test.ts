@@ -6,11 +6,11 @@ import { PrismAccess } from "./prism-access";
 describe("The PrismAccess stack", () => {
   it("matches the snapshot", () => {
     const app = new App();
-    const role = new PrismAccess(app, "prism-access", {
+    const stack = new PrismAccess(app, "prism-access", {
       migratedFromCloudFormation: true,
       stack: "deploy",
     });
 
-    expect(SynthUtils.toCloudFormation(role)).toMatchSnapshot();
+    expect(SynthUtils.toCloudFormation(stack)).toMatchSnapshot();
   });
 });

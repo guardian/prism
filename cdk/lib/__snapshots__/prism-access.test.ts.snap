@@ -96,6 +96,10 @@ Object {
             "Value": "TEST",
           },
           Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
             "Key": "Stack",
             "Value": "deploy",
           },

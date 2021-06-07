@@ -65,7 +65,6 @@ export class PrismStack extends GuStack {
     const userData = new GuUserData(this, {
       ...PrismStack.app,
       distributable: {
-        bucket: GuDistributionBucketParameter.getInstance(this),
         fileName: "prism.deb",
         executionStatement: `dpkg -i /${PrismStack.app.app}/prism.deb`,
       },
@@ -101,6 +100,7 @@ export class PrismStack extends GuStack {
     });
 
     const loadBalancer = new GuHttpsClassicLoadBalancer(this, "LoadBalancer", {
+      ...PrismStack.app,
       vpc,
       crossZone: true,
       subnetSelection: { subnets },

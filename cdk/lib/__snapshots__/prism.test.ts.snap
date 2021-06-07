@@ -81,6 +81,10 @@ Object {
             "Value": "TEST",
           },
           Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
             "Key": "Stack",
             "Value": "deploy",
           },
@@ -97,7 +101,7 @@ Object {
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "AppServerSecurityGroupPrismfromprismLoadBalancerSecurityGroupA5954B5A90002D5FC675": Object {
+    "AppServerSecurityGroupPrismfromprismLoadBalancerPrismSecurityGroupE6A4FDFF900028CF9C72": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "FromPort": 9000,
@@ -110,7 +114,7 @@ Object {
         "IpProtocol": "tcp",
         "SourceSecurityGroupId": Object {
           "Fn::GetAtt": Array [
-            "LoadBalancerSecurityGroupA28D6DD7",
+            "LoadBalancerPrismSecurityGroupB966F197",
             "GroupId",
           ],
         },
@@ -158,6 +162,11 @@ Object {
             "Key": "gu:cdk:version",
             "PropagateAtLaunch": true,
             "Value": "TEST",
+          },
+          Object {
+            "Key": "gu:repo",
+            "PropagateAtLaunch": true,
+            "Value": "guardian/prism",
           },
           Object {
             "Key": "Name",
@@ -220,6 +229,12 @@ Object {
           Object {
             "Fn::GetAtt": Array [
               "GuHttpsEgressSecurityGroupPrism4A68FA56",
+              "GroupId",
+            ],
+          },
+          Object {
+            "Fn::GetAtt": Array [
+              "WazuhSecurityGroup",
               "GroupId",
             ],
           },
@@ -446,6 +461,10 @@ dpkg -i /prism/prism.deb",
             "Value": "TEST",
           },
           Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
             "Key": "Stack",
             "Value": "deploy",
           },
@@ -462,7 +481,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "GuHttpsEgressSecurityGroupPrismfromprismLoadBalancerSecurityGroupA5954B5A900062FECC6D": Object {
+    "GuHttpsEgressSecurityGroupPrismfromprismLoadBalancerPrismSecurityGroupE6A4FDFF900079618B08": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "FromPort": 9000,
@@ -475,7 +494,7 @@ dpkg -i /prism/prism.deb",
         "IpProtocol": "tcp",
         "SourceSecurityGroupId": Object {
           "Fn::GetAtt": Array [
-            "LoadBalancerSecurityGroupA28D6DD7",
+            "LoadBalancerPrismSecurityGroupB966F197",
             "GroupId",
           ],
         },
@@ -560,6 +579,10 @@ dpkg -i /prism/prism.deb",
             "Value": "TEST",
           },
           Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
             "Key": "Stack",
             "Value": "deploy",
           },
@@ -598,7 +621,7 @@ dpkg -i /prism/prism.deb",
         "SecurityGroups": Array [
           Object {
             "Fn::GetAtt": Array [
-              "LoadBalancerSecurityGroupA28D6DD7",
+              "LoadBalancerPrismSecurityGroupB966F197",
               "GroupId",
             ],
           },
@@ -616,6 +639,10 @@ dpkg -i /prism/prism.deb",
             "Value": "TEST",
           },
           Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
             "Key": "Stack",
             "Value": "deploy",
           },
@@ -629,9 +656,9 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
     },
-    "LoadBalancerSecurityGroupA28D6DD7": Object {
+    "LoadBalancerPrismSecurityGroupB966F197": Object {
       "Properties": Object {
-        "GroupDescription": "prism/LoadBalancer/SecurityGroup",
+        "GroupDescription": "prism/LoadBalancerPrism/SecurityGroup",
         "SecurityGroupIngress": Array [
           Object {
             "CidrIp": "10.0.0.0/8",
@@ -651,6 +678,10 @@ dpkg -i /prism/prism.deb",
             "Value": "TEST",
           },
           Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
             "Key": "Stack",
             "Value": "deploy",
           },
@@ -667,7 +698,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "LoadBalancerSecurityGrouptoprismAppServerSecurityGroupPrismF277483B9000E90B82F6": Object {
+    "LoadBalancerPrismSecurityGrouptoprismAppServerSecurityGroupPrismF277483B900013F7178D": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "DestinationSecurityGroupId": Object {
@@ -679,7 +710,7 @@ dpkg -i /prism/prism.deb",
         "FromPort": 9000,
         "GroupId": Object {
           "Fn::GetAtt": Array [
-            "LoadBalancerSecurityGroupA28D6DD7",
+            "LoadBalancerPrismSecurityGroupB966F197",
             "GroupId",
           ],
         },
@@ -688,7 +719,7 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "LoadBalancerSecurityGrouptoprismGuHttpsEgressSecurityGroupPrismF365BAA79000CA697FB8": Object {
+    "LoadBalancerPrismSecurityGrouptoprismGuHttpsEgressSecurityGroupPrismF365BAA79000A91E1244": Object {
       "Properties": Object {
         "Description": "Port 9000 LB to fleet",
         "DestinationSecurityGroupId": Object {
@@ -700,7 +731,7 @@ dpkg -i /prism/prism.deb",
         "FromPort": 9000,
         "GroupId": Object {
           "Fn::GetAtt": Array [
-            "LoadBalancerSecurityGroupA28D6DD7",
+            "LoadBalancerPrismSecurityGroupB966F197",
             "GroupId",
           ],
         },
@@ -784,6 +815,55 @@ dpkg -i /prism/prism.deb",
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "WazuhSecurityGroup": Object {
+      "Properties": Object {
+        "GroupDescription": "Allow outbound traffic from wazuh agent to manager",
+        "SecurityGroupEgress": Array [
+          Object {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Wazuh event logging",
+            "FromPort": 1514,
+            "IpProtocol": "tcp",
+            "ToPort": 1514,
+          },
+          Object {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Wazuh agent registration",
+            "FromPort": 1515,
+            "IpProtocol": "tcp",
+            "ToPort": 1515,
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "App",
+            "Value": "prism",
+          },
+          Object {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          Object {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          Object {
+            "Key": "Stack",
+            "Value": "deploy",
+          },
+          Object {
+            "Key": "Stage",
+            "Value": Object {
+              "Ref": "Stage",
+            },
+          },
+        ],
+        "VpcId": Object {
+          "Ref": "VpcId",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
     },
   },
 }
