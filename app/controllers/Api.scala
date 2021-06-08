@@ -258,7 +258,8 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
           "app" -> app,
           "stack" -> i.stack.getOrElse("unknown"),
           "stage" -> i.stage.getOrElse("unknown"),
-          "guCdkVersion" -> i.guCdkVersion.getOrElse("n/a")
+          "guCdkVersion" -> i.guCdkVersion.getOrElse("n/a"),
+          "guCdkPatternName" -> i.guCdkPatternName.getOrElse("unknown")
         )
       )
     }
