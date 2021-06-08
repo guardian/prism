@@ -74,6 +74,7 @@ object Lambda extends Logging{
     tags,
     app = tags.get("App").map(_.split(",").toList).getOrElse(Nil),
     guCdkVersion = tags.get("gu:cdk:version"),
+    guCdkPatternName = tags.get("gu:cdk:pattern-name"),
     stage = tags.get("Stage"),
     stack = tags.get("Stack")
   )
@@ -88,6 +89,7 @@ case class Lambda(
   tags: Map[String, String],
   override val app: List[String],
   override val guCdkVersion: Option[String],
+  override val guCdkPatternName: Option[String],
   override val stage: Option[String],
   override val stack: Option[String]
 ) extends IndexedItemWithCoreTags {

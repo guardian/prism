@@ -23,7 +23,8 @@ trait IndexedItemWithCoreTags extends
   IndexedItemWithApp with
   IndexedItemWithGuCdkVersion with
   IndexedItemWithStage with
-  IndexedItemWithStack
+  IndexedItemWithStack with
+  IndexedItemWithPatternName
 
 trait IndexedItemWithApp extends IndexedItem {
   val app: List[String] = Nil
@@ -32,6 +33,12 @@ trait IndexedItemWithApp extends IndexedItem {
 trait IndexedItemWithGuCdkVersion extends IndexedItem {
   val guCdkVersion: Option[String] = None
 }
+
+
+trait IndexedItemWithPatternName extends IndexedItem {
+  val guCdkPatternName: Option[String] = None
+}
+
 
 trait IndexedItemWithStage extends IndexedItem {
   val stage: Option[String] = None
@@ -48,13 +55,13 @@ case object Global extends AwsRegionType
 case object Regional extends AwsRegionType
 
 /** A CollectorSet knows how to create a set of collectors for a given resource type that typically
- *  spans multiple accounts, which can be of different underlying platforms. 
+ *  spans multiple accounts, which can be of different underlying platforms.
  *  A CollectorSet creates an appropriate set of Collector instances for each account and region.
  *
  * @param resource the name of the resource that this CollectorSet is responsible for
  * @param accounts the set of accounts to collect this resource from
- * @param awsRegionType some resourceTypes in AWS have a single Global instance instead of Regional 
- * instances. If a CollectorSet processes `AmazonOrigin` origins then you should specify whether the AWS 
+ * @param awsRegionType some resourceTypes in AWS have a single Global instance instead of Regional
+ * instances. If a CollectorSet processes `AmazonOrigin` origins then you should specify whether the AWS
  * collector is global (such as Route53) or regional (such as EC2 instances).
  * @tparam T the class that represents a collected instance of the resource
  */
