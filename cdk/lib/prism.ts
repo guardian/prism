@@ -77,7 +77,8 @@ export class PrismStack extends GuStack {
       ...PrismStack.app,
       existingLogicalId: {
         logicalId: "AutoscalingGroup",
-        reason: "We override this to ensure that we do not replace the existing resource",
+        reason:
+          "We override this to ensure that we do not replace the existing resource (as this may result in downtime)",
       },
       vpc,
       vpcSubnets: { subnets },
