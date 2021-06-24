@@ -1,2 +1,1 @@
-jest.mock("@guardian/cdk/lib/constants/library-info");
-
+jest.mock("@guardian/cdk/lib/constants/tracking-tag");
