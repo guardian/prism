@@ -4,7 +4,6 @@ import type { App } from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import { Stage } from "@guardian/cdk/lib/constants";
 import { GuAutoScalingGroup, GuUserData } from "@guardian/cdk/lib/constructs/autoscaling";
-import { GuDistributionBucketParameter } from "@guardian/cdk/lib/constructs/core";
 import { AppIdentity } from "@guardian/cdk/lib/constructs/core/identity";
 import type { GuStackProps } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuStack } from "@guardian/cdk/lib/constructs/core/stack";
@@ -58,7 +57,11 @@ export class PrismStack extends GuStack {
       description: "application servers",
       vpc,
       allowAllOutbound: true,
-      existingLogicalId: "AppServerSecurityGroup",
+      existingLogicalId: {
+        logicalId: "AppServerSecurityGroup",
+        reason:
+          "We override this to ensure that we do not replace the existing resource (security group replacement is painful!)",
+      },
       ...PrismStack.app,
     });
 
@@ -72,7 +75,10 @@ export class PrismStack extends GuStack {
 
     const asg = new GuAutoScalingGroup(this, "AutoscalingGroup", {
       ...PrismStack.app,
-      existingLogicalId: "AutoscalingGroup",
+      existingLogicalId: {
+        logicalId: "AutoscalingGroup",
+        reason: "We override this to ensure that we do not replace the existing resource",
+      },
       vpc,
       vpcSubnets: { subnets },
       role: role,
@@ -114,7 +120,11 @@ export class PrismStack extends GuStack {
       listener: {
         allowConnectionsFrom: [Peer.ipv4("10.0.0.0/8")],
       },
-      existingLogicalId: "LoadBalancer",
+      existingLogicalId: {
+        logicalId: "LoadBalancer",
+        reason:
+          "We override this to ensure that we do not replace the existing resource (as this would cause downtime)",
+      },
     });
 
     appServerSecurityGroup.connections.allowFrom(loadBalancer, Port.tcp(9000), "Port 9000 LB to fleet");
