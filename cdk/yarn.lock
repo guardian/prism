@@ -1044,10 +1044,10 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@guardian/cdk@19.0.0":
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-19.0.0.tgz#5adefed1c06cbd0cdcdbacc3359f6541007697b7"
-  integrity sha512-wBALFvwjByJ/SYtRsv9tyvryFj3iSWYvJAJecxxcIzDbX+zBFKq/IoH1q84cTawdE4DXOZXc2cQuYJp5YGvGfw==
+"@guardian/cdk@19.2.1":
+  version "19.2.1"
+  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-19.2.1.tgz#c89265fb61c47ec2f70f375740e2899f51758497"
+  integrity sha512-c+5w/wxvx8+1+9DorUWqqh+8VY2iIGgjqnZ9FCTrFbFN/l77W6eyv8tA9Qx1C7uWpPGWG+x3/hwfL8tCK/6gtA==
   dependencies:
     "@aws-cdk/assert" "1.107.0"
     "@aws-cdk/aws-apigateway" "1.107.0"
@@ -1064,8 +1064,8 @@
     "@aws-cdk/aws-rds" "1.107.0"
     "@aws-cdk/aws-s3" "1.107.0"
     "@aws-cdk/core" "1.107.0"
-    aws-sdk "^2.919.0"
-    execa "^5.0.1"
+    aws-sdk "^2.929.0"
+    execa "^5.1.1"
     git-url-parse "^11.4.4"
     read-pkg-up "7.0.1"
 
@@ -1778,25 +1778,10 @@ aws-cdk@1.107.0:
     yaml "1.10.2"
     yargs "^16.2.0"
 
-aws-sdk@^2.848.0:
-  version "2.886.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.886.0.tgz#a3c17ead366eb05d3c1bd3f0efc7b4cdf4daab54"
-  integrity sha512-GK2TiijM/sX3PMOvPbZFPBeL7hW5S0RstwgplEABVxCMPXLkk8ws5ENOwS/c74nrTQKSxZMn/3sThNEtb3J7Ew==
-  dependencies:
-    buffer "4.9.2"
-    events "1.1.1"
-    ieee754 "1.1.13"
-    jmespath "0.15.0"
-    querystring "0.2.0"
-    sax "1.2.1"
-    url "0.10.3"
-    uuid "3.3.2"
-    xml2js "0.4.19"
-
-aws-sdk@^2.919.0:
-  version "2.922.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.922.0.tgz#4568be067dceaaeda5d2d5a7e2f22666687f0b32"
-  integrity sha512-SufbR5TTCK94Zk/xIv4v/m0MM9z+KW999XnjXOyNWGFGHP9/FArjtHtq69+a3KpohYBR1dBj8wUhVjbClmQIBA==
+aws-sdk@^2.848.0, aws-sdk@^2.929.0:
+  version "2.933.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.933.0.tgz#42f2cab2ebb63291ce6e764510e8bfa997847256"
+  integrity sha512-WJBQSE3zdX5YbzTa5+k45hzUAL5EPyiZJAnzCV6TIkPEYPMY215q8iloBATqbntbvAyWC4j2Rto6+RYmki1MOQ==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
@@ -2785,7 +2770,7 @@ execa@^4.0.0:
     signal-exit "^3.0.2"
     strip-final-newline "^2.0.0"
 
-execa@^5.0.1:
+execa@^5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/execa/-/execa-5.1.1.tgz#f80ad9cbf4298f7bd1d4c9555c21e93741c411dd"
   integrity sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==
