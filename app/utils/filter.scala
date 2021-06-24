@@ -4,40 +4,50 @@ import scala.util.matching.Regex
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 
-trait Matchable[T] {
-  def isMatch(value: T): Boolean
+trait Matchable {
+  def isMatch(value: JsValue): Boolean
 }
-case class StringMatchable(matcher: String) extends Matchable[String] {
-  def isMatch(value: String): Boolean = value == matcher
+case class StringMatchable(matcher: String) extends Matchable {
+  def isMatch(value: JsValue): Boolean = value match {
+    case JsString(str) => str == matcher
+    case JsNumber(num) => num.toString == matcher
+    case JsArray(seq) => seq.exists(isMatch)
+    case JsBoolean(bool) => bool.toString.equalsIgnoreCase(matcher)
+    case _ => false
+  }
 }
-case class RegExMatchable(matcher: Regex) extends Matchable[String] {
-  def isMatch(value: String): Boolean = matcher.unapplySeq(value).isDefined
+case class RegExMatchable(matcher: Regex) extends Matchable {
+  private def isRegExMatch(value: String) = matcher.unapplySeq(value).isDefined
+  def isMatch(value: JsValue): Boolean = value match {
+    case JsString(str) => isRegExMatch(str)
+    case JsNumber(num) => isRegExMatch(num.toString)
+    case JsArray(seq) => seq.exists(isMatch)
+    case JsBoolean(bool) => isRegExMatch(bool.toString)
+    case _ => false
+  }
 }
-case class InverseMatchable[T](matcher: Matchable[T]) extends Matchable[T] {
-  def isMatch(value: T): Boolean = !matcher.isMatch(value)
+case object ExistsMatchable extends Matchable {
+  override def isMatch(value: JsValue): Boolean = value match {
+    case JsNull => false
+    case _ => true
+  }
 }
-case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] with Logging {
+case class InverseMatchable(matcher: Matchable) extends Matchable {
+  def isMatch(value: JsValue): Boolean = !matcher.isMatch(value)
+  def inverse: Boolean = true
+}
+case class ResourceFilter(filter:Map[String,Seq[Matchable]]) extends Matchable with Logging {
   def isMatch(json: JsValue): Boolean = {
-    filter.map { case (field, values) =>
-      values -> field.split('.').foldLeft(json){case (jv, part) => (jv \ part).getOrElse(JsNull)}
-    } forall {
-      case (values, JsString(str)) => values exists (_.isMatch(str))
-      case (values, JsNumber(int)) => values exists (_.isMatch(int.toString() ))
-      case (values, JsArray(seq)) =>
-        seq.exists {
-          case JsString(str) => values exists (_.isMatch(str))
-          case _ => false
-        }
-      case _ => false
-    }
+    filter.map { case (fieldName, matchers) =>
+      matchers -> fieldName.split('.').foldLeft(json){case (jv, part) => (jv \ part).getOrElse(JsNull)}
+    } forall { case (matchers, fieldValue) => matchers exists (_.isMatch(fieldValue)) }
   }
 
   def isMatch(map: Map[String, String]): Boolean = {
     filter.map { case (field, values) =>
-      val value = map.get(field)
-      value match {
+      map.get(field) match {
         case None => true // no constraint? then match
-        case Some(string) => values exists (_.isMatch(string))
+        case Some(string) => values exists (_.isMatch(JsString(string)))
       }
     } forall(ok => ok)
   }
@@ -51,12 +61,14 @@ object ResourceFilter {
   val RegexMatch: Regex = """^([a-zA-Z0-9.]*)~$""".r
   val SimpleMatch: Regex = """^([a-zA-Z0-9.]*)$""".r
 
-  def matcher(key:String, value:String): Option[(String, Matchable[String])] = {
+  def matcher(key:String, value:String): Option[(String, Matchable)] = {
     key match {
       case InverseRegexMatch(bareKey) => Some(bareKey -> InverseMatchable(RegExMatchable(value.r)))
       case RegexMatch(bareKey) => Some(bareKey -> RegExMatchable(value.r))
-      case InverseMatch(bareKey) => Some(bareKey -> InverseMatchable(StringMatchable(value)))
-      case SimpleMatch(bareKey) => Some(bareKey -> StringMatchable(value))
+      case InverseMatch(bareKey) if value.nonEmpty => Some(bareKey -> InverseMatchable(StringMatchable(value)))
+      case SimpleMatch(bareKey) if value.nonEmpty => Some(bareKey -> StringMatchable(value))
+      case InverseMatch(bareKey) => Some(bareKey -> InverseMatchable(ExistsMatchable))
+      case SimpleMatch(bareKey) => Some(bareKey -> ExistsMatchable)
       case _ => None
     }
   }
@@ -71,5 +83,5 @@ object ResourceFilter {
     ResourceFilter((defaultKeys ++ filterKeys).toMap)
   }
 
-  lazy val all: Matchable[JsValue] = (_: JsValue) => true
+  lazy val all: Matchable = (_: JsValue) => true
 }
