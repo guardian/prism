@@ -17,6 +17,8 @@ Prism collects data on the following entities:
  - [VPCs](https://prism.gutools.co.uk/vpcs)
  - [AWS Accounts](https://prism.gutools.co.uk/sources/accounts)
 
+For a full list of prism endpoints, head to https://prism.gutools.co.uk/
+
 Endpoints
 ---------
 
