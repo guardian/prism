@@ -13,6 +13,7 @@ Prism collects data on the following entities:
  - Stages
  - Stacks
  - Apps
+ - Buckets
 
 Endpoints
 ---------
