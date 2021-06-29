@@ -8,12 +8,16 @@ Entities
 
 Prism collects data on the following entities:
 
- - Instances
- - Security Groups
- - Stages
- - Stacks
- - Apps
- - Buckets
+ - [Instances](https://prism.gutools.co.uk/instances)
+ - [Security Groups](https://prism.gutools.co.uk/security-groups)
+ - [Stages](https://prism.gutools.co.uk/stages)
+ - [Stacks](https://prism.gutools.co.uk/stacks)
+ - [Apps](https://prism.gutools.co.uk/apps)
+ - [Buckets]((https://prism.gutools.co.uk/buckets)
+ - [VPCs](https://prism.gutools.co.uk/vpcs)
+ - [AWS Accounts](https://prism.gutools.co.uk/sources/accounts)
+
+For a full list of prism endpoints, head to https://prism.gutools.co.uk/
 
 Endpoints
 ---------
