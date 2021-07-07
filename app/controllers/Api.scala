@@ -102,7 +102,7 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
         if (notInitialisedSources.isEmpty) Map.empty else Map(sources.label -> notInitialisedSources)
       } reduce { notInitialisedSources =>
         if (notInitialisedSources.isEmpty) {
-          Json.obj("healthcheck" -> "initialised")
+          Json.obj("healthcheck" -> "initialised", "test" -> "true")
         } else
           throw ApiCallException(Json.obj("healthcheck" -> "not yet initialised", "sources" -> notInitialisedSources.values.headOption), SERVICE_UNAVAILABLE)
       }
