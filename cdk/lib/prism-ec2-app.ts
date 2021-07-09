@@ -34,7 +34,11 @@ export class PrismEc2App extends GuStack {
         CODE: { domainName: "prism.code.dev-gutools.co.uk" },
         PROD: { domainName: "prism.gutools.co.uk" },
       },
-      monitoringConfiguration: { noMonitoring: true },
+      monitoringConfiguration: {
+        snsTopicName: "devx-alerts",
+        http5xxAlarm: false,
+        unhealthyInstancesAlarm: true,
+      },
       access: { scope: AccessScope.INTERNAL, cidrRanges: [Peer.ipv4("10.0.0.0/8")] },
       roleConfiguration: {
         additionalPolicies: [
