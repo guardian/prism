@@ -5,11 +5,13 @@ Object {
   "Mappings": Object {
     "stagemapping": Object {
       "CODE": Object {
+        "alarmActionsEnabled": false,
         "domainName": "prism.code.dev-gutools.co.uk",
         "maxInstances": 2,
         "minInstances": 1,
       },
       "PROD": Object {
+        "alarmActionsEnabled": true,
         "domainName": "prism.gutools.co.uk",
         "maxInstances": 4,
         "minInstances": 2,
@@ -913,6 +915,125 @@ dpkg -i /prism/prism.deb",
         },
       },
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "UnhealthyInstancesAlarmPrismC2D80E9B": Object {
+      "Properties": Object {
+        "ActionsEnabled": Object {
+          "Fn::FindInMap": Array [
+            "stagemapping",
+            Object {
+              "Ref": "Stage",
+            },
+            "alarmActionsEnabled",
+          ],
+        },
+        "AlarmActions": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:aws:sns:",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+                ":",
+                Object {
+                  "Ref": "AWS::AccountId",
+                },
+                ":devx-alerts",
+              ],
+            ],
+          },
+        ],
+        "AlarmDescription": "prism's instances have failed healthchecks several times over the last hour.
+      This typically results in the AutoScaling Group cycling instances and can lead to problems with deployment,
+      scaling or handling traffic spikes.
+
+      Check prism's application logs or ssh onto an unhealthy instance in order to debug these problems.",
+        "AlarmName": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "Unhealthy instances for prism in ",
+              Object {
+                "Ref": "Stage",
+              },
+            ],
+          ],
+        },
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 6,
+        "Dimensions": Array [
+          Object {
+            "Name": "LoadBalancer",
+            "Value": Object {
+              "Fn::Join": Array [
+                "",
+                Array [
+                  Object {
+                    "Fn::Select": Array [
+                      1,
+                      Object {
+                        "Fn::Split": Array [
+                          "/",
+                          Object {
+                            "Ref": "ListenerPrism140519A6",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  Object {
+                    "Fn::Select": Array [
+                      2,
+                      Object {
+                        "Fn::Split": Array [
+                          "/",
+                          Object {
+                            "Ref": "ListenerPrism140519A6",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  Object {
+                    "Fn::Select": Array [
+                      3,
+                      Object {
+                        "Fn::Split": Array [
+                          "/",
+                          Object {
+                            "Ref": "ListenerPrism140519A6",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              ],
+            },
+          },
+          Object {
+            "Name": "TargetGroup",
+            "Value": Object {
+              "Fn::GetAtt": Array [
+                "TargetGroupPrismC8B388A7",
+                "TargetGroupFullName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 12,
+        "MetricName": "UnHealthyHostCount",
+        "Namespace": "AWS/ApplicationELB",
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
     },
     "WazuhSecurityGroup": Object {
       "Properties": Object {
