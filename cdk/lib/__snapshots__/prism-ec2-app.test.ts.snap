@@ -72,7 +72,7 @@ Object {
   "Resources": Object {
     "AutoScalingGroupPrismASG36691601": Object {
       "Properties": Object {
-        "HealthCheckGracePeriod": 800,
+        "HealthCheckGracePeriod": 500,
         "HealthCheckType": "ELB",
         "LaunchConfigurationName": Object {
           "Ref": "AutoScalingGroupPrismLaunchConfig969400AD",

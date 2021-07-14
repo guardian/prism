@@ -79,6 +79,6 @@ export class PrismEc2App extends GuStack {
 
     // Similarly the pattern does not offer support for extending the default ASG grace period via props
     const cfnAsg = pattern.autoScalingGroup.node.defaultChild as CfnAutoScalingGroup;
-    cfnAsg.healthCheckGracePeriod = 800;
+    cfnAsg.healthCheckGracePeriod = 500;
   }
 }
