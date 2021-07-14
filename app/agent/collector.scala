@@ -24,11 +24,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
   log.info(s"new collector set - ${collectorSet.resource.name} - with collectors ${collectors}")
 
-  def get(collector: Collector[T]): Datum[T] = datumAgents(collector)()
-
   def get(): Iterable[Datum[T]] = datumAgents.values.map(_())
-
-  def getTuples: Iterable[(Label, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
 
   def getLabels: Seq[Label] = get().map(_.label).toSeq
 
@@ -99,17 +95,9 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 }
 
 trait CollectorAgentTrait[T<:IndexedItem] {
-  def get(collector: Collector[T]): Datum[T]
-
   def get(): Iterable[Datum[T]]
 
-  def getTuples: Iterable[(Label, T)]
-
-  def getLabels: Seq[Label]
-
-  def size: Int
-
-  def update(collector: Collector[T], previous:Datum[T]):Datum[T]
+  def getTuples: Iterable[(Label, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
 
   def init():Unit
 

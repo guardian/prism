@@ -92,17 +92,7 @@ object ApiSpec extends PlaySpecification with Results {
     private val resourceType = ResourceType("test")
     private val label = Label(resourceType, new TestOrigin, 1)
 
-    def get(collector: Collector[TestItem]): Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
-
     def get(): Iterable[Datum[TestItem]] = Seq(Datum(label, Seq(TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-2", Map("stage" -> "CODE")))))
-
-    def getTuples: Iterable[(Label, TestItem)] = Seq((label, TestItem("arn", "name", "region") ))
-
-    def getLabels: Seq[Label] = Seq(label)
-
-    def size: Int = 1
-
-    def update(collector: Collector[TestItem], previous:Datum[TestItem]):Datum[TestItem] = Datum(label, Seq(TestItem("arn", "name", "region")))
 
     def init():Unit = {}
 
