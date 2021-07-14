@@ -1,10 +1,10 @@
 import agent._
 import controllers.{Api, ApiCallException, ApiResult}
+import org.joda.time.DateTime
 import play.api.libs.json.{JsArray, _}
 import play.api.mvc._
 import play.api.test._
 
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -75,24 +75,18 @@ object ApiSpec extends PlaySpecification with Results {
     implicit val testItemWrites: OWrites[TestItem] = Json.writes[TestItem]
   }
 
-  class TestOrigin extends Origin {
-    private val oneSecond = FiniteDuration(1, "s")
-
-    def vendor: String = "vendor"
-    def account: String = "account"
-    def resources: Set[String] = Set("resources")
-    def jsonFields: Map[String, String] = Map("key" -> "value")
-    def crawlRate: Map[String, CrawlRate] = Map("test" -> CrawlRate(oneSecond, oneSecond))
-
-    override def toMarkerMap: Map[String, Any] = jsonFields
-  }
-
+  val TestOrigin = ApiOrigin(
+    vendor = "vendor",
+    accountName = "account",
+    Map.empty,
+    JsObject.empty
+  )
 
   class TestCollectorAgent extends CollectorAgentTrait[TestItem] {
     private val resourceType = ResourceType("test")
-    private val label = Label(resourceType, new TestOrigin, 1)
+    private val label = ApiLabel(resourceType.name, TestOrigin, 1, DateTime.now, true, Some(1), Label.SUCCESS, None, Nil)
 
-    def get(): Iterable[Datum[TestItem]] = Seq(Datum(label, Seq(TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-2", Map("stage" -> "CODE")))))
+    def get(): Iterable[ApiDatum[TestItem]] = Seq(ApiDatum(label, Seq(TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-1", Map("stage" -> "PROD")), TestItem("arn", "name", "eu-west-2", Map("stage" -> "CODE")))))
 
     def init():Unit = {}
 

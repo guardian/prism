@@ -11,6 +11,7 @@ import collectors._
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json.{JsString, _}
+import play.api.libs.functional.syntax._
 import play.api.mvc.RequestHeader
 
 trait RequestWrites[T] {
@@ -28,7 +29,7 @@ object joda {
 }
 
 object model {
-  import joda.dateTimeWrites
+  import joda._
   val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX").withZone(ZoneId.from(ZoneOffset.UTC))
   implicit val instantWrites: Writes[Instant] = Writes.temporalWrites[Instant, DateTimeFormatter](formatter)
 

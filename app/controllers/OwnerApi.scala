@@ -1,6 +1,6 @@
 package controllers
 
-import agent.{CrawlRate, Label, Origin, ResourceType}
+import agent.{ApiLabel, ApiOrigin, CrawlRate, Label, Origin, ResourceType}
 import data.Owners
 import jsonimplicits.model._
 import model.Owner
@@ -29,19 +29,21 @@ class OwnerApi(cc: ControllerComponents)(implicit executionContext: ExecutionCon
 
     object OwnerResourceType extends ResourceType("Owners")
 
-    val ownerLabel: Label = Label(
-      OwnerResourceType,
-      new Origin {
-        val vendor = "prism"
-        val account = "prism"
-        val resources = Set("sources")
-        val jsonFields = Map.empty[String, String]
-        val crawlRate = Map("Owners" -> CrawlRate(30 days, 30 days))
-
-        override def toMarkerMap: Map[String, Any] = jsonFields
-      },
+    val ownerLabel: ApiLabel = ApiLabel(
+      OwnerResourceType.name,
+      ApiOrigin(
+        vendor = "prism",
+        accountName = "prism",
+        Map.empty,
+        JsObject.empty
+      ),
       Owners.all.size,
-      DateTime.now
+      DateTime.now,
+      false,
+      None,
+      Label.SUCCESS,
+      None,
+      Nil
     )
 
     def ownerList = Action.async { implicit request =>

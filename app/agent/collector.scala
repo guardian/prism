@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.agent.Agent
 import net.logstash.logback.marker.Markers
 import org.joda.time.DateTime
+import play.api.libs.json.JsObject
 import utils._
 
 import scala.collection.mutable
@@ -24,9 +25,14 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
   log.info(s"new collector set - ${collectorSet.resource.name} - with collectors ${collectors}")
 
-  def get(): Iterable[Datum[T]] = datumAgents.values.map(_())
+  private def getInternal(): Iterable[Datum[T]] = datumAgents.values.map(_())
 
-  def getLabels: Seq[Label] = get().map(_.label).toSeq
+  def get(): Iterable[ApiDatum[T]] = datumAgents.values.map { agent =>
+    val data: Datum[T] = agent()
+    ApiDatum.fromDatum(data)
+  }
+
+  def getLabels: Seq[Label] = getInternal().map(_.label).toSeq
 
   def size: Int = get().map(_.data.size).sum
 
@@ -95,9 +101,9 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 }
 
 trait CollectorAgentTrait[T<:IndexedItem] {
-  def get(): Iterable[Datum[T]]
+  def get(): Iterable[ApiDatum[T]]
 
-  def getTuples: Iterable[(Label, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
+  def getTuples: Iterable[(ApiLabel, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
 
   def init():Unit
 
@@ -149,24 +155,26 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
 
   val bootTime = new DateTime()
 
-  def sources:Datum[SourceStatus] = {
+  def sources:ApiDatum[SourceStatus] = {
     val statusList = sourceStatusAgent().values
 
-    val label = Label(
-      ResourceType("sources"),
-      new Origin {
-        val vendor = "prism"
-        val account = "prism"
-        val resources = Set("sources")
-        val crawlRate = Map(("sources" -> CrawlRate(Duration.Inf, Duration.Undefined)))
-        val jsonFields = Map.empty[String, String]
-
-        override def toMarkerMap: Map[String, Any] = jsonFields
-      },
+    val label = ApiLabel(
+      "sources",
+      ApiOrigin(
+        vendor = "prism",
+        accountName = "prism",
+        Map.empty,
+        JsObject.empty
+      ),
       statusList.size,
-      bootTime
+      bootTime,
+      false,
+      None,
+      Label.SUCCESS,
+      None,
+      Nil
     )
-    Datum(label, statusList.toSeq)
+    ApiDatum(label, statusList.toSeq)
   }
   override def toMarkerMap: Map[String, Any] = Map.empty
 }

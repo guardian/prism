@@ -96,23 +96,38 @@ object Datum {
   def apply[T](collector: Collector[T]): Datum[T] = {
     Try {
       val items = collector.crawl.toSeq
-      Datum(Label(collector, items.size), items)
+      Datum(Label.from(collector, items.size), items)
     } recover {
       case NonFatal(t) =>
-        Datum[T](Label(collector, t), Nil)
+        Datum[T](Label.from(collector, t), Nil)
     } get
   }
-  def empty[T](collector: Collector[T]): Datum[T] = Datum(Label(collector, new IllegalStateException("First crawl not yet done")), Nil)
+  def empty[T](collector: Collector[T]): Datum[T] = Datum(Label.from(collector, new IllegalStateException("First crawl not yet done")), Nil)
 }
 case class Datum[T](label:Label, data:Seq[T])
 
 object Label {
-  def apply[T](c: Collector[T], itemCount: Int): Label = Label(c.resource, c.origin, itemCount)
-  def apply[T](c: Collector[T], error: Throwable): Label = Label(c.resource, c.origin, 0, error = Some(error))
+  def from[T](c: Collector[T], itemCount: Int): Label = Label(c.resource, c.origin, itemCount)
+  def from[T](c: Collector[T], error: Throwable): Label = {
+    Label(
+      c.resource,
+      c.origin,
+      0,
+      error = Some(error)
+    )
+  }
+  val ERROR = "error"
+  val SUCCESS = "success"
 }
-case class Label(resourceType: ResourceType, origin:Origin, itemCount:Int, createdAt:DateTime = new DateTime(), error:Option[Throwable] = None) extends Marker {
+case class Label(
+  resourceType: ResourceType,
+  origin:Origin,
+  itemCount:Int,
+  createdAt:DateTime = new DateTime(),
+  error:Option[Throwable] = None
+) extends Marker {
   lazy val isError: Boolean = error.isDefined
-  lazy val status: String = if (isError) "error" else "success"
+  lazy val status: String = if (isError) Label.ERROR else Label.SUCCESS
   lazy val bestBefore: BestBefore = BestBefore(createdAt, origin.crawlRate(resourceType.name).shelfLife, error = isError)
 
   override def toMarkerMap: Map[String, Any] = Map("resource" -> resourceType.name, "account" -> origin.account)
@@ -122,13 +137,18 @@ case class ResourceType(name: String)
 
 case class CrawlRate(shelfLife: Duration, refreshPeriod: Duration)
 
-case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
-  val isFiniteShelfLife: Boolean = shelfLife.isFinite
-  val bestBefore:DateTime = if (isFiniteShelfLife) {
-    created plus JodaDuration.millis(shelfLife.toMillis)
-  } else {
-    new DateTime( 9999, 1, 1, 0, 0, 0, DateTimeZone.UTC )
+object BestBefore {
+  def bestBefore(createdAt: DateTime, shelfLife: Duration): DateTime = {
+    if (shelfLife.isFinite) {
+      createdAt plus JodaDuration.millis(shelfLife.toMillis)
+    } else {
+      new DateTime( 9999, 1, 1, 0, 0, 0, DateTimeZone.UTC )
+    }
   }
+}
+
+case class BestBefore(created:DateTime, shelfLife:Duration, error:Boolean) {
+  val bestBefore:DateTime = BestBefore.bestBefore(created, shelfLife)
   def isStale:Boolean = error || (new DateTime() compareTo bestBefore) >= 0
   def age:JodaDuration = new JodaDuration(created, new DateTime)
 }

@@ -83,7 +83,7 @@ case class SecurityGroup(arn:String,
 object SecurityGroup {
   implicit val arnLookup = new ArnLookup[SecurityGroup] {
     override def call(arn: String): Call = routes.Api.securityGroup(arn)
-    override def item(arn: String, prism: Prism): Option[(Label,SecurityGroup)] =
+    override def item(arn: String, prism: Prism): Option[(ApiLabel,SecurityGroup)] =
       prism.securityGroupAgent.getTuples.find(_._2.arn==arn)
   }
 }

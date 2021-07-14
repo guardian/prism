@@ -1,7 +1,7 @@
 package controllers
 
 import scala.language.postfixOps
-import agent.{CrawlRate, Label, Origin, ResourceType}
+import agent.{ApiLabel, ApiOrigin, CrawlRate, Label, Origin, ResourceType}
 import model.DataContainer
 import org.joda.time.DateTime
 import play.api.http.{ContentTypes, Status}
@@ -47,12 +47,13 @@ object ApiResult extends Logging {
 
     import jsonimplicits.model.labelWriter
 
-    case class SourceData[D](sourceData: Try[Map[Label, Seq[D]]]) {
-      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+    case class SourceData[D](sourceData: Try[Map[ApiLabel, Seq[D]]]) {
+      def reduce(reduce: Map[ApiLabel, Seq[D]] => JsValue)(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
         reduceAsync(input => Future.successful(reduce(input)))
       }
 
-      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+      def reduceAsync(reduce: Map[ApiLabel, Seq[D]] => Future[JsValue])(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+        val now = new DateTime()
         sourceData.map { mapSources =>
           val filter = ResourceFilter.fromRequest
           val filteredSources = mapSources.groupBy {
@@ -60,24 +61,24 @@ object ApiResult extends Logging {
           }
           filteredSources.get(false).foreach(falseMap => if (falseMap.values.exists(_.isEmpty)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
 
-          val sources: Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
+          val sources: Map[ApiLabel, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
 
           val usedLabels = sources.filter {
             case (_, data) => data.nonEmpty
           }.keys
 
           val staleLabels = sources.keys.filter {
-            label => label.bestBefore.isStale
+            label => ApiLabel.isStale(label, now)
           }
 
-          val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
+          val lastUpdated: DateTime = usedLabels.toSeq.filterNot(ApiLabel.isError).map(_.createdAt) match {
             case dates: Seq[DateTime] if dates.nonEmpty => dates.min((x: DateTime, y: DateTime) => {
               x.getMillis.compareTo(y.getMillis)
             })
             case _ => new DateTime(0)
           }
 
-          val stale = sources.keys.exists(_.bestBefore.isStale)
+          val stale = sources.keys.exists(ApiLabel.isStale(_, now))
 
           val reduceSources = reduce(sources).map {
             data =>
@@ -112,7 +113,7 @@ object ApiResult extends Logging {
       }
     }
 
-    def apply[D](mapSources: => Map[Label, Seq[D]]): SourceData[D] = {
+    def apply[D](mapSources: => Map[ApiLabel, Seq[D]]): SourceData[D] = {
       new SourceData[D](
         Try {
           mapSources
@@ -122,19 +123,21 @@ object ApiResult extends Logging {
   }
 
   def noSource(block: => JsValue)(implicit request:RequestHeader, ec: ExecutionContext): Future[Result] = {
-    val sourceLabel:Label = Label(
-      ResourceType(noSourceContainer.name),
-      new Origin {
-        val account = "unknown"
-        val vendor = "unknown"
-        val resources = Set.empty[String]
-        val jsonFields = Map.empty[String, String]
-        val crawlRate = Map(noSourceContainer.name -> CrawlRate(15 minutes, 1 minutes))
-
-        override def toMarkerMap: Map[String, Any] = jsonFields
-      },
+    val sourceLabel:ApiLabel = ApiLabel(
+      noSourceContainer.name,
+      ApiOrigin(
+        vendor = "unknown",
+        accountName = "unknown",
+        Map.empty,
+        JsObject.empty
+      ),
       1,
-      noSourceContainer.lastUpdated
+      noSourceContainer.lastUpdated,
+      false,
+      None,
+      Label.SUCCESS,
+      None,
+      Nil
     )
     filter(Map(sourceLabel -> Seq("dummy"))) reduceAsync { _ =>
       Future.successful(block)
