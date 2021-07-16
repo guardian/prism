@@ -1,33 +1,24 @@
 package conf
 
-import java.net.InetAddress
-
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
-import software.amazon.awssdk.core.retry.RetryPolicy
+import conf.AwsClientConfig.clientConfig
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeInstancesRequest, DescribeTagsRequest, Filter}
 import utils.Logging
 
+import java.net.InetAddress
 import scala.collection.MapView
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-object AWS extends Logging {
-  val clientConfig: ClientOverrideConfiguration = ClientOverrideConfiguration
-    .builder()
-    .retryPolicy(
-      RetryPolicy
-        .builder()
-        .numRetries(10)
-        .build()
-    )
-    .build()
+case class Identity(stack: String, app: String, stage: String)
 
+object AWS extends Logging {
   // This is to detect if we are running in AWS or on GC2. The 169.254.169.254
   // thing works on both but this DNS entry seems peculiar to AWS.
   lazy val isAWS: Boolean = Try(InetAddress.getByName("instance-data")).isSuccess
+
   def awsOption[T](f: => T): Option[T] = if (isAWS) Option(f) else None
 
   lazy val connectionRegion: Region = Region.EU_WEST_1
@@ -37,8 +28,8 @@ object AWS extends Logging {
   type Tag = (String, String)
 
   object instance {
-    lazy val id:Option[String] = awsOption(EC2MetadataUtils.getInstanceId)
-    lazy val allTags:Map[String,String] =
+    lazy val id: Option[String] = awsOption(EC2MetadataUtils.getInstanceId)
+    lazy val allTags: Map[String, String] =
       id.toSeq.flatMap { id =>
         val tagsResult = AWS.EC2Client.describeTags(
           DescribeTagsRequest.builder.filters(
@@ -61,8 +52,8 @@ object AWS extends Logging {
     def addressesFromTags(tags: List[Tag]): List[String] = {
 
       log.info(s"Looking up instances with tags: $tags")
-      val tagsAsFilters = tags.map{
-        case(name, value) => Filter.builder.name("tag:" + name).values(value).build
+      val tagsAsFilters = tags.map {
+        case (name, value) => Filter.builder.name("tag:" + name).values(value).build
       }.asJavaCollection
 
       val describeInstancesResult = EC2Client.describeInstances(DescribeInstancesRequest.builder.filters(tagsAsFilters).build)

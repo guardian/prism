@@ -2,7 +2,7 @@ import com.amazonaws.regions.Regions
 import conf._
 import play.api.{Configuration, _}
 import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils
-import utils.{AWSCredentialProviders, Logging}
+import utils.{AWSCredentialProviders, AWSCredentialProvidersV1, Logging}
 
 import scala.util.Try
 
@@ -23,14 +23,16 @@ class AppLoader extends ApplicationLoader with Logging {
 
     val extraConfigs = List(
       DynamoConfiguration(
-        AWSCredentialProviders.deployToolsCredentialsProviderChainV1,
+        AWSCredentialProvidersV1.deployToolsCredentialsProviderChain,
         Regions.EU_WEST_1,
         identity
       ),
       FileConfiguration(identity)
     )
 
-    val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
+    val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty){ case (configSource, config) =>
+      Configuration(configSource.configuration(context.environment.mode == Mode.Test)).withFallback(config)
+    }
 
     val stream: Option[String] = extraConfig.getOptional[String]("LoggingStream")
     stream match {

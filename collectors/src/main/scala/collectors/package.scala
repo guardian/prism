@@ -6,4 +6,6 @@ object `package` {
       if (seq.isEmpty) None else Some(seq)
     }
   }
+
+  type Arn = String
 }

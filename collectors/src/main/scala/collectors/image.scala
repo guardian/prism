@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import org.joda.time.DateTime
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeImagesRequest, Filter, Image => AwsImage}
@@ -23,7 +23,7 @@ case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRa
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[Image] = {

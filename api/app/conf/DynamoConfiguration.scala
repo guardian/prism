@@ -4,13 +4,12 @@ import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.document.{DynamoDB, Item, PrimaryKey, TableKeysAndAttributes}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import play.api.{Configuration, Mode}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
 
-case class Identity(stack: String, app: String, stage: String)
 case class ConfigSegment(app: String, stage: String)
 
 object DynamoConfiguration {
@@ -23,10 +22,10 @@ object DynamoConfiguration {
 class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
                           identity: Identity, prefix:String) extends ConfigurationSource with Logging {
 
-  def configuration(mode: Mode): Configuration = {
+  def configuration(isTest: Boolean): Config = {
 
-    if (mode == Mode.Test)
-      Configuration.empty
+    if (isTest)
+      ConfigFactory.empty
     else {
       val client = AmazonDynamoDBClientBuilder.standard()
         .withCredentials(credProvider)
@@ -42,13 +41,13 @@ class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
         configSegmentsFromIdentity(identity)
       )
 
-      val finalConfig = configs.flatMap{ case (_, config) => config }.foldRight[Configuration](Configuration.empty){ _.withFallback(_) }
+      val finalConfig = configs.flatMap{ case (_, config) => config }.foldRight[Config](ConfigFactory.empty){ _.withFallback(_) }
 
       finalConfig
     }
   }
 
-  def fromTable(dynamoDb: DynamoDB, tableName: String, configSegments: Seq[ConfigSegment]): Seq[(ConfigSegment, Option[Configuration])] = {
+  def fromTable(dynamoDb: DynamoDB, tableName: String, configSegments: Seq[ConfigSegment]): Seq[(ConfigSegment, Option[Config])] = {
     val primaryKeys = configSegments.map{ segment => new PrimaryKey("App", segment.app, "Stage", segment.stage) }
 
     val tableKeysAndAttributes = new TableKeysAndAttributes(tableName).withPrimaryKeys(primaryKeys:_*)
@@ -64,8 +63,8 @@ class DynamoConfiguration(credProvider: AWSCredentialsProvider, region: Regions,
     configSegments.map{ segment => segment -> configs.get(segment) }
   }
 
-  def fromItem(item: Item, originDescription: String): Configuration = {
-    Configuration(ConfigFactory.parseMap(item.getMap("Config"), originDescription))
+  def fromItem(item: Item, originDescription: String): Config = {
+    ConfigFactory.parseMap(item.getMap("Config"), originDescription)
   }
 
   def configSegmentsFromIdentity(identity: Identity) = Seq(

@@ -7,25 +7,13 @@ import play.api.http.Status
 import play.api.libs.json.Json._
 import play.api.libs.json._
 import play.api.mvc.{Action, RequestHeader, Result, _}
-import utils.{Matchable, ResourceFilter}
+import utils.{CollectorAgent, Matchable, ResourceFilter}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 //noinspection TypeAnnotation
 class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: PrismConfiguration)(implicit executionContext: ExecutionContext) extends AbstractController(cc) {
-    implicit def referenceWrites[T <: IndexedItem](implicit arnLookup:ArnLookup[T], tWrites:Writes[T], request: RequestHeader): Writes[Reference[T]] = (o: Reference[T]) => {
-      request.getQueryString("_reference") match {
-        case Some("inline") =>
-          arnLookup.item(o.arn, prismDataStore).flatMap { case (label, t) =>
-            Api.itemJson(item = t, label = Some(label), expand = true)
-          }.getOrElse(JsString(o.arn))
-        case Some("uri") =>
-          Json.toJson(arnLookup.call(o.arn).absoluteURL()(request))
-        case _ =>
-          Json.toJson(o.arn)
-      }
-    }
     import jsonimplicits.model._
 
     def sortString(jsv: JsValue):String =

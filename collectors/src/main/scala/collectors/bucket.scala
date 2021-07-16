@@ -1,9 +1,8 @@
 package collectors
 
 import java.time.Instant
-
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.model.{GetBucketLocationRequest, ListBucketsRequest, S3Exception, Bucket => AWSBucket}
 import software.amazon.awssdk.services.s3.{S3Client, S3Configuration}
@@ -32,7 +31,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(Region.EU_WEST_1)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .serviceConfiguration(s3Configuration)
     .build
 

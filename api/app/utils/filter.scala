@@ -1,6 +1,7 @@
 package utils
 
 import play.api.libs.json._
+import play.api.mvc.RequestHeader
 
 import scala.util.matching.Regex
 

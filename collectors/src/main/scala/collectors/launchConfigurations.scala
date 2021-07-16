@@ -3,7 +3,7 @@ package collectors
 import java.time.Instant
 
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import software.amazon.awssdk.services.autoscaling.AutoScalingClient
 import software.amazon.awssdk.services.autoscaling.model.{DescribeLaunchConfigurationsRequest, LaunchConfiguration => AwsLaunchConfiguration}
 import utils.Logging
@@ -24,7 +24,7 @@ case class AWSLaunchConfigurationCollector(origin: AmazonOrigin, resource: Resou
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[LaunchConfiguration] = {

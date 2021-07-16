@@ -1,27 +1,26 @@
 package collectors
 
 import agent._
-import conf.AWS
-import controllers.{Prism, routes}
+import conf.AwsClientConfig
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeSecurityGroupsRequest, IpPermission, SecurityGroup => AwsSecurityGroup}
 
 import scala.jdk.CollectionConverters._
 import scala.language.{existentials, postfixOps}
 
-class SecurityGroupCollectorSet(accounts: Accounts, prismController: Prism) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts, Some(Regional)) {
+class SecurityGroupCollectorSet(accounts: Accounts) extends CollectorSet[SecurityGroup](ResourceType("security-group"), accounts, Some(Regional)) {
   def lookupCollector: PartialFunction[Origin, Collector[SecurityGroup]] = {
-    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, prismController, aws.crawlRate(resource.name))
+    case aws:AmazonOrigin => AWSSecurityGroupCollector(aws, resource, aws.crawlRate(resource.name))
   }
 }
 
-case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, prismController: Prism, crawlRate: CrawlRate)
+case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType, crawlRate: CrawlRate)
     extends Collector[SecurityGroup] {
 
-  def fromAWS( secGroup: AwsSecurityGroup, lookup:Map[String,SecurityGroup]): SecurityGroup = {
+  def fromAWS( secGroup: AwsSecurityGroup): SecurityGroup = {
     def groupRefs(rule: IpPermission): Seq[SecurityGroupRef] = {
       rule.userIdGroupPairs.asScala.map { pair =>
-        SecurityGroupRef(pair.groupId, pair.userId, lookup.get(pair.groupId).map(_.arn))
+        SecurityGroupRef(pair.groupId, pair.userId)
       }
     }.toSeq
 
@@ -51,14 +50,13 @@ case class AWSSecurityGroupCollector(origin:AmazonOrigin, resource:ResourceType,
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[SecurityGroup] = {
     //  get all existing groups to allow for cross referencing
-    val existingGroups = prismController.securityGroupAgent.get().flatMap(_.data).map(sg => sg.groupId -> sg).toMap
     val request = DescribeSecurityGroupsRequest.builder.build
-    client.describeSecurityGroupsPaginator(request).securityGroups.asScala.map(fromAWS(_, existingGroups))
+    client.describeSecurityGroupsPaginator(request).securityGroups.asScala.map(fromAWS)
   }
 }
 
@@ -75,16 +73,6 @@ case class SecurityGroup(arn:String,
                          location:String,
                          rules:Seq[Rule],
                          vpcId:Option[String],
-                         tags:Map[String, String]) extends IndexedItem {
-//  def callFromArn: String => Call = arn => routes.Api.securityGroup(arn)
-}
+                         tags:Map[String, String]) extends IndexedItem
 
-object SecurityGroup {
-  implicit val arnLookup = new ArnLookup[SecurityGroup] {
-    override def call(arn: String): Call = routes.Api.securityGroup(arn)
-    override def item(arn: String, prism: Prism): Option[(ApiLabel,SecurityGroup)] =
-      prism.securityGroupAgent.getTuples.find(_._2.arn==arn)
-  }
-}
-
-case class SecurityGroupRef(groupId:String, account:String, arn:Option[String])
+case class SecurityGroupRef(groupId:String, account:String)

@@ -1,18 +1,17 @@
 package jsonimplicits
 
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneId, ZoneOffset}
-
 import _root_.model.{Owner, SSA}
 import agent._
 import ai.x.play.json.Encoders.encoder
 import ai.x.play.json.Jsonx
 import collectors._
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
+import jsonimplicits.Joda._
 import play.api.libs.json.{JsString, _}
-import play.api.libs.functional.syntax._
 import play.api.mvc.RequestHeader
+import utils.SourceStatus
+
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId, ZoneOffset}
 
 trait RequestWrites[T] {
   def writes(request: RequestHeader): Writes[T]
@@ -21,16 +20,7 @@ object RequestWrites {
   def fromWrites[T](implicit delegate:Writes[T]): RequestWrites[T] = (_: RequestHeader) => delegate
 }
 
-object joda {
-  private object dateTimeWrites extends Writes[org.joda.time.DateTime] {
-    def writes(d: org.joda.time.DateTime): JsValue = JsString(ISODateTimeFormat.dateTime.print(d))
-  }
-  private val dateTimeReads: Reads[DateTime] = JodaReads.jodaDateReads("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
-  implicit val dateTimeFormats: Format[DateTime] = Format(dateTimeReads, dateTimeWrites)
-}
-
 object model {
-  import joda._
   val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX").withZone(ZoneId.from(ZoneOffset.UTC))
   implicit val instantWrites: Writes[Instant] = Writes.temporalWrites[Instant, DateTimeFormatter](formatter)
 
@@ -40,7 +30,7 @@ object model {
   implicit val securityGroupRuleWriter: Writes[Rule] = Json.writes[Rule]
   implicit val securityGroupWriter: Writes[SecurityGroup] = Json.writes[SecurityGroup]
 
-  implicit def instanceRequestWriter(implicit refWriter: Writes[Reference[SecurityGroup]]): Writes[Instance] = {
+  implicit val instanceRequestWriter: Writes[Instance] = {
     implicit val addressWriter: Writes[Address] = Json.writes[Address]
     implicit val instanceSpecificationWriter: Writes[InstanceSpecification] = Json.writes[InstanceSpecification]
     implicit val managementEndpointWriter: Writes[ManagementEndpoint] = Json.writes[ManagementEndpoint]

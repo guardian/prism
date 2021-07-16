@@ -3,7 +3,7 @@ package collectors
 import agent._
 import software.amazon.awssdk.services.lambda.LambdaClient
 import software.amazon.awssdk.services.lambda.model.{FunctionConfiguration, ListTagsRequest, PackageType, Runtime}
-import conf.AWS
+import conf.AwsClientConfig
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
@@ -21,7 +21,7 @@ case class AWSLambdaCollector(origin: AmazonOrigin, resource: ResourceType, craw
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[Lambda] = {

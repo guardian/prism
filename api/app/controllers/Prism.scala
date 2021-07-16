@@ -1,10 +1,10 @@
 package controllers
 
-import agent.{Accounts, CollectorAgent, SourceStatusAgent}
+import agent.Accounts
 import akka.actor.ActorSystem
 import collectors._
 import conf.PrismConfiguration
-import utils.StopWatch
+import utils.{CollectorAgent, SourceStatusAgent, StopWatch}
 
 // TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
 class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
@@ -15,11 +15,11 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
   val lazyStartup: Boolean = prismConfiguration.accounts.lazyStartup
 
   // TODO: Maybe we should refactor this to not require a circular reference / pass in this
-  val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts, this), sourceStatusAgent, lazyStartup)(actorSystem)
+  val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val lambdaAgent = new CollectorAgent[Lambda](new LambdaCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val dataAgent = new CollectorAgent[Data](new DataCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
 
-  val securityGroupAgent = new CollectorAgent[SecurityGroup](new SecurityGroupCollectorSet(accounts, this), sourceStatusAgent, lazyStartup)(actorSystem)
+  val securityGroupAgent = new CollectorAgent[SecurityGroup](new SecurityGroupCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
 
   val imageAgent = new CollectorAgent[Image](new ImageCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val launchConfigurationAgent = new CollectorAgent[LaunchConfiguration](new LaunchConfigurationCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)

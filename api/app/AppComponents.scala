@@ -22,7 +22,7 @@ class AppComponents(context: ApplicationLoader.Context)
     super.httpFilters :+ gzipFilter
   }
 
-  val prismConfig = new PrismConfiguration(configuration)
+  val prismConfig = new PrismConfiguration(configuration.underlying)
 
   val prismController = new Prism(prismConfig)(actorSystem)
 

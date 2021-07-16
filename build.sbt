@@ -1,4 +1,5 @@
 import com.gu.riffraff.artifact.BuildInfo
+import play.core.PlayVersion
 
 name := "prism"
 
@@ -17,7 +18,9 @@ val awsVersionOne = "1.11.918"
 lazy val collectors = (project in file("collectors"))
   .settings(
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % PlayVersion.akkaVersion,
       "org.scala-stm" %% "scala-stm" % "0.9.1",
+      "com.typesafe" % "config" % "1.4.1",
       "software.amazon.awssdk" % "lambda" % awsVersion,
       "software.amazon.awssdk" % "s3" % awsVersion,
       "software.amazon.awssdk" % "auth" % awsVersion,

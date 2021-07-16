@@ -1,11 +1,11 @@
-package agent
+package utils
 
+import agent._
 import akka.actor.ActorSystem
 import akka.agent.Agent
 import net.logstash.logback.marker.Markers
 import org.joda.time.DateTime
 import play.api.libs.json.JsObject
-import utils._
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -47,17 +47,17 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
       case l@Label(product, origin, size, _, None) =>
         val marker = Markers.appendEntries((
           origin.toMarkerMap ++ l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
-        log.info(s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")(marker)
+        log.info(marker, s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
         datum
       case l@Label(product, origin, _, _, Some(error)) =>
         val marker = Markers.appendEntries((l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         previous.label match {
           case bad if bad.isError =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)(marker)
+            log.error(marker, s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)
           case stale if stale.bestBefore.isStale =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
+            log.error(marker, s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)
           case notYetStale if !notYetStale.bestBefore.isStale =>
-            log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
+            log.warn(marker, s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
         }
         previous
     }
@@ -100,16 +100,6 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
   }
 }
 
-trait CollectorAgentTrait[T<:IndexedItem] {
-  def get(): Iterable[ApiDatum[T]]
-
-  def getTuples: Iterable[(ApiLabel, T)] = get().flatMap(datum => datum.data.map(datum.label ->))
-
-  def init():Unit
-
-  def shutdown():Unit
-}
-
 case class SourceStatus(state: Label, error: Option[Label] = None) {
   lazy val latest: Label = error.getOrElse(state)
 }
@@ -125,8 +115,8 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
       val key = (label.resourceType, label.origin)
       val previous = previousMap.get(key)
       val next = label match {
-        case good if !good.isError => SourceStatus(good)
-        case bad => SourceStatus(previous.map(_.state).getOrElse(bad), Some(bad))
+        case good if !good.isError => utils.SourceStatus(good)
+        case bad => utils.SourceStatus(previous.map(_.state).getOrElse(bad), Some(bad))
       }
       previousMap + (key -> next)
     } onComplete {
@@ -144,9 +134,9 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
           ).asJava)
           if (uninitialisedSources == 0) {
             initialisedResources += (label.resourceType -> true)
-            log.info(s"Healthcheck passed successfully for ${label.resourceType.name} after ${timeSpent}ms")(marker)
+            log.info(marker, s"Healthcheck passed successfully for ${label.resourceType.name} after ${timeSpent}ms")
           } else {
-            log.info(s"$uninitialisedSources out of ${newMap.size} still not healthy after ${timeSpent}ms")(marker)
+            log.info(marker, s"$uninitialisedSources out of ${newMap.size} still not healthy after ${timeSpent}ms")
           }
         }
       case Failure(_) => log.warn(s"failed to update resource ${label.resourceType.name}")

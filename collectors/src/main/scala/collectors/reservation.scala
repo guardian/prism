@@ -3,7 +3,7 @@ package collectors
 import java.time.Instant
 
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeReservedInstancesRequest, ReservedInstances, RecurringCharge => AwsRecurringCharge}
 import utils.Logging
@@ -23,7 +23,7 @@ case class AWSReservationCollector(origin: AmazonOrigin, resource: ResourceType,
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[Reservation] = {

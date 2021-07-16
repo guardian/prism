@@ -1,8 +1,7 @@
 package collectors
 
 import agent._
-import conf.AWS
-import controllers.routes
+import conf.AwsClientConfig.clientConfig
 import software.amazon.awssdk.services.route53.Route53Client
 import software.amazon.awssdk.services.route53.model.{HostedZone, ListHostedZonesRequest, ListResourceRecordSetsRequest, ResourceRecordSet}
 import utils.Logging
@@ -23,7 +22,7 @@ case class Route53ZoneCollector(origin: AmazonOrigin, resource: ResourceType, cr
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(clientConfig)
     .build
 
   def crawl: Iterable[Route53Zone] = {

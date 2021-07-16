@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeSubnetsRequest, DescribeVpcsRequest, Filter, Subnet => AwsSubnet, Vpc => AwsVpc}
 import utils.Logging
@@ -22,7 +22,7 @@ case class AWSVpcCollector(origin:AmazonOrigin, resource: ResourceType, crawlRat
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def getSubnets(vpcId: String) = {

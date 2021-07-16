@@ -1,7 +1,7 @@
 package collectors
 
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import play.api.libs.json.{JsString, JsValue, Json}
 import software.amazon.awssdk.services.cloudformation.CloudFormationClient
 import software.amazon.awssdk.services.cloudformation.model.{DescribeStackResourcesRequest, DescribeStacksRequest, GetStackPolicyRequest, GetStackPolicyResponse, ListStacksRequest, Stack, StackResource, StackStatus, StackSummary}
@@ -25,7 +25,7 @@ case class CloudformationStackCollector(origin: AmazonOrigin, resource: Resource
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[CloudformationStack] = {

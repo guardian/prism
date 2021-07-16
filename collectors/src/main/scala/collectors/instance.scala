@@ -4,8 +4,7 @@ import java.net.InetAddress
 import java.time.Instant
 
 import agent._
-import conf.AWS
-import controllers.{Prism, routes}
+import conf.AwsClientConfig
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{DescribeInstancesRequest, Instance => AwsInstance, Reservation => AwsReservation}
 import utils.Logging
@@ -14,19 +13,19 @@ import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.util.matching.Regex
 
-class InstanceCollectorSet(accounts: Accounts, prism: Prism) extends CollectorSet[Instance](ResourceType("instance"), accounts, Some(Regional)) {
+class InstanceCollectorSet(accounts: Accounts) extends CollectorSet[Instance](ResourceType("instance"), accounts, Some(Regional)) {
   val lookupCollector: PartialFunction[Origin, Collector[Instance]] = {
-    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, amazon.crawlRate(resource.name), prism)
+    case amazon:AmazonOrigin => AWSInstanceCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate, prism: Prism) extends Collector[Instance] with Logging {
+case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Instance] with Logging {
 
   val client: Ec2Client = Ec2Client
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def getInstances:Iterable[(AwsReservation, AwsInstance)] = {
@@ -52,14 +51,7 @@ case class AWSInstanceCollector(origin:AmazonOrigin, resource: ResourceType, cra
         region = origin.region,
         vendor = "aws",
         securityGroups = instance.securityGroups.asScala.map{ sg =>
-          Reference[SecurityGroup](
-            s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.groupId}",
-            Map(
-              "groupId" -> sg.groupId,
-              "groupName" -> sg.groupName
-            ),
-            prism
-          )
+          s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/${sg.groupId}"
         }.toSeq,
         tags = instance.tags.asScala.map(t => t.key -> t.value).toMap,
         specs = InstanceSpecification(instance.imageId, Image.arn(origin.region, instance.imageId), instance.instanceTypeAsString, Option(instance.vpcId))
@@ -77,7 +69,7 @@ object Instance {
              instanceName: String,
              region: String,
              vendor: String,
-             securityGroups: Seq[Reference[SecurityGroup]],
+             securityGroups: Seq[Arn],
              tags: Map[String, String],
              specs: InstanceSpecification): Instance = {
     val stack = tags.get("Stack")
@@ -171,7 +163,7 @@ case class Instance(
                  instanceName: String,
                  region: String,
                  vendor: String,
-                 securityGroups: Seq[Reference[SecurityGroup]],
+                 securityGroups: Seq[Arn],
                  tags: Map[String, String] = Map.empty,
                  override val stage: Option[String],
                  override val stack: Option[String],

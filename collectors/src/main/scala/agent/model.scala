@@ -7,7 +7,6 @@ import scala.util.control.NonFatal
 import scala.language.postfixOps
 import play.api.libs.json._
 import utils.{Logging, Marker}
-import play.api.mvc.Call
 import software.amazon.awssdk.regions.Region
 
 import scala.concurrent.duration._

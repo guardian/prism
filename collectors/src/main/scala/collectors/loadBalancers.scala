@@ -3,7 +3,7 @@ package collectors
 import agent._
 import software.amazon.awssdk.services.elasticloadbalancing.ElasticLoadBalancingClient
 import software.amazon.awssdk.services.elasticloadbalancing.model.{DescribeLoadBalancersRequest, LoadBalancerDescription}
-import conf.AWS
+import conf.AwsClientConfig
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
@@ -21,7 +21,7 @@ case class LoadBalancerCollector(origin: AmazonOrigin, resource: ResourceType, c
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl: Iterable[LoadBalancer] = {

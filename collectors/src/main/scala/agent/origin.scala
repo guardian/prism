@@ -59,7 +59,7 @@ trait Origin extends Marker {
 
 case class Credentials(accessKey: Option[String], role: Option[String], profile: Option[String], regionName: String)(secretKey: Option[String]) {
   val region: Region = Region.of(regionName)
-  val (id, provider) = (accessKey, secretKey, role, profile) match {
+  val (id: String, provider: AwsCredentialsProvider) = (accessKey, secretKey, role, profile) match {
     case (_, _, Some(r), Some(p)) =>
       val stsClient = StsClient.builder
         .credentialsProvider(ProfileCredentialsProvider.builder.profileName(p).build)

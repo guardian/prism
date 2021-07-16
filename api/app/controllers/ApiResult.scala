@@ -11,7 +11,7 @@ import play.api.mvc.{RequestHeader, Result, Results}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import utils.{Logging, ResourceFilter}
-import jsonimplicits.joda._
+import jsonimplicits.Joda._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps

@@ -3,7 +3,7 @@ package collectors
 import java.time.Instant
 
 import agent._
-import conf.AWS
+import conf.AwsClientConfig
 import software.amazon.awssdk.services.rds.RdsClient
 import software.amazon.awssdk.services.rds.model.{DBInstance, DescribeDbInstancesRequest}
 import utils.Logging
@@ -23,7 +23,7 @@ case class AWSRdsCollector(origin:AmazonOrigin, resource: ResourceType, crawlRat
     .builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
+    .overrideConfiguration(AwsClientConfig.clientConfig)
     .build
 
   def crawl:Iterable[Rds] =

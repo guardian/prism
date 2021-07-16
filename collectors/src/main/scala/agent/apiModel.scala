@@ -3,7 +3,7 @@ package agent
 import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import jsonimplicits.joda._
+import jsonimplicits.Joda._
 
 object ApiOrigin {
   private val writes = new OWrites[ApiOrigin] {
