@@ -5,7 +5,10 @@ import akka.actor.ActorSystem
 import akka.agent.Agent
 import net.logstash.logback.marker.Markers
 import org.joda.time.DateTime
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, OFormat}
+import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -100,6 +103,20 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
   }
 }
 
+class ObjectCollectorAgent[T<:IndexedItem](collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent,
+  lazyStartup:Boolean, s3Client: S3Client, bucket: String, prefix: String)(actorSystem: ActorSystem)(implicit formats: OFormat[T])
+  extends CollectorAgent[T](collectorSet, sourceStatusAgent, lazyStartup)(actorSystem) {
+  override def update(collector: Collector[T], previous: Datum[T]): Datum[T] = {
+    val datum = super.update(collector, previous)
+    val apiDatum = ApiDatum.fromDatum(datum)
+    val byteBuffer = ObjectStoreSerialisation.serialise(apiDatum)
+    val key: String = s"$prefix/${apiDatum.label.origin.id}.json"
+    val request = PutObjectRequest.builder.bucket(bucket).key(key).contentType("application/json").build
+    s3Client.putObject(request, RequestBody.fromByteBuffer(byteBuffer))
+    datum
+  }
+}
+
 case class SourceStatus(state: Label, error: Option[Label] = None) {
   lazy val latest: Label = error.getOrElse(state)
 }
@@ -151,6 +168,7 @@ class SourceStatusAgent(actorSystem: ActorSystem, prismRunTimeStopWatch: StopWat
     val label = ApiLabel(
       "sources",
       ApiOrigin(
+        id = "prism-sources",
         vendor = "prism",
         accountName = "prism",
         Map.empty,

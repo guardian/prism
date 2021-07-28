@@ -76,6 +76,7 @@ object ApiSpec extends PlaySpecification with Results {
   }
 
   val TestOrigin = ApiOrigin(
+    id = "test",
     vendor = "vendor",
     accountName = "account",
     Map.empty,

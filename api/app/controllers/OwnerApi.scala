@@ -32,6 +32,7 @@ class OwnerApi(cc: ControllerComponents)(implicit executionContext: ExecutionCon
     val ownerLabel: ApiLabel = ApiLabel(
       OwnerResourceType.name,
       ApiOrigin(
+        id = "prism-owner",
         vendor = "prism",
         accountName = "prism",
         Map.empty,

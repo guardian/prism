@@ -1,3 +1,5 @@
+import agent.ObjectStoreCollectorAgent
+import collectors.Lambda
 import conf.PrismConfiguration
 import controllers._
 import play.api.mvc.EssentialFilter
@@ -6,6 +8,8 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilterComponents
 import router.Routes
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
 import utils.{Lifecycle, Logging, ScheduledAgent}
 
 import scala.collection.mutable
@@ -24,7 +28,12 @@ class AppComponents(context: ApplicationLoader.Context)
 
   val prismConfig = new PrismConfiguration(configuration.underlying)
 
-  val prismController = new Prism(prismConfig)(actorSystem)
+  val s3Client = S3Client.builder.region(Region.EU_WEST_1).build
+
+  val s3LambdaCollectorAgent =
+    new ObjectStoreCollectorAgent[Lambda](s3Client, prismConfig.collectionStore.bucketName, "lambda/")(jsonimplicits.model.lambdaFormat)
+
+  val prismController = new Prism(prismConfig, s3LambdaCollectorAgent)(actorSystem)
 
   /* Initialise agents */
   val lifecycleSingletons: mutable.Buffer[Lifecycle] = mutable.Buffer[Lifecycle]()
@@ -32,7 +41,7 @@ class AppComponents(context: ApplicationLoader.Context)
   lifecycleSingletons ++= List(
     ScheduledAgent
   )
-  lifecycleSingletons ++= prismController.allAgents
+  lifecycleSingletons ++= prismController.allInternalAgents
 
   log.info("Calling init() on Lifecycle singletons: %s" format lifecycleSingletons.map(_.getClass.getName).mkString(", "))
   lifecycleSingletons foreach { singleton =>
@@ -54,6 +63,7 @@ class AppComponents(context: ApplicationLoader.Context)
     }
     lifecycleSingletons.clear()
   })
+
 
   lazy val homeController = new Application(controllerComponents, () => router.documentation)
 

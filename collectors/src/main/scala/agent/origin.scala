@@ -46,6 +46,8 @@ class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
 }
 
 trait Origin extends Marker {
+  // the id must be a unique identifier
+  def id: String
   def vendor: String
   def account: String
   def filterMap: Map[String,String] = Map.empty
@@ -131,6 +133,8 @@ case class AmazonOrigin(account:String, region:String, credentials: Credentials,
   val awsRegionV2: Region = Region.of(region)
 
   override def toMarkerMap: Map[String, Any] = Map("region" -> awsRegionV2.id)
+
+  override def id: String = s"$vendor-$region-$account"
 }
 case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[String], crawlRate: Map[String, CrawlRate]) extends Origin with Logging {
   private val classpathHandler = new URLStreamHandler {
@@ -180,4 +184,6 @@ case class JsonOrigin(vendor:String, account:String, url:String, resources:Set[S
   val jsonFields = Map("url" -> url)
 
   override def toMarkerMap: Map[String, Any] = jsonFields
+
+  override def id: String = s"$vendor-$account"
 }

@@ -1,13 +1,13 @@
 package controllers
 
-import agent.Accounts
+import agent.{Accounts, CollectorAgentTrait, IndexedItem, ObjectStoreCollectorAgent}
 import akka.actor.ActorSystem
 import collectors._
 import conf.PrismConfiguration
 import utils.{CollectorAgent, SourceStatusAgent, StopWatch}
 
 // TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
-class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
+class Prism(prismConfiguration: PrismConfiguration, lambdaS3Agent: ObjectStoreCollectorAgent[Lambda])(actorSystem: ActorSystem) {
   val prismRunTimeStopWatch = new StopWatch()
   val sourceStatusAgent = new SourceStatusAgent(actorSystem, prismRunTimeStopWatch)
   val accounts = new Accounts(prismConfiguration)
@@ -16,7 +16,7 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
 
   // TODO: Maybe we should refactor this to not require a circular reference / pass in this
   val instanceAgent = new CollectorAgent[Instance](new InstanceCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
-  val lambdaAgent = new CollectorAgent[Lambda](new LambdaCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
+  val lambdaAgent = lambdaS3Agent // new CollectorAgent[Lambda](new LambdaCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
   val dataAgent = new CollectorAgent[Data](new DataCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
 
   val securityGroupAgent = new CollectorAgent[SecurityGroup](new SecurityGroupCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
@@ -37,7 +37,9 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
   // To re-enable this functionality, add cloudformationStackAgent to allAgents.
   val cloudformationStackAgent = new CollectorAgent[CloudformationStack](new CloudformationStackCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
 
-  val allAgents = Seq(instanceAgent, lambdaAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
+  val allInternalAgents: Seq[CollectorAgent[_ <: IndexedItem]] = Seq(instanceAgent, dataAgent, securityGroupAgent, imageAgent, launchConfigurationAgent,
     serverCertificateAgent, acmCertificateAgent, route53ZoneAgent, elbAgent, bucketAgent, reservationAgent, rdsAgent,
     vpcAgent)
+
+  val allAgents: Seq[CollectorAgentTrait[_ <: IndexedItem]] = allInternalAgents ++ Seq(lambdaS3Agent)
 }

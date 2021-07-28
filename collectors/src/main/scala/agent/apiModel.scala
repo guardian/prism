@@ -8,12 +8,15 @@ import jsonimplicits.Joda._
 object ApiOrigin {
   private val writes = new OWrites[ApiOrigin] {
     override def writes(o: ApiOrigin): JsObject = Json.obj(
+      "id" -> o.id,
       "vendor" -> o.vendor,
-      "accountName" -> o.accountName
+      "accountName" -> o.accountName,
+      "filterMap" -> o.filterMap
     ) ++ o.fields
   }
   private val reads: Reads[ApiOrigin] =
     (
+      (JsPath \ "id").read[String] and
       (JsPath \ "vendor").read[String] and
       (JsPath \ "accountName").read[String] and
       (JsPath \ "filterMap").read[Map[String, String]] and
@@ -25,6 +28,7 @@ object ApiOrigin {
 
   def fromOrigin(origin: Origin): ApiOrigin = {
     ApiOrigin(
+      origin.id,
       origin.vendor,
       origin.account,
       origin.filterMap,
@@ -33,7 +37,7 @@ object ApiOrigin {
   }
 }
 
-case class ApiOrigin(vendor: String, accountName: String, filterMap: Map[String, String], fields: JsObject)
+case class ApiOrigin(id: String, vendor: String, accountName: String, filterMap: Map[String, String], fields: JsObject)
 
 object ApiLabel {
   implicit def format: OFormat[ApiLabel] = Json.format[ApiLabel]

@@ -126,6 +126,7 @@ object ApiResult extends Logging {
     val sourceLabel:ApiLabel = ApiLabel(
       noSourceContainer.name,
       ApiOrigin(
+        id = "nosource",
         vendor = "unknown",
         accountName = "unknown",
         Map.empty,

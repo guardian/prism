@@ -38,6 +38,10 @@ class PrismConfiguration(configuration: Config) extends Logging {
     }
   }
 
+  object collectionStore {
+    lazy val bucketName: String = configuration.getString("collectionStore.bucketName")
+  }
+
   object accounts {
     lazy val lazyStartup: Boolean = configuration.getOptionalString("accounts.lazyStartup").exists("true" ==)
 

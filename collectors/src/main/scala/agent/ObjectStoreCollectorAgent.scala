@@ -27,6 +27,10 @@ class ObjectStoreCollectorAgent[T<:IndexedItem](s3Client: S3Client, bucket: Stri
     }
   }
 
+  def put(datum: Datum[T]): Unit = {
+
+  }
+
   override def init(): Unit = {
   }
 

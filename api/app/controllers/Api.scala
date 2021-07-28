@@ -38,9 +38,9 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
         }
       }
 
-    def summaryFromTwo[T<:IndexedItem, U<:IndexedItem](sourceTAgent: CollectorAgent[T],
+    def summaryFromTwo[T<:IndexedItem, U<:IndexedItem](sourceTAgent: CollectorAgentTrait[T],
                                                        transformT: T => Iterable[JsValue],
-                                                       sourceUAgent: CollectorAgent[U],
+                                                       sourceUAgent: CollectorAgentTrait[U],
                                                        transformU: U => Iterable[JsValue],
                                                        key: String,
                                                        enableFilter: Boolean = false
@@ -299,7 +299,7 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
 object Api extends Status {
   import jsonimplicits.model._
 
-  def singleItem[T<:IndexedItem](agent:CollectorAgent[T], arn:String)
+  def singleItem[T<:IndexedItem](agent:CollectorAgentTrait[T], arn:String)
                                 (implicit request: RequestHeader, writes: Writes[T], executionContext: ExecutionContext): Future[Result] =
     ApiResult.filter {
       val sources = agent.get()
