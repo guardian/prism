@@ -28,11 +28,21 @@ class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
     Try {
       val iamClient = IamClient.builder
         .credentialsProvider(awsOrigin.credentials.provider)
-        .region(AWS.connectionRegion)
+        .region(Region.AWS_GLOBAL)
         .build
 
       val ArnIamAccountExtractor(derivedAccountNumber) = iamClient.getUser.user.arn
       awsOrigin.copy(accountNumber = Some(derivedAccountNumber))
+    } recoverWith {
+      case NonFatal(_) => Try {
+        val stsClient = StsClient.builder
+          .credentialsProvider(awsOrigin.credentials.provider)
+          .region(Region.AWS_GLOBAL)
+          .build
+
+        val accountNumber = stsClient.getCallerIdentity.account
+        awsOrigin.copy(accountNumber = Some(accountNumber))
+      }
     } recover {
       case NonFatal(e) =>
         if (awsOrigin.accountNumber.isDefined) awsOrigin else {
