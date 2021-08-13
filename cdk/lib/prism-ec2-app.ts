@@ -50,6 +50,10 @@ export class PrismEc2App extends GuStack {
           new GuGetS3ObjectsPolicy(this, "DataPolicy", {
             bucketName: "prism-data",
           }),
+          new GuAllowPolicy(this, "DataCachePolicy", {
+            actions: ["s3:PutObject", "s3:DeleteObject"],
+            resources: [`arn:aws:s3:::prism-data/cache/${this.stack}/*`],
+          }),
           new GuAssumeRolePolicy(this, "CrawlerPolicy", {
             resources: ["arn:aws:iam::*:role/*Prism*", "arn:aws:iam::*:role/*prism*"],
           }),

@@ -323,6 +323,30 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::IAM::Policy",
     },
+    "DataCachePolicy6B8D1C88": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "s3:PutObject",
+                "s3:DeleteObject",
+              ],
+              "Effect": "Allow",
+              "Resource": "arn:aws:s3:::prism-data/cache/deploy/*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DataCachePolicy6B8D1C88",
+        "Roles": Array [
+          Object {
+            "Ref": "InstanceRolePrism96D154B7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "DataPolicyCE0B28AE": Object {
       "Properties": Object {
         "PolicyDocument": Object {
