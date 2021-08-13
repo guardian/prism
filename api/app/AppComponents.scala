@@ -1,4 +1,4 @@
-import agent.ObjectStoreCollectorAgent
+import agent.ObjectStoreAgent
 import collectors.Lambda
 import conf.PrismConfiguration
 import controllers._
@@ -10,7 +10,7 @@ import play.filters.gzip.GzipFilterComponents
 import router.Routes
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import utils.{Lifecycle, Logging, ScheduledAgent}
+import utils.{AWSCredentialProviders, Lifecycle, Logging, ScheduledAgent}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -28,12 +28,12 @@ class AppComponents(context: ApplicationLoader.Context)
 
   val prismConfig = new PrismConfiguration(configuration.underlying)
 
-  val s3Client = S3Client.builder.region(Region.EU_WEST_1).build
+  val s3Client = S3Client.builder
+    .credentialsProvider(AWSCredentialProviders.deployToolsCredentialsProviderChain)
+    .region(Region.EU_WEST_1)
+    .build
 
-  val s3LambdaCollectorAgent =
-    new ObjectStoreCollectorAgent[Lambda](s3Client, prismConfig.collectionStore.bucketName, "lambda/")(jsonimplicits.model.lambdaFormat)
-
-  val prismController = new Prism(prismConfig, s3LambdaCollectorAgent)(actorSystem)
+  val prismController = new Prism(prismConfig, s3Client)(actorSystem)
 
   /* Initialise agents */
   val lifecycleSingletons: mutable.Buffer[Lifecycle] = mutable.Buffer[Lifecycle]()

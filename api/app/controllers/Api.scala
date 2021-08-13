@@ -24,7 +24,7 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
         case _ => ""
       }
 
-    def summary[T<:IndexedItem](sourceAgent: CollectorAgent[T], transform: T => Iterable[JsValue], key: String, enableFilter: Boolean = false)(implicit ordering:Ordering[String]): Action[AnyContent] =
+    def summary[T<:IndexedItem](sourceAgent: CollectorAgentTrait[T], transform: T => Iterable[JsValue], key: String, enableFilter: Boolean = false)(implicit ordering:Ordering[String]): Action[AnyContent] =
       Action.async { implicit request =>
         ApiResult.filter[JsValue] {
           sourceAgent.get().map { datum => datum.label -> datum.data.flatMap(transform)}.toMap

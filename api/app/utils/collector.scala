@@ -41,7 +41,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 
   override def toMarkerMap: Map[String, Any] = Map("records" -> size, "durationType" -> "crawl")
 
-  def update(collector: Collector[T], previous:Datum[T]):Datum[T] = {
+  def update(collector: Collector[T], previous:Datum[T]):Option[Datum[T]] = {
     val s = new StopWatch
     val datum = Datum[T](collector)
     val timeSpent = s.elapsed
@@ -51,7 +51,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
         val marker = Markers.appendEntries((
           origin.toMarkerMap ++ l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         log.info(marker, s"Crawl of ${product.name} from $origin successful (${timeSpent}ms): $size records, ${l.bestBefore}")
-        datum
+        Some(datum)
       case l@Label(product, origin, _, _, Some(error)) =>
         val marker = Markers.appendEntries((l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         previous.label match {
@@ -62,7 +62,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
           case notYetStale if !notYetStale.bestBefore.isStale =>
             log.warn(marker, s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)
         }
-        previous
+        None
     }
   }
 
@@ -75,7 +75,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
         sourceStatusAgent.update(startupData.label)
         startupData
       } else {
-        val startupData = update(collector, Datum.empty[T](collector))
+        val startupData = update(collector, Datum.empty[T](collector)).getOrElse(Datum.empty[T](collector))
         assert(!startupData.label.isError, s"Error occurred collecting data when lazy startup is disabled: ${startupData.label}")
         startupData
       }
@@ -85,7 +85,7 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
       val agent: Option[ScheduledAgent[Datum[T]]] = Some(collector.crawlRate.refreshPeriod).collect {
         case fd: FiniteDuration =>
           ScheduledAgent[Datum[T]](randomDelay seconds, fd, initial){ previous =>
-            update(collector, previous)
+            update(collector, previous).getOrElse(previous)
           }
       }
       if (agent.isEmpty) {
@@ -103,17 +103,21 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
   }
 }
 
-class ObjectCollectorAgent[T<:IndexedItem](collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent,
-  lazyStartup:Boolean, s3Client: S3Client, bucket: String, prefix: String)(actorSystem: ActorSystem)(implicit formats: OFormat[T])
+class CollectorAgentWithObjectStorePersistance[T<:IndexedItem](collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent,
+  lazyStartup:Boolean, s3Client: S3Client, bucket: String)(actorSystem: ActorSystem)(implicit formats: OFormat[T])
   extends CollectorAgent[T](collectorSet, sourceStatusAgent, lazyStartup)(actorSystem) {
-  override def update(collector: Collector[T], previous: Datum[T]): Datum[T] = {
+  override def update(collector: Collector[T], previous: Datum[T]): Option[Datum[T]] = {
     val datum = super.update(collector, previous)
-    val apiDatum = ApiDatum.fromDatum(datum)
-    val byteBuffer = ObjectStoreSerialisation.serialise(apiDatum)
-    val key: String = s"$prefix/${apiDatum.label.origin.id}.json"
-    val request = PutObjectRequest.builder.bucket(bucket).key(key).contentType("application/json").build
-    s3Client.putObject(request, RequestBody.fromByteBuffer(byteBuffer))
-    datum
+    datum.foreach { d =>
+      val apiDatum = ApiDatum.fromDatum(d)
+      val byteBuffer = ObjectStoreSerialisation.serialise(apiDatum)
+      val key: String = s"${collectorSet.resource.name}/${apiDatum.label.origin.id}.json"
+      log.info(s"Persisting ${apiDatum.label.itemCount} ${apiDatum.label.resource} items from ${apiDatum.label.origin.id} to $key")
+      val request = PutObjectRequest.builder.bucket(bucket).key(key).contentType("application/json").build
+      s3Client.putObject(request, RequestBody.fromByteBuffer(byteBuffer))
+    }
+    // don't store data in the agent as it won't be used
+    datum.map(_.copy(data=Nil))
   }
 }
 

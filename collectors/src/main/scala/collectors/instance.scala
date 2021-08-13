@@ -77,11 +77,11 @@ object Instance {
 
     apply(
       arn = arn,
-      name = addresses.primary.dnsName,
+      name = Option(addresses.primary.dnsName),
       vendorState = vendorState,
       group = group,
-      dnsName = addresses.primary.dnsName,
-      ip = addresses.primary.ip,
+      dnsName = Option(addresses.primary.dnsName),
+      ip = Option(addresses.primary.ip),
       addresses = addresses.mapOfAddresses,
       createdAt = createdAt,
       instanceName = instanceName,
@@ -153,11 +153,11 @@ case class InstanceSpecification(imageId:String, imageArn:String, instanceType:S
 
 case class Instance(
                  arn: String,
-                 name: String,
+                 name: Option[String],
                  vendorState: Option[String],
                  group: String,
-                 dnsName: String,
-                 ip: String,
+                 dnsName: Option[String],
+                 ip: Option[String],
                  addresses: Map[String,Address],
                  createdAt: Instant,
                  instanceName: String,
@@ -177,7 +177,7 @@ case class Instance(
                 ) extends IndexedItemWithCoreTags {
 
 //  def callFromArn: String => Call = arn => routes.Api.instance(arn)
-  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
+  override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ dnsName.map("dnsName" -> _) ++ stage.map("stage" ->)
 
   def +(other:Instance):Instance = {
     this.copy(

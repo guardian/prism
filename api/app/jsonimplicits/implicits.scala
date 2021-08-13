@@ -30,12 +30,12 @@ object model {
   implicit val securityGroupRuleWriter: Writes[Rule] = Json.writes[Rule]
   implicit val securityGroupWriter: Writes[SecurityGroup] = Json.writes[SecurityGroup]
 
-  implicit val instanceRequestWriter: Writes[Instance] = {
-    implicit val addressWriter: Writes[Address] = Json.writes[Address]
-    implicit val instanceSpecificationWriter: Writes[InstanceSpecification] = Json.writes[InstanceSpecification]
-    implicit val managementEndpointWriter: Writes[ManagementEndpoint] = Json.writes[ManagementEndpoint]
+  implicit val instanceRequestWriter: OFormat[Instance] = {
+    implicit val addressWriter: OFormat[Address] = Json.format[Address]
+    implicit val instanceSpecificationWriter: OFormat[InstanceSpecification] = Json.format[InstanceSpecification]
+    implicit val managementEndpointWriter: OFormat[ManagementEndpoint] = Json.format[ManagementEndpoint]
 
-    Json.writes[Instance]
+    Json.format[Instance]
   }
   implicit val valueWriter: Writes[Value] = Json.writes[Value]
   implicit val dataWriter: Writes[Data] = Json.writes[Data]
@@ -44,7 +44,7 @@ object model {
   implicit val launchConfigurationWriter: Writes[LaunchConfiguration] = Json.writes[LaunchConfiguration]
   implicit val serverCertificateWriter: Writes[ServerCertificate] = Json.writes[ServerCertificate]
   implicit val bucketWriter: Writes[Bucket] = Json.writes[Bucket]
-  implicit val lambdaFormat: Format[Lambda] = Json.format[Lambda]
+  implicit val lambdaFormat: OFormat[Lambda] = Json.format[Lambda]
   implicit val reservationWriter: Writes[Reservation] = {
     implicit val recurringCharge: Writes[RecurringCharge] = Json.writes[RecurringCharge]
     Json.writes[Reservation]
