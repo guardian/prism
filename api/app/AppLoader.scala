@@ -50,7 +50,7 @@ class AppLoader extends ApplicationLoader with Logging {
     val contextWithConfig = context.copy(initialConfiguration = combinedConfig)
 
     try {
-      new AppComponents(contextWithConfig).application
+      new AppComponents(contextWithConfig, identity).application
     } catch {
       case t: Throwable =>
         log.error("Unable to initialise prism", t)

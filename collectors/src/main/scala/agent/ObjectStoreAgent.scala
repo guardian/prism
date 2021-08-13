@@ -7,14 +7,14 @@ import utils.{Logging, ObjectStoreSerialisation}
 
 import scala.jdk.CollectionConverters._
 
-class ObjectStoreAgent[T<:IndexedItem](collectorSet: CollectorSet[T], s3Client: S3Client, bucket: String)(implicit tFormat: Format[T])
+class ObjectStoreAgent[T<:IndexedItem](collectorSet: CollectorSet[T], s3Client: S3Client, bucket: String, stage: String)(implicit tFormat: Format[T])
   extends CollectorAgentTrait[T] with Logging {
 
   private val resourceName: String = collectorSet.resource.name
 
   private val listObjectsRequest = ListObjectsV2Request.builder
     .bucket(bucket)
-    .prefix(s"$resourceName/")
+    .prefix(s"cache/$stage/$resourceName/")
     .build
 
   /* todo: put a very short cache around all of this (1-2 seconds???) to provide a

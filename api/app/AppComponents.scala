@@ -1,6 +1,6 @@
 import agent.ObjectStoreAgent
 import collectors.Lambda
-import conf.PrismConfiguration
+import conf.{Identity, PrismConfiguration}
 import controllers._
 import play.api.mvc.EssentialFilter
 import play.api.routing.Router
@@ -15,7 +15,7 @@ import utils.{AWSCredentialProviders, Lifecycle, Logging, ScheduledAgent}
 import scala.collection.mutable
 import scala.concurrent.Future
 
-class AppComponents(context: ApplicationLoader.Context)
+class AppComponents(context: ApplicationLoader.Context, identity: Identity)
   extends BuiltInComponentsFromContext(context)
     with HttpFiltersComponents
     with GzipFilterComponents
@@ -33,7 +33,7 @@ class AppComponents(context: ApplicationLoader.Context)
     .region(Region.EU_WEST_1)
     .build
 
-  val prismController = new Prism(prismConfig, s3Client)(actorSystem)
+  val prismController = new Prism(prismConfig, s3Client, identity.stage)(actorSystem)
 
   /* Initialise agents */
   val lifecycleSingletons: mutable.Buffer[Lifecycle] = mutable.Buffer[Lifecycle]()

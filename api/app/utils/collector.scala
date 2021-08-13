@@ -104,14 +104,14 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
 }
 
 class CollectorAgentWithObjectStorePersistance[T<:IndexedItem](collectorSet: CollectorSet[T], sourceStatusAgent: SourceStatusAgent,
-  lazyStartup:Boolean, s3Client: S3Client, bucket: String)(actorSystem: ActorSystem)(implicit formats: OFormat[T])
+  lazyStartup:Boolean, s3Client: S3Client, bucket: String, stage: String)(actorSystem: ActorSystem)(implicit formats: OFormat[T])
   extends CollectorAgent[T](collectorSet, sourceStatusAgent, lazyStartup)(actorSystem) {
   override def update(collector: Collector[T], previous: Datum[T]): Option[Datum[T]] = {
     val datum = super.update(collector, previous)
     datum.foreach { d =>
       val apiDatum = ApiDatum.fromDatum(d)
       val byteBuffer = ObjectStoreSerialisation.serialise(apiDatum)
-      val key: String = s"${collectorSet.resource.name}/${apiDatum.label.origin.id}.json"
+      val key: String = s"cache/$stage/${collectorSet.resource.name}/${apiDatum.label.origin.id}.json"
       log.info(s"Persisting ${apiDatum.label.itemCount} ${apiDatum.label.resource} items from ${apiDatum.label.origin.id} to $key")
       val request = PutObjectRequest.builder.bucket(bucket).key(key).contentType("application/json").build
       s3Client.putObject(request, RequestBody.fromByteBuffer(byteBuffer))

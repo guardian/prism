@@ -9,7 +9,7 @@ import utils.{CollectorAgent, CollectorAgentWithObjectStorePersistance, SourceSt
 import jsonimplicits.model._
 
 // TODO: Maybe we should refactor this to be PrismAgents and to not be in the controllers package?
-class Prism(prismConfiguration: PrismConfiguration, s3Client: S3Client)(actorSystem: ActorSystem) {
+class Prism(prismConfiguration: PrismConfiguration, s3Client: S3Client, stage: String)(actorSystem: ActorSystem) {
   val prismRunTimeStopWatch = new StopWatch()
   val sourceStatusAgent = new SourceStatusAgent(actorSystem, prismRunTimeStopWatch)
   val accounts = new Accounts(prismConfiguration)
@@ -17,12 +17,12 @@ class Prism(prismConfiguration: PrismConfiguration, s3Client: S3Client)(actorSys
   val lazyStartup: Boolean = prismConfiguration.accounts.lazyStartup
 
   private val instanceCollectorSet = new InstanceCollectorSet(accounts)
-  val instanceAgent = new ObjectStoreAgent[Instance](instanceCollectorSet, s3Client, prismConfiguration.collectionStore.bucketName)
-  val instanceCollector = new CollectorAgentWithObjectStorePersistance[Instance](instanceCollectorSet, sourceStatusAgent, lazyStartup, s3Client, prismConfiguration.collectionStore.bucketName)(actorSystem)
+  val instanceAgent = new ObjectStoreAgent[Instance](instanceCollectorSet, s3Client, prismConfiguration.collectionStore.bucketName, stage)
+  val instanceCollector = new CollectorAgentWithObjectStorePersistance[Instance](instanceCollectorSet, sourceStatusAgent, lazyStartup, s3Client, prismConfiguration.collectionStore.bucketName, stage)(actorSystem)
 
   private val lambdaCollectorSet = new LambdaCollectorSet(accounts)
-  val lambdaAgent = new ObjectStoreAgent[Lambda](lambdaCollectorSet, s3Client, prismConfiguration.collectionStore.bucketName)
-  val lambdaCollector = new CollectorAgentWithObjectStorePersistance[Lambda](lambdaCollectorSet, sourceStatusAgent, lazyStartup, s3Client, prismConfiguration.collectionStore.bucketName)(actorSystem)
+  val lambdaAgent = new ObjectStoreAgent[Lambda](lambdaCollectorSet, s3Client, prismConfiguration.collectionStore.bucketName, stage)
+  val lambdaCollector = new CollectorAgentWithObjectStorePersistance[Lambda](lambdaCollectorSet, sourceStatusAgent, lazyStartup, s3Client, prismConfiguration.collectionStore.bucketName, stage)(actorSystem)
 
   val dataAgent = new CollectorAgent[Data](new DataCollectorSet(accounts), sourceStatusAgent, lazyStartup)(actorSystem)
 
