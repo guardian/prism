@@ -52,7 +52,11 @@ export class PrismEc2App extends GuStack {
           }),
           new GuAllowPolicy(this, "DataCachePolicy", {
             actions: ["s3:PutObject", "s3:DeleteObject"],
-            resources: [`arn:aws:s3:::prism-data/cache/${this.stack}/*`],
+            resources: [`arn:aws:s3:::prism-data/cache/${this.stage}/*`],
+          }),
+          new GuAllowPolicy(this, "DataCacheListPolicy", {
+            actions: ["s3:ListBucket"],
+            resources: [`arn:aws:s3:::prism-data`],
           }),
           new GuAssumeRolePolicy(this, "CrawlerPolicy", {
             resources: ["arn:aws:iam::*:role/*Prism*", "arn:aws:iam::*:role/*prism*"],

@@ -323,6 +323,27 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::IAM::Policy",
     },
+    "DataCacheListPolicy77FBCAB9": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "s3:ListBucket",
+              "Effect": "Allow",
+              "Resource": "arn:aws:s3:::prism-data",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DataCacheListPolicy77FBCAB9",
+        "Roles": Array [
+          Object {
+            "Ref": "InstanceRolePrism96D154B7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "DataCachePolicy6B8D1C88": Object {
       "Properties": Object {
         "PolicyDocument": Object {
@@ -333,7 +354,18 @@ dpkg -i /prism/prism.deb",
                 "s3:DeleteObject",
               ],
               "Effect": "Allow",
-              "Resource": "arn:aws:s3:::prism-data/cache/deploy/*",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:aws:s3:::prism-data/cache/",
+                    Object {
+                      "Ref": "Stage",
+                    },
+                    "/*",
+                  ],
+                ],
+              },
             },
           ],
           "Version": "2012-10-17",
