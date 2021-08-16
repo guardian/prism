@@ -40,6 +40,7 @@ lazy val collectors = (project in file("collectors"))
       "net.logstash.logback" % "logstash-logback-encoder" % "6.4" exclude("com.fasterxml.jackson.core", "jackson-databind"),
       "com.gu" % "kinesis-logback-appender" % "2.0.1",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.2",
+      "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.3"
     )
   )
 

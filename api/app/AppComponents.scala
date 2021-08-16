@@ -1,5 +1,3 @@
-import agent.ObjectStoreAgent
-import collectors.Lambda
 import conf.{Identity, PrismConfiguration}
 import controllers._
 import play.api.mvc.EssentialFilter
