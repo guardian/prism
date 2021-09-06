@@ -908,6 +908,12 @@ dpkg -i /prism/prism.deb",
             },
           },
         ],
+        "TargetGroupAttributes": Array [
+          Object {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30",
+          },
+        ],
         "TargetType": "instance",
         "UnhealthyThresholdCount": 10,
         "VpcId": Object {
