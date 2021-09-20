@@ -2,6 +2,11 @@
 
 set -e
 
+if [[ ! -z "${TEAMCITY_VERSION}" ]]; then
+  echo "Running in TeamCity. Nope!"
+  exit 0
+fi
+
 # build CDK first to ensure it is on disk for SBT to pick up
 (
   cd cdk
