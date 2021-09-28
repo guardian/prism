@@ -16,10 +16,15 @@ jobs:
       - uses: guardian/actions-assume-aws-role@v1.0.0
         with:
           awsRoleToAssume: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
-      - name: Use Node.js 14.15.5
-        uses: actions/setup-node@v2.4.0
+
+      # Node is needed for CDK
+      - name: Setup node
+        uses: guardian/actions-setup-node@v2.4.1
         with:
-          node-version: 14.15.5
+          cache: 'yarn'
+          cache-dependency-path: 'cdk/yarn.lock'
+
+      # Java is needed for the Scala Play app
       - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
