@@ -21,6 +21,8 @@ lazy val root = (project in file("."))
     fileDescriptorLimit := Some("16384"),
     maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
     topLevelDirectory in Universal := Some(normalizedName.value),
+    riffRaffPackageName := s"devx::${name.value}",
+    riffRaffManifestProjectName := riffRaffPackageName.value,
     riffRaffPackageType := (packageBin in Debian).value,
     riffRaffArtifactResources  := Seq(
       riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
