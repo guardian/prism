@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@aws-cdk/core": "1.120.0",
-    "@guardian/cdk": "24.0.0",
+    "@guardian/cdk": "26.2.1",
     "source-map-support": "^0.5.16"
   }
 }
