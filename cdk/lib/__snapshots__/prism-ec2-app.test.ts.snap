@@ -39,11 +39,6 @@ Object {
       "Description": "SSM parameter containing the S3 bucket name holding distribution artifacts",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
-    "InstanceTypePrism": Object {
-      "Default": "t3.small",
-      "Description": "EC2 Instance Type for the app prism",
-      "Type": "String",
-    },
     "LoggingStreamName": Object {
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
@@ -175,9 +170,7 @@ Object {
         "ImageId": Object {
           "Ref": "AMIPrism",
         },
-        "InstanceType": Object {
-          "Ref": "InstanceTypePrism",
-        },
+        "InstanceType": "t4g.medium",
         "SecurityGroups": Array [
           Object {
             "Fn::GetAtt": Array [
@@ -1061,10 +1054,6 @@ dpkg -i /prism/prism.deb",
           },
         ],
         "Tags": Array [
-          Object {
-            "Key": "App",
-            "Value": "prism",
-          },
           Object {
             "Key": "gu:cdk:version",
             "Value": "TEST",
