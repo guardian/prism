@@ -17,6 +17,14 @@ jobs:
         with:
           awsRoleToAssume: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
 
+      - name: Cache SBT
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
       # Node is needed for CDK
       - name: Setup node
         uses: guardian/actions-setup-node@v2.4.1
