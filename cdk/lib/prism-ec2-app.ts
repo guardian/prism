@@ -1,6 +1,6 @@
 import type { CfnAutoScalingGroup } from "@aws-cdk/aws-autoscaling";
 import { BlockDeviceVolume, EbsDeviceVolumeType } from "@aws-cdk/aws-autoscaling";
-import { Peer } from "@aws-cdk/aws-ec2";
+import { InstanceClass, InstanceSize, InstanceType, Peer } from "@aws-cdk/aws-ec2";
 import type { App } from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import { AccessScope, GuPlayApp } from "@guardian/cdk";
@@ -24,6 +24,7 @@ export class PrismEc2App extends GuStack {
 
     const pattern = new GuPlayApp(this, {
       ...PrismEc2App.app,
+      instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
       userData: {
         distributable: {
           fileName: "prism.deb",
