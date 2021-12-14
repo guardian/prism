@@ -4,7 +4,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion in ThisBuild := "2.13.3"
+ThisBuild / scalaVersion := "2.13.3"
 
 resolvers ++= Seq(
   "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
@@ -17,13 +17,13 @@ val awsVersionOne = "1.11.918"
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
   .settings(
-    packageName in Universal := normalizedName.value,
+    Universal / packageName := normalizedName.value,
     fileDescriptorLimit := Some("16384"),
     maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
-    topLevelDirectory in Universal := Some(normalizedName.value),
+    Universal / topLevelDirectory := Some(normalizedName.value),
     riffRaffPackageName := s"devx::${name.value}",
     riffRaffManifestProjectName := riffRaffPackageName.value,
-    riffRaffPackageType := (packageBin in Debian).value,
+    riffRaffPackageType := (Debian / packageBin).value,
     riffRaffArtifactResources  := Seq(
       riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
       baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml",
@@ -77,10 +77,10 @@ lazy val root = (project in file("."))
       "-Xfatal-warnings",
       "-Xcheckinit"
     ),
-    scalacOptions in Test ++= Seq("-Yrangepos")
+    Test / scalacOptions ++= Seq("-Yrangepos")
   )
 
-javaOptions in Universal ++= Seq(
+Universal / javaOptions ++= Seq(
   "-Dpidfile.path=/dev/null",
   "-J-XX:MaxRAMPercentage=60",
   "-J-XX:InitialRAMPercentage=60",
