@@ -68,6 +68,9 @@ export class PrismEc2App extends GuStack {
           }),
         },
       ],
+      accessLogging: {
+        enabled: true,
+      },
     });
 
     // The pattern does not currently offer support for customising healthchecks via props
