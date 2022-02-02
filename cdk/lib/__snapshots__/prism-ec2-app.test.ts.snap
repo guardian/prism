@@ -3,7 +3,7 @@
 exports[`The PrismEc2App stack matches the snapshot 1`] = `
 Object {
   "Mappings": Object {
-    "stagemapping": Object {
+    "prism": Object {
       "CODE": Object {
         "alarmActionsEnabled": false,
         "domainName": "prism.code.dev-gutools.co.uk",
@@ -74,7 +74,7 @@ Object {
         },
         "MaxSize": Object {
           "Fn::FindInMap": Array [
-            "stagemapping",
+            "prism",
             Object {
               "Ref": "Stage",
             },
@@ -83,7 +83,7 @@ Object {
         },
         "MinSize": Object {
           "Fn::FindInMap": Array [
-            "stagemapping",
+            "prism",
             Object {
               "Ref": "Stage",
             },
@@ -214,7 +214,7 @@ dpkg -i /prism/prism.deb",
       "Properties": Object {
         "DomainName": Object {
           "Fn::FindInMap": Array [
-            "stagemapping",
+            "prism",
             Object {
               "Ref": "Stage",
             },
@@ -906,6 +906,10 @@ dpkg -i /prism/prism.deb",
             "Key": "deregistration_delay.timeout_seconds",
             "Value": "30",
           },
+          Object {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
         ],
         "TargetType": "instance",
         "UnhealthyThresholdCount": 10,
@@ -919,7 +923,7 @@ dpkg -i /prism/prism.deb",
       "Properties": Object {
         "ActionsEnabled": Object {
           "Fn::FindInMap": Array [
-            "stagemapping",
+            "prism",
             Object {
               "Ref": "Stage",
             },
@@ -944,7 +948,7 @@ dpkg -i /prism/prism.deb",
             ],
           },
         ],
-        "AlarmDescription": "prism's instances have failed healthchecks several times over the last hour.
+        "AlarmDescription": "prism's instances have failed healthchecks several times over the last 1 hour.
       This typically results in the AutoScaling Group cycling instances and can lead to problems with deployment,
       scaling or handling traffic spikes.
 
