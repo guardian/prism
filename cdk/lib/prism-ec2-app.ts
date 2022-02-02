@@ -20,7 +20,13 @@ export class PrismEc2App extends GuStack {
   };
 
   constructor(scope: App, id: string, props: GuStackProps) {
-    super(scope, id, props);
+    super(scope, id, {
+      ...props,
+      env: {
+        // region is required to enable access logging at the load balancer
+        region: "eu-west-1",
+      },
+    });
 
     const pattern = new GuPlayApp(this, {
       ...PrismEc2App.app,
@@ -70,6 +76,7 @@ export class PrismEc2App extends GuStack {
       ],
       accessLogging: {
         enabled: true,
+        prefix: PrismEc2App.app.app,
       },
     });
 
