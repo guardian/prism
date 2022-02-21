@@ -66,4 +66,4 @@ A typical Prism response includes the following top level fields:
 
 Using prism from the command line
 ------------------------------
-There is a [ruby gem](./marauder/README.md) that allows you to query the api from the command line.
+There is a [ruby gem](./marauder/README.md) that allows you to query the api from the command line. 
