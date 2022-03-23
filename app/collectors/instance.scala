@@ -185,6 +185,8 @@ case class Instance(
                  specification:Option[InstanceSpecification]
                 ) extends IndexedItemWithCoreTags {
 
+  override val awsRuntime: String = "EC2"
+
   def callFromArn: String => Call = arn => routes.Api.instance(arn)
   override lazy val fieldIndex: Map[String, String] = super.fieldIndex ++ Map("dnsName" -> dnsName) ++ stage.map("stage" ->)
 

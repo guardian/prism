@@ -3,6 +3,7 @@ package controllers
 import agent._
 import collectors._
 import conf.PrismConfiguration
+import data.Owners
 import play.api.http.Status
 import play.api.libs.json.Json._
 import play.api.libs.json._
@@ -259,7 +260,9 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
           "stack" -> i.stack.getOrElse("unknown"),
           "stage" -> i.stage.getOrElse("unknown"),
           "guCdkVersion" -> i.guCdkVersion.getOrElse("n/a"),
-          "guCdkPatternName" -> i.guCdkPatternName.getOrElse("unknown")
+          "guCdkPatternName" -> i.guCdkPatternName.getOrElse("unknown"),
+          "awsRuntime" -> i.awsRuntime,
+          "stackOwner" -> Owners.forStack(i.stack.getOrElse("unknown"), i.stage, Some(app)).id
         )
       )
     }

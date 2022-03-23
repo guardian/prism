@@ -24,7 +24,9 @@ trait IndexedItemWithCoreTags extends
   IndexedItemWithGuCdkVersion with
   IndexedItemWithStage with
   IndexedItemWithStack with
-  IndexedItemWithPatternName
+  IndexedItemWithPatternName {
+  val awsRuntime: String
+}
 
 trait IndexedItemWithApp extends IndexedItem {
   val app: List[String] = Nil

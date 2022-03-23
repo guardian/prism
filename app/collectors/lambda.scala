@@ -93,5 +93,6 @@ case class Lambda(
   override val stage: Option[String],
   override val stack: Option[String]
 ) extends IndexedItemWithCoreTags {
+  override val awsRuntime: String = "Lambda"
   override def callFromArn: (String) => Call = arn => routes.Api.instance(arn)
 }
