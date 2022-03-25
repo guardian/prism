@@ -74,6 +74,7 @@ object Owners extends Owners {
     "data.technology" -> SSA(stack = "ophan-data-lake"),
     "reader.revenue.dev" -> SSA(stack = "membership"),
     "reader.revenue.dev" -> SSA(stack = "subscriptions"),
-    "reader.revenue.dev" -> SSA(stack = "support")
+    "reader.revenue.dev" -> SSA(stack = "support"),
+    "newsletters.dev" -> SSA("newsletters")
   )
 }
