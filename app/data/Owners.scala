@@ -86,6 +86,6 @@ object Owners extends Owners {
     "reader.revenue.dev" -> SSA(stack = "support"),
     "newsletters.dev" -> SSA(stack = "newsletters"),
     "multimediatech" -> SSA(stack = "multimedia"),
-    "targeting" -> SSA(stack = "targeted.experiences.core")
+    "targeted.experiences.core" -> SSA(stack = "targeting")
   )
 }
