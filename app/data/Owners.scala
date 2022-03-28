@@ -27,22 +27,26 @@ trait Owners {
 
 object Owners extends Owners {
 
-  override def default: Owner = Owner("dig.dev.tooling")
+  override def default: Owner = Owner("devx.sec.ops")
 
   override def stacks: Set[(String, SSA)] = Set(
-    "security.dev" -> SSA("security"),
+    "devx.sec.ops" -> SSA("security"),
+    "devx.sec.ops" -> SSA("deploy"),
+    "dotcom.platform" -> SSA(stack = "abacus"),
+    "dotcom.platform" -> SSA("domains"),
     "dotcom.platform" -> SSA("frontend"),
     "dotcom.platform" -> SSA("frontend-elk"),
     "identitydev" -> SSA(stack = "discussion"),
-    "dotcom.platform" -> SSA(stack = "abacus"),
     "identitydev" -> SSA(stack = "identity"),
-    "dig.dev.tooling" -> SSA("deploy"),
-    "dig.dev.tooling" -> SSA("domains"),
+    "digitalcms.dev" -> SSA("crosswords"),
     "digitalcms.dev" -> SSA("flexible"),
     "digitalcms.dev" -> SSA("flexible-secondary"),
     "digitalcms.dev" -> SSA("workflow"),
     "digitalcms.dev" -> SSA("cms-fronts"),
     "digitalcms.dev" -> SSA("elk-new"),
+    "digitalcms.dev" -> SSA("grid-elasticsearch"),
+    "digitalcms.dev" -> SSA("composer"),
+    "digital.investigations" -> SSA("pfi"),
     "digital.investigations" -> SSA("pfi-giant"),
     "digital.investigations" -> SSA("pfi-playground"),
     "digital.investigations" -> SSA("pfi-structured"),
@@ -54,19 +58,24 @@ object Owners extends Owners {
     "content.platforms" -> SSA(stack = "content-api-crier-v2-preview"),
     "content.platforms" -> SSA(stack = "content-api-dashboard"),
     "content.platforms" -> SSA(stack = "content-api-facebook-news-bot"),
+    "content.platforms" -> SSA(stack = "content-api-facebook-newstab"),
+    "content.platforms" -> SSA(stack = "content-api-fastly-cache-purger"),
+    "content.platforms" -> SSA(stack = "content-api-floodgate"),
     "content.platforms" -> SSA(stack = "content-api-logging"),
     "content.platforms" -> SSA(stack = "content-api-okr-weekly"),
+    "content.platforms" -> SSA(stack = "content-api-podcasts-analytics"),
     "content.platforms" -> SSA(stack = "content-api-preview"),
     "content.platforms" -> SSA(stack = "content-api-recipeasy"),
     "content.platforms" -> SSA(stack = "content-api-sanity-tests"),
     "content.platforms" -> SSA(stack = "pubflow"),
     "content.platforms" -> SSA(stack = "pubflow-preview"),
+    "mobile.server.side" -> SSA(stack = "content-api-mobile-notifications"),
     "mobile.server.side" -> SSA(stack = "mobile"),
     "mobile.server.side" -> SSA(stack = "mobile-notifications"),
     "mobile.server.side" -> SSA(stack = "mobile-preview"),
     "mobile.server.side" -> SSA(stack = "mobile-purchases"),
     "infosec.ops" -> SSA(stack = "infosec"),
-    "infosec.ops" -> SSA(stack = "nessus"),
+    "infosec.ops" -> SSA(stack = "infosec-nessus"),
     "infosec.ops" -> SSA(stack = "secure-contact"),
     "infosec.ops" -> SSA(stack = "infosec-hive"),
     "infosec.ops" -> SSA(stack = "wazuh"),
@@ -75,6 +84,8 @@ object Owners extends Owners {
     "reader.revenue.dev" -> SSA(stack = "membership"),
     "reader.revenue.dev" -> SSA(stack = "subscriptions"),
     "reader.revenue.dev" -> SSA(stack = "support"),
-    "newsletters.dev" -> SSA(stack = "newsletters")
+    "newsletters.dev" -> SSA(stack = "newsletters"),
+    "multimediatech" -> SSA(stack = "multimedia"),
+    "targeting" -> SSA(stack = "targeted.experiences.core")
   )
 }
