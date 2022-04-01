@@ -27,7 +27,7 @@ trait Owners {
 
 object Owners extends Owners {
 
-  override def default: Owner = Owner("devx.sec.ops")
+  override def default: Owner = Owner("devx.sec.ops+unowned")
 
   override def stacks: Set[(String, SSA)] = Set(
     "devx.sec.ops" -> SSA("security"),
