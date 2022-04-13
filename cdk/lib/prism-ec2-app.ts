@@ -1,9 +1,5 @@
-import type { CfnAutoScalingGroup } from "@aws-cdk/aws-autoscaling";
-import { BlockDeviceVolume, EbsDeviceVolumeType } from "@aws-cdk/aws-autoscaling";
-import { InstanceClass, InstanceSize, InstanceType, Peer } from "@aws-cdk/aws-ec2";
-import type { App } from "@aws-cdk/core";
-import { Duration } from "@aws-cdk/core";
-import { AccessScope, GuPlayApp } from "@guardian/cdk";
+import { GuPlayApp } from "@guardian/cdk";
+import { AccessScope } from "@guardian/cdk/lib/constants";
 import type { AppIdentity } from "@guardian/cdk/lib/constructs/core/identity";
 import type { GuStackProps } from "@guardian/cdk/lib/constructs/core/stack";
 import { GuStack } from "@guardian/cdk/lib/constructs/core/stack";
@@ -13,14 +9,24 @@ import {
   GuDynamoDBReadPolicy,
   GuGetS3ObjectsPolicy,
 } from "@guardian/cdk/lib/constructs/iam";
+import type { App } from "aws-cdk-lib";
+import { Duration } from "aws-cdk-lib";
+import type { CfnAutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+import { BlockDeviceVolume, EbsDeviceVolumeType } from "aws-cdk-lib/aws-autoscaling";
+import { InstanceClass, InstanceSize, InstanceType, Peer } from "aws-cdk-lib/aws-ec2";
+
+interface PrismEc2AppProps extends Omit<GuStackProps, "description" | "stack"> {
+  domainName: string;
+  minimumInstances: number;
+}
 
 export class PrismEc2App extends GuStack {
   private static app: AppIdentity = {
     app: "prism",
   };
 
-  constructor(scope: App, id: string, props: GuStackProps) {
-    super(scope, id, props);
+  constructor(scope: App, id: string, props: PrismEc2AppProps) {
+    super(scope, id, { ...props, description: "Prism - service discovery", stack: "deploy" });
 
     const pattern = new GuPlayApp(this, {
       ...PrismEc2App.app,
@@ -32,14 +38,16 @@ export class PrismEc2App extends GuStack {
         },
       },
       certificateProps: {
-        CODE: { domainName: "prism.code.dev-gutools.co.uk" },
-        PROD: { domainName: "prism.gutools.co.uk" },
+        domainName: props.domainName,
       },
-      monitoringConfiguration: {
-        snsTopicName: "devx-alerts",
-        http5xxAlarm: false,
-        unhealthyInstancesAlarm: true,
-      },
+      monitoringConfiguration:
+        this.stage === "PROD"
+          ? {
+              snsTopicName: "devx-alerts",
+              http5xxAlarm: false,
+              unhealthyInstancesAlarm: true,
+            }
+          : { noMonitoring: true },
       access: { scope: AccessScope.INTERNAL, cidrRanges: [Peer.ipv4("10.0.0.0/8")] },
       roleConfiguration: {
         additionalPolicies: [
@@ -57,8 +65,7 @@ export class PrismEc2App extends GuStack {
         ],
       },
       scaling: {
-        CODE: { minimumInstances: 1 },
-        PROD: { minimumInstances: 2 },
+        minimumInstances: props.minimumInstances,
       },
       blockDevices: [
         {

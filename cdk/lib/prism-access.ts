@@ -1,18 +1,22 @@
-import { ArnPrincipal, Effect, Policy, PolicyStatement } from "@aws-cdk/aws-iam";
-import type { App } from "@aws-cdk/core";
-import { CfnOutput } from "@aws-cdk/core";
-import type { GuStackProps } from "@guardian/cdk/lib/constructs/core";
 import { GuArnParameter, GuStack } from "@guardian/cdk/lib/constructs/core";
 import { AppIdentity } from "@guardian/cdk/lib/constructs/core/identity";
 import { GuRole } from "@guardian/cdk/lib/constructs/iam";
+import { CfnOutput } from "aws-cdk-lib";
+import type { App } from "aws-cdk-lib";
+import { ArnPrincipal, Effect, Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 export class PrismAccess extends GuStack {
   private static app: AppIdentity = {
     app: "prism",
   };
 
-  constructor(scope: App, id: string, props: GuStackProps) {
-    super(scope, id, props);
+  constructor(scope: App, id: string) {
+    super(scope, id, {
+      description: "CloudFormation template to create the prism role.",
+      stack: "deploy",
+      stage: "INFRA", // singleton stack
+      migratedFromCloudFormation: true,
+    });
 
     /*
     Looks like some @guardian/cdk constructs are not applying the App tag.

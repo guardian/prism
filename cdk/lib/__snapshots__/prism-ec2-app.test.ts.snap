@@ -2,22 +2,7 @@
 
 exports[`The PrismEc2App stack matches the snapshot 1`] = `
 Object {
-  "Mappings": Object {
-    "prism": Object {
-      "CODE": Object {
-        "alarmActionsEnabled": false,
-        "domainName": "prism.code.dev-gutools.co.uk",
-        "maxInstances": 2,
-        "minInstances": 1,
-      },
-      "PROD": Object {
-        "alarmActionsEnabled": true,
-        "domainName": "prism.gutools.co.uk",
-        "maxInstances": 4,
-        "minInstances": 2,
-      },
-    },
-  },
+  "Description": "Prism - service discovery",
   "Outputs": Object {
     "LoadBalancerPrismDnsName": Object {
       "Description": "DNS entry for LoadBalancerPrism",
@@ -44,18 +29,9 @@ Object {
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
-    "Stage": Object {
-      "AllowedValues": Array [
-        "CODE",
-        "PROD",
-      ],
-      "Default": "CODE",
-      "Description": "Stage name",
-      "Type": "String",
-    },
     "VpcId": Object {
       "Default": "/account/vpc/primary/id",
-      "Description": "Virtual Private Cloud to run EC2 instances within",
+      "Description": "Virtual Private Cloud to run EC2 instances within. Should NOT be the account default VPC.",
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::VPC::Id>",
     },
     "prismPrivateSubnets": Object {
@@ -72,24 +48,8 @@ Object {
         "LaunchConfigurationName": Object {
           "Ref": "AutoScalingGroupPrismLaunchConfig969400AD",
         },
-        "MaxSize": Object {
-          "Fn::FindInMap": Array [
-            "prism",
-            Object {
-              "Ref": "Stage",
-            },
-            "maxInstances",
-          ],
-        },
-        "MinSize": Object {
-          "Fn::FindInMap": Array [
-            "prism",
-            Object {
-              "Ref": "Stage",
-            },
-            "minInstances",
-          ],
-        },
+        "MaxSize": "4",
+        "MinSize": "2",
         "Tags": Array [
           Object {
             "Key": "App",
@@ -124,9 +84,7 @@ Object {
           Object {
             "Key": "Stage",
             "PropagateAtLaunch": true,
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "TargetGroupARNs": Array [
@@ -171,6 +129,9 @@ Object {
           "Ref": "AMIPrism",
         },
         "InstanceType": "t4g.medium",
+        "MetadataOptions": Object {
+          "HttpTokens": "required",
+        },
         "SecurityGroups": Array [
           Object {
             "Fn::GetAtt": Array [
@@ -196,11 +157,7 @@ aws s3 cp 's3://",
                 Object {
                   "Ref": "DistributionBucketName",
                 },
-                "/deploy/",
-                Object {
-                  "Ref": "Stage",
-                },
-                "/prism/prism.deb' '/prism/prism.deb'
+                "/deploy/PROD/prism/prism.deb' '/prism/prism.deb'
 dpkg -i /prism/prism.deb",
               ],
             ],
@@ -212,15 +169,7 @@ dpkg -i /prism/prism.deb",
     "CertificatePrism0841D21D": Object {
       "DeletionPolicy": "Retain",
       "Properties": Object {
-        "DomainName": Object {
-          "Fn::FindInMap": Array [
-            "prism",
-            Object {
-              "Ref": "Stage",
-            },
-            "domainName",
-          ],
-        },
+        "DomainName": "prism.gutools.co.uk",
         "Tags": Array [
           Object {
             "Key": "App",
@@ -240,9 +189,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "ValidationMethod": "DNS",
@@ -399,11 +346,7 @@ dpkg -i /prism/prism.deb",
                     Object {
                       "Ref": "DistributionBucketName",
                     },
-                    "/deploy/",
-                    Object {
-                      "Ref": "Stage",
-                    },
-                    "/prism/*",
+                    "/deploy/PROD/prism/*",
                   ],
                 ],
               },
@@ -451,9 +394,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "VpcId": Object {
@@ -590,9 +531,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
       },
@@ -629,9 +568,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "VpcId": Object {
@@ -731,9 +668,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "Type": "application",
@@ -762,9 +697,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "VpcId": Object {
@@ -813,11 +746,30 @@ dpkg -i /prism/prism.deb",
                     Object {
                       "Ref": "AWS::AccountId",
                     },
-                    ":parameter/",
+                    ":parameter/PROD/deploy/prism",
+                  ],
+                ],
+              },
+            },
+            Object {
+              "Action": Array [
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:aws:ssm:",
                     Object {
-                      "Ref": "Stage",
+                      "Ref": "AWS::Region",
                     },
-                    "/deploy/prism",
+                    ":",
+                    Object {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":parameter/PROD/deploy/prism/*",
                   ],
                 ],
               },
@@ -896,9 +848,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "TargetGroupAttributes": Array [
@@ -921,15 +871,7 @@ dpkg -i /prism/prism.deb",
     },
     "UnhealthyInstancesAlarmPrismC2D80E9B": Object {
       "Properties": Object {
-        "ActionsEnabled": Object {
-          "Fn::FindInMap": Array [
-            "prism",
-            Object {
-              "Ref": "Stage",
-            },
-            "alarmActionsEnabled",
-          ],
-        },
+        "ActionsEnabled": true,
         "AlarmActions": Array [
           Object {
             "Fn::Join": Array [
@@ -953,19 +895,9 @@ dpkg -i /prism/prism.deb",
       scaling or handling traffic spikes.
 
       Check prism's application logs or ssh onto an unhealthy instance in order to debug these problems.",
-        "AlarmName": Object {
-          "Fn::Join": Array [
-            "",
-            Array [
-              "Unhealthy instances for prism in ",
-              Object {
-                "Ref": "Stage",
-              },
-            ],
-          ],
-        },
+        "AlarmName": "Unhealthy instances for prism in PROD",
         "ComparisonOperator": "GreaterThanOrEqualToThreshold",
-        "DatapointsToAlarm": 6,
+        "DatapointsToAlarm": 30,
         "Dimensions": Array [
           Object {
             "Name": "LoadBalancer",
@@ -1028,10 +960,10 @@ dpkg -i /prism/prism.deb",
             },
           },
         ],
-        "EvaluationPeriods": 12,
+        "EvaluationPeriods": 60,
         "MetricName": "UnHealthyHostCount",
         "Namespace": "AWS/ApplicationELB",
-        "Period": 300,
+        "Period": 60,
         "Statistic": "Maximum",
         "Threshold": 1,
         "TreatMissingData": "notBreaching",
@@ -1072,9 +1004,7 @@ dpkg -i /prism/prism.deb",
           },
           Object {
             "Key": "Stage",
-            "Value": Object {
-              "Ref": "Stage",
-            },
+            "Value": "PROD",
           },
         ],
         "VpcId": Object {

@@ -5,7 +5,9 @@ deployments:
     type: cloud-formation
     app: prism
     parameters:
-      templatePath: PrismEc2App.template.json
+      templateStagePaths:
+        CODE: Prism-CODE.template.json
+        PROD: Prism-PROD.template.json
       amiParameter: AMIPrism
       amiEncrypted: true
       amiTags:
