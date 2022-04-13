@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 import "source-map-support/register";
-import { App } from "@aws-cdk/core";
+import { App } from "aws-cdk-lib";
 import { PrismAccess } from "../lib/prism-access";
 import { PrismEc2App } from "../lib/prism-ec2-app";
 
 const app = new App();
 
-new PrismEc2App(app, "PrismEc2App", {
-  description: "Prism - service discovery",
-  stack: "deploy",
+new PrismEc2App(app, "Prism-CODE", {
+  stage: "CODE",
+  domainName: "prism.code.dev-gutools.co.uk",
+  minimumInstances: 1,
 });
 
-new PrismAccess(app, "PrismAccess", {
-  description: "CloudFormation template to create the prism role.",
-  migratedFromCloudFormation: true,
-  stack: "deploy",
+new PrismEc2App(app, "Prism-PROD", {
+  stage: "PROD",
+  domainName: "prism.gutools.co.uk",
+  minimumInstances: 2,
 });
+
+new PrismAccess(app, "PrismAccessStackSet");

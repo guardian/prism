@@ -1,16 +1,12 @@
-import "@aws-cdk/assert/jest";
-import { SynthUtils } from "@aws-cdk/assert";
-import { App } from "@aws-cdk/core";
+import { App } from "aws-cdk-lib";
+import { Template } from "aws-cdk-lib/assertions";
 import { PrismAccess } from "./prism-access";
 
 describe("The PrismAccess stack", () => {
   it("matches the snapshot", () => {
     const app = new App();
-    const stack = new PrismAccess(app, "prism-access", {
-      migratedFromCloudFormation: true,
-      stack: "deploy",
-    });
+    const stack = new PrismAccess(app, "prism-access");
 
-    expect(SynthUtils.toCloudFormation(stack)).toMatchSnapshot();
+    expect(Template.fromStack(stack).toJSON()).toMatchSnapshot();
   });
 });
