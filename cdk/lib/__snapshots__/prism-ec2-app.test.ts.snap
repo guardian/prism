@@ -72,6 +72,13 @@ Object {
             "Value": "guardian/prism",
           },
           Object {
+            "Key": "LogKinesisStreamName",
+            "PropagateAtLaunch": true,
+            "Value": Object {
+              "Ref": "LoggingStreamName",
+            },
+          },
+          Object {
             "Key": "Name",
             "PropagateAtLaunch": true,
             "Value": "prism/AutoScalingGroupPrism",
