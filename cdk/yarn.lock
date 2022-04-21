@@ -317,15 +317,17 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@guardian/cdk@41.1.0-beta.1":
-  version "41.1.0-beta.1"
-  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-41.1.0-beta.1.tgz#c54904cb638883d6febda15d7250df132a4788f0"
-  integrity sha512-kVvPXnzXKaOlh8elKDiKgkjUOfFXTizhak6ep5ZH/3RplmfXQ59PWRHMzcGGmIwwOLay9O9y7KqgTL5wvOkBUw==
+"@guardian/cdk@41.1.0":
+  version "41.1.0"
+  resolved "https://registry.yarnpkg.com/@guardian/cdk/-/cdk-41.1.0.tgz#b070bb7a8ffa111b7f024b3a5bd8232d5a564192"
+  integrity sha512-/RCQLCKf+DFle2BVhtbbXbef8+XmsgRl1V8RAAMjCdkAKfk4YAoMoBg/Z9xLKr+HKdMDfsSJowLZZ6gwswKpwg==
   dependencies:
     "@oclif/core" "1.7.0"
-    aws-sdk "^2.1109.0"
+    aws-cdk-lib "2.20.0"
+    aws-sdk "^2.1113.0"
     chalk "^4.1.2"
     codemaker "^1.55.1"
+    constructs "10.0.110"
     git-url-parse "^11.6.0"
     inquirer "^8.2.2"
     lodash.camelcase "^4.3.0"
@@ -1098,10 +1100,10 @@ aws-cdk@2.20.0:
   optionalDependencies:
     fsevents "2.3.2"
 
-aws-sdk@^2.1109.0:
-  version "2.1113.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1113.0.tgz#78ce8b713048f3f72c6c55561cd0d70b4ac71da1"
-  integrity sha512-F+B+HFnKCVIOmErZ1jJ8YL4XxDSaUI9l3JskfpIrk0XdJVcIfyHgA4XUrTUda4z5TOy1Z7eWV2IXgEpVRM4xyw==
+aws-sdk@^2.1113.0:
+  version "2.1118.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1118.0.tgz#1789e881b1f43bef7807111d5716ab691ab965c2"
+  integrity sha512-R3g06c4RC0Gz/lwMA7wgC7+FwYf5vaO30sPIigoX5m6Tfb7tdzfCYD7pnpvkPRNUvWJ3f5kQk+pEeW25DstRrQ==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
