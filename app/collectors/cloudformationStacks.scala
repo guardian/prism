@@ -13,6 +13,7 @@ import java.time.Instant
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.util.Try
+import software.amazon.awssdk.services.cloudformation.model.GetTemplateSummaryRequest
 
 class CloudformationStackCollectorSet(accounts: Accounts) extends CollectorSet[CloudformationStack](ResourceType("cloudformationStacks"), accounts, Some(Regional)) {
 
@@ -36,14 +37,14 @@ case class CloudformationStackCollector(origin: AmazonOrigin, resource: Resource
       .filterNot(_.stackStatusAsString == StackStatus.DELETE_COMPLETE.toString)
       .map{ stack =>
         val resources = client.describeStackResources(DescribeStackResourcesRequest.builder.stackName(stack.stackName).build)
-        val policy = client.getStackPolicy(GetStackPolicyRequest.builder.stackName(stack.stackName).build)
-        CloudformationStack.fromApiData(stack, resources.stackResources.asScala, Option(policy.stackPolicyBody))
+        val templateSummary = client.getTemplateSummary(GetTemplateSummaryRequest.builder.stackName(stack.stackName).build)
+        CloudformationStack.fromApiData(stack, resources.stackResources.asScala, templateSummary.metadata())
       }
   }
 }
 
 object CloudformationStack {
-  def fromApiData(stack: Stack, resources: Iterable[StackResource], policy: Option[String]): CloudformationStack = {
+  def fromApiData(stack: Stack, resources: Iterable[StackResource], templateMetadata: String): CloudformationStack = {
     CloudformationStack(
       arn = stack.stackId,
       name = stack.stackName,
@@ -60,32 +61,9 @@ object CloudformationStack {
       lastUpdatedTime = Option(stack.lastUpdatedTime),
       parentId = Option(stack.parentId),
       rootId = Option(stack.rootId),
-      tags = stack.tags.asScala.map { tag =>
-        tag.key -> tag.value
-      }.toMap,
+      tags = stack.tags.asScala.map { tag => tag.key -> tag.value }.toMap,
       disableRollback = Option(stack.disableRollback),
       terminationProtection = Option(stack.enableTerminationProtection),
-      outputs = Option(stack.outputs).toList.flatMap(_.asScala).map { output =>
-        CloudformationStackOutput(
-          description = Option(output.description),
-          exportName = Option(output.exportName),
-          key = None,
-          value = None,
-          // commented out whilst we figure out whether it's safe to display all values
-          // key = Option(output.outputKey),
-          // value = Option(output.outputValue)
-        )
-      },
-      parameters = Option(stack.parameters).toList.flatMap(_.asScala).map { param =>
-        CloudformationStackParameter(
-          key = Option(param.parameterKey),
-          value = None,
-          resolvedValue = None
-// commented out whilst we figure out whether it's safe to display all values in case more secrets are added without NoEcho
-//          value = Option(param.parameterValue),
-//          resolvedValue = Option(param.resolvedValue)
-        )
-      },
       resources = resources.map { resource =>
         resource.description()
         CloudformationStackResource(
@@ -104,9 +82,7 @@ object CloudformationStack {
           timestamp = resource.timestamp
         )
       }.toList,
-      policy = policy.map { p =>
-        Try(Json.parse(p)).toOption.getOrElse(JsString(s"Unable to parse policy $policy"))
-      }
+      templateMetadata = templateMetadata,
     )
   }
 }
@@ -114,20 +90,6 @@ object CloudformationStack {
 case class CloudformationStackDriftInformation(
   lastCheckTimestamp: Option[Instant],
   status: String
-)
-
-case class CloudformationStackOutput(
-  description: Option[String],
-  exportName: Option[String],
-  key: Option[String],
-  value: Option[String]
-)
-
-case class CloudformationStackParameter(
-  key: Option[String],
-// commented out whilst we figure out whether it's safe to display all values in case more secrets are added without NoEcho
-  value: Option[String],
-  resolvedValue: Option[String]
 )
 
 case class CloudformationStackResource(
@@ -155,10 +117,8 @@ case class CloudformationStack(
   tags: Map[String, String],
   disableRollback: Option[Boolean],
   terminationProtection: Option[Boolean],
-  outputs: List[CloudformationStackOutput],
-  parameters: List[CloudformationStackParameter],
   resources: List[CloudformationStackResource],
-  policy: Option[JsValue]
+  templateMetadata: String,
 ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.cloudformationStack(arn)
 }
