@@ -138,7 +138,8 @@ object PrismConfiguration {
       "reservation" -> fastCrawlRate,
       "instance" -> fastCrawlRate,
       "images" -> fastCrawlRate,
-      "data" -> fastCrawlRate
+      "data" -> fastCrawlRate,
+      "cloudformationStacks" -> slowCrawlRate,
     ).withDefaultValue(defaultCrawlRate)
   }
   val lowPriorityRegionCrawlRate: Map[String, CrawlRate] = Map.empty.withDefaultValue(slowCrawlRate)

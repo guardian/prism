@@ -16,3 +16,11 @@ dist
 Gemfile.lock
 .rakeTasks
 *.iml
+
+.bloop/
+.bsp/
+.metals/
+.vscode/
+project/.bloop/
+project/metals.sbt
+project/project/
