@@ -72,8 +72,6 @@ object model {
   implicit val vpcWriter: Writes[Vpc] = Json.writes[Vpc]
 
   implicit val cloudformationStackDriftInformationWriter: Writes[CloudformationStackDriftInformation] = Json.writes[CloudformationStackDriftInformation]
-  implicit val cloudformationStackOutput: Writes[CloudformationStackOutput] = Json.writes[CloudformationStackOutput]
-  implicit val cloudformationStackParameter: Writes[CloudformationStackParameter] = Json.writes[CloudformationStackParameter]
   implicit val cloudformationStackResource: Writes[CloudformationStackResource] = Json.writes[CloudformationStackResource]
   implicit val cloudformationStackWriter: Writes[CloudformationStack] = Json.writes[CloudformationStack]
 
