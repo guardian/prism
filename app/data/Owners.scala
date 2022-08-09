@@ -58,6 +58,8 @@ object Owners extends Owners {
     "digital.investigations" -> SSA("investigations"),
     "commercial.dev" -> SSA(stack = "frontend", app = Some("ipad-ad-preview")),
     "commercial.dev" -> SSA(stack = "flexible", app = Some("campaign-central")),
+    "consent" -> SSA(stack = "baton"),
+    "consent" -> SSA(stack = "cmp-monitoring"),
     "content.platforms" -> SSA(stack = "content-api"),
     "content.platforms" -> SSA(stack = "content-api-crier-v2"),
     "content.platforms" -> SSA(stack = "content-api-crier-v2-preview"),
