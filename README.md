@@ -67,3 +67,16 @@ A typical Prism response includes the following top level fields:
 Using prism from the command line
 ------------------------------
 There is a [ruby gem](./marauder/README.md) that allows you to query the api from the command line.
+
+
+Running locally
+------------------------------
+1. Get Deploy Tools Janus credentials.
+
+2. Ensure you are running Java 11
+
+3. Run `sbt`
+
+4. Start the application: `sbt:prism> run`
+
+Once the sever has started, the webapp is accessible at [http://localhost:9000/](http://localhost:9000/)
