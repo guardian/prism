@@ -71,7 +71,7 @@ There is a [ruby gem](./marauder/README.md) that allows you to query the api fro
 
 Running locally
 ------------------------------
-1. Get Security Janus credentials.
+1. Get Deploy Tools Janus credentials.
 
 2. Ensure you are running Java 11
 
