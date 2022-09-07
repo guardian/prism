@@ -43,7 +43,7 @@ lazy val root = (project in file("."))
     },
     buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
-      "com.google.code.findbugs" % "jsr305" % "2.0.3",
+      "com.google.code.findbugs" % "jsr305" % "3.0.2",
       "software.amazon.awssdk" % "lambda" % awsVersion,
       "software.amazon.awssdk" % "s3" % awsVersion,
       "software.amazon.awssdk" % "auth" % awsVersion,
