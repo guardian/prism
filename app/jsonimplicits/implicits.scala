@@ -71,10 +71,6 @@ object model {
   implicit val subnetWriter: Writes[Subnet] = Json.writes[Subnet]
   implicit val vpcWriter: Writes[Vpc] = Json.writes[Vpc]
 
-  implicit val cloudformationStackDriftInformationWriter: Writes[CloudformationStackDriftInformation] = Json.writes[CloudformationStackDriftInformation]
-  implicit val cloudformationStackResource: Writes[CloudformationStackResource] = Json.writes[CloudformationStackResource]
-  implicit val cloudformationStackWriter: Writes[CloudformationStack] = Json.writes[CloudformationStack]
-
   implicit val loadBalancerWriter: Writes[LoadBalancer] = Json.writes[LoadBalancer]
 
   implicit val awsAccountWrites = Json.writes[AWSAccount]
