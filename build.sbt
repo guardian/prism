@@ -66,7 +66,7 @@ lazy val root = (project in file("."))
       "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
       specs2 % "test",
-      "net.logstash.logback" % "logstash-logback-encoder" % "6.6" exclude("com.fasterxml.jackson.core", "jackson-databind"),
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.2" exclude("com.fasterxml.jackson.core", "jackson-databind"),
       "com.gu" % "kinesis-logback-appender" % "2.1.0",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.7",
     ),
