@@ -63,7 +63,7 @@ lazy val root = (project in file("."))
       "com.typesafe.play" %% "play-json-joda" % "2.9.1",
       "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
-      "org.scala-stm" %% "scala-stm" % "0.9.1",
+      "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "6.4" exclude("com.fasterxml.jackson.core", "jackson-databind"),
