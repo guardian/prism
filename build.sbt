@@ -12,7 +12,7 @@ resolvers ++= Seq(
 )
 
 val awsVersion = "2.16.58"
-val awsVersionOne = "1.11.1034"
+val awsVersionOne = "1.12.297"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
@@ -43,7 +43,7 @@ lazy val root = (project in file("."))
     },
     buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
-      "com.google.code.findbugs" % "jsr305" % "2.0.3",
+      "com.google.code.findbugs" % "jsr305" % "3.0.2",
       "software.amazon.awssdk" % "lambda" % awsVersion,
       "software.amazon.awssdk" % "s3" % awsVersion,
       "software.amazon.awssdk" % "auth" % awsVersion,
@@ -67,8 +67,8 @@ lazy val root = (project in file("."))
       filters,
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "6.6" exclude("com.fasterxml.jackson.core", "jackson-databind"),
-      "com.gu" % "kinesis-logback-appender" % "2.0.3",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.4",
+      "com.gu" % "kinesis-logback-appender" % "2.1.0",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.7",
     ),
     scalacOptions ++= List(
       "-encoding", "utf8",
