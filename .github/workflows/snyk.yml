@@ -1,0 +1,15 @@
+# This action is just a test
+name: Snyk (test)
+
+on: push
+
+jobs:
+  security:
+    timeout-minutes: 30
+    uses: guardian/.github/.github/workflows/sbt-node-snyk.yml@main
+    with:
+      DEBUG: true
+      ORG: guardian-test
+      SKIP_NODE: false
+    secrets:
+       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
