@@ -224,14 +224,6 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
       Api.singleItem(prismDataStore.vpcAgent, arn)
     }
 
-    def cloudformationStackList = Action.async { implicit request =>
-      Api.itemList(prismDataStore.cloudformationStackAgent, "cloudformation-stacks")
-    }
-
-    def cloudformationStack(arn: String) = Action.async { implicit request =>
-      Api.singleItem(prismDataStore.cloudformationStackAgent, arn)
-    }
-
     private def stackExtractor(i: IndexedItemWithStack) = i.stack.map(Json.toJson(_))
     private def stageExtractor(i: IndexedItemWithStage) = i.stage.map(Json.toJson(_))
     def roleList = summary[Instance](prismDataStore.instanceAgent, i => i.role.map(Json.toJson(_)), "roles")
