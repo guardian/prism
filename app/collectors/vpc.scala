@@ -44,10 +44,13 @@ case class AWSVpcCollector(origin:AmazonOrigin, resource: ResourceType, crawlRat
 
       val subnetInfo = for {
         // Discard route tables that do not have an explicit subnet association.
-        subnetAssoc <- assocs.find(a => a.subnetId().nonEmpty)
+        subnetAssoc <- assocs.find(a => Option(a.subnetId()).isDefined)
 
         // Public subnets have route tables with an associated internet gateway.
-        gatewayAssoc <- assocs.find(a => a.gatewayId().nonEmpty)
+        // These always have IDs prefixed with 'igw'. It feels hacky but it's
+        // not clear if there is a better way to detect these. See e.g.
+        // https://stackoverflow.com/questions/48830793/aws-vpc-identify-private-and-public-subnet.
+        gatewayAssoc <- assocs.find(a => Option(a.gatewayId()).isDefined)
         scope = if (gatewayAssoc.gatewayId().startsWith("igw")) Public else Private
       } yield (subnetAssoc.subnetId() -> scope)
 
