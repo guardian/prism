@@ -19,6 +19,7 @@ class VpcCollectorSet(accounts: Accounts) extends CollectorSet[Vpc](ResourceType
   }
 }
 
+case class RouteTable(isMain: Boolean, subnetIDs: Set[String], hasInternetGateway: Boolean)
 case class AWSVpcCollector(origin:AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Vpc] with Logging {
 
   val client: Ec2Client = Ec2Client
@@ -33,36 +34,42 @@ case class AWSVpcCollector(origin:AmazonOrigin, resource: ResourceType, crawlRat
     client.describeSubnetsPaginator(subnetsRequest).subnets.asScala
   }
 
-  def getSubnetScopes(vpcId: String): Map[String, SubnetScope] = {
+  // Returns a map of subnetId to scope (public or private).
+  def getSubnetScopes(vpcId: String, subnets: List[AwsSubnet]): Map[String, SubnetScope] = {
     val req = DescribeRouteTablesRequest.builder().filters(Filter.builder().name("vpc-id").values(vpcId).build).build
-    val tables = client.describeRouteTablesPaginator(req).routeTables().asScala
+    val tablesData = client.describeRouteTablesPaginator(req).routeTables().asScala
 
-    val m = tables.toList.flatMap(table => {
-      // Associations link a route table to other resources, such as subnets,
-      // internet gateways, or nats.
-      val assocs = table.associations().asScala
+    // Let's convert the AWS data into something more useful for our purposes.
+    val tables = tablesData.map(table => {
+      val assocs = table.associations().asScala.toList
+      val routes = table.routes().asScala.toList
 
-      val subnetInfo = for {
-        // Discard route tables that do not have an explicit subnet association.
-        subnetAssoc <- assocs.find(a => Option(a.subnetId()).isDefined)
+      val isMain = assocs.exists(assoc => assoc.main())
 
-        // Public subnets have route tables with an associated internet gateway.
-        // These always have IDs prefixed with 'igw'. It feels hacky but it's
-        // not clear if there is a better way to detect these. See e.g.
-        // https://stackoverflow.com/questions/48830793/aws-vpc-identify-private-and-public-subnet.
-        gatewayAssoc <- assocs.find(a => Option(a.gatewayId()).isDefined)
-        scope = if (gatewayAssoc.gatewayId().startsWith("igw")) Public else Private
-      } yield (subnetAssoc.subnetId() -> scope)
-
-      subnetInfo.toList
+      // It feels like there should be a better way to detect the presence of an AWS Internet Gateway but apparently this is it :(.
+      val tableHasIgw = routes.exists(route => Option(route.gatewayId()).getOrElse("").startsWith("igw"))
+      val subnetIDs = assocs.flatMap(assoc => Option(assoc.subnetId()).toList)
+      RouteTable(isMain = isMain, hasInternetGateway = tableHasIgw, subnetIDs = subnetIDs.toSet)
     })
 
-    m.toMap
+    val data = subnets.map(subnet => {
+      // If there is no explicit route table associated with a subnet, the VPC 'main' route table is used instead.
+      val main = tables.find(table => table.isMain)
+      val associatedTable = tables.find(table => table.subnetIDs.contains(subnet.subnetId))
+
+      val isPublic = associatedTable.orElse(main).exists(table => table.hasInternetGateway)
+      val scope = if (isPublic) Public else Private
+
+      (subnet.subnetId -> scope)
+    })
+
+    data.toMap
   }
 
   def crawl:Iterable[Vpc] =
     client.describeVpcsPaginator(DescribeVpcsRequest.builder.build).vpcs.asScala.map { vpc =>
-      Vpc.fromApiData(vpc, getSubnets(vpc.vpcId), getSubnetScopes(vpc.vpcId), origin)
+      val subnets = getSubnets(vpc.vpcId).toList
+      Vpc.fromApiData(vpc, subnets, getSubnetScopes(vpc.vpcId, subnets), origin)
     }
 }
 
