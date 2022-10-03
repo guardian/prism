@@ -4,7 +4,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.3"
+ThisBuild / scalaVersion := "2.13.9"
 
 resolvers ++= Seq(
   "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
@@ -12,7 +12,7 @@ resolvers ++= Seq(
 )
 
 val awsVersion = "2.16.58"
-val awsVersionOne = "1.11.918"
+val awsVersionOne = "1.12.314"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
@@ -43,7 +43,7 @@ lazy val root = (project in file("."))
     },
     buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
-      "com.google.code.findbugs" % "jsr305" % "2.0.0",
+      "com.google.code.findbugs" % "jsr305" % "3.0.2",
       "software.amazon.awssdk" % "lambda" % awsVersion,
       "software.amazon.awssdk" % "s3" % awsVersion,
       "software.amazon.awssdk" % "auth" % awsVersion,
@@ -56,19 +56,19 @@ lazy val root = (project in file("."))
       "software.amazon.awssdk" % "iam" % awsVersion,
       "software.amazon.awssdk" % "rds" % awsVersion,
       "software.amazon.awssdk" % "cloudformation" % awsVersion,
-      "com.beust" % "jcommander" % "1.75", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
+      "com.beust" % "jcommander" % "1.82", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
-      "com.typesafe.play" %% "play-json" % "2.9.1",
-      "com.typesafe.play" %% "play-json-joda" % "2.9.1",
+      "com.typesafe.play" %% "play-json" % "2.9.3",
+      "com.typesafe.play" %% "play-json-joda" % "2.9.3",
       "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
-      "org.scala-stm" %% "scala-stm" % "0.9.1",
+      "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
       specs2 % "test",
-      "net.logstash.logback" % "logstash-logback-encoder" % "6.4" exclude("com.fasterxml.jackson.core", "jackson-databind"),
-      "com.gu" % "kinesis-logback-appender" % "2.0.1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.2",
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.2" exclude("com.fasterxml.jackson.core", "jackson-databind"),
+      "com.gu" % "kinesis-logback-appender" % "2.1.0",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.4",
     ),
     scalacOptions ++= List(
       "-encoding", "utf8",

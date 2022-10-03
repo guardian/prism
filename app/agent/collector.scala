@@ -51,11 +51,14 @@ class CollectorAgent[T<:IndexedItem](val collectorSet: CollectorSet[T], sourceSt
         val marker = Markers.appendEntries((l.toMarkerMap ++ this.toMarkerMap ++ Map("duration" -> timeSpent)).asJava)
         previous.label match {
           case bad if bad.isError =>
-            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfuly since Prism started", error)(marker)
+            log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): NO data available as this has not been crawled successfully since Prism started", error)(marker)
           case stale if stale.bestBefore.isStale =>
             log.error(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled STALE data (${stale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
           case notYetStale if !notYetStale.bestBefore.isStale =>
             log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms): leaving previously crawled data (${notYetStale.bestBefore.age.getStandardSeconds} seconds old)", error)(marker)
+
+          // this shouldn't happen, but we need to be exhaustive
+          case _ => log.warn(s"Crawl of ${product.name} from $origin failed (${timeSpent}ms)", error)(marker)
         }
         previous
     }
