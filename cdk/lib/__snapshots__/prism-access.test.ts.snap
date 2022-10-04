@@ -3,6 +3,13 @@
 exports[`The PrismAccess stack matches the snapshot 1`] = `
 Object {
   "Description": "CloudFormation template to create the prism role.",
+  "Metadata": Object {
+    "gu:cdk:constructs": Array [
+      "GuArnParameter",
+      "GuRole",
+    ],
+    "gu:cdk:version": "TEST",
+  },
   "Outputs": Object {
     "Role": Object {
       "Description": "Prism Role",

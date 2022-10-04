@@ -15,7 +15,6 @@ export class PrismAccess extends GuStack {
       description: "CloudFormation template to create the prism role.",
       stack: "deploy",
       stage: "INFRA", // singleton stack
-      migratedFromCloudFormation: true,
     });
 
     /*
@@ -36,12 +35,13 @@ export class PrismAccess extends GuStack {
      * This is the external prism role in each account which is used by prism to crawl data from that account.
      */
     const prismRole = new GuRole(this, "PrismRole", {
-      existingLogicalId: {
-        logicalId: "PrismRole",
-        reason: "We override this to ensure that we do not replace the existing resource",
-      },
       description: "Role Prism uses to crawl resources in this account",
       assumedBy: new ArnPrincipal(parameters.PrismAccount.valueAsString),
+    });
+
+    this.overrideLogicalId(prismRole, {
+      logicalId: "PrismRole",
+      reason: "We override this to ensure that we do not replace the existing resource",
     });
 
     new Policy(this, "PrismPolicy", {

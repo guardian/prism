@@ -3,6 +3,36 @@
 exports[`The PrismEc2App stack matches the snapshot 1`] = `
 Object {
   "Description": "Prism - service discovery",
+  "Metadata": Object {
+    "gu:cdk:constructs": Array [
+      "GuAllowPolicy",
+      "GuDynamoDBReadPolicy",
+      "GuGetS3ObjectsPolicy",
+      "GuAssumeRolePolicy",
+      "GuPlayApp",
+      "GuVpcParameter",
+      "GuSubnetListParameter",
+      "GuCertificate",
+      "GuInstanceRole",
+      "GuSSMRunCommandPolicy",
+      "GuDescribeEC2Policy",
+      "GuLoggingStreamNameParameter",
+      "GuLogShippingPolicy",
+      "GuDistributionBucketParameter",
+      "GuGetDistributablePolicy",
+      "GuParameterStoreReadPolicy",
+      "GuAmiParameter",
+      "GuHttpsEgressSecurityGroup",
+      "GuAutoScalingGroup",
+      "GuWazuhAccess",
+      "GuApplicationLoadBalancer",
+      "GuApplicationTargetGroup",
+      "GuHttpsApplicationListener",
+      "GuSecurityGroup",
+      "GuUnhealthyInstancesAlarm",
+    ],
+    "gu:cdk:version": "TEST",
+  },
   "Outputs": Object {
     "LoadBalancerPrismDnsName": Object {
       "Description": "DNS entry for LoadBalancerPrism",
