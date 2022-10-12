@@ -84,13 +84,12 @@ class Api (cc: ControllerComponents, prismDataStore: Prism, prismConfiguration: 
 
     def sourceAccounts: Action[AnyContent] = Action.async { implicit request =>
       ApiResult.noSource {
-        val accounts = prismDataStore.sourceStatusAgent.sources.data.map { source =>
-          val accountName = source.latest.origin.account
-          val accountNumber = source.latest.origin match {
-            case a: AmazonOrigin => a.accountNumber
-            case _ => None
+        val accounts = prismDataStore.accounts.all.collect {
+          case result:AmazonOrigin => {
+            val accountName = result.account
+            val accountNumber = result.accountNumber
+            AWSAccount(accountNumber, accountName)
           }
-          AWSAccount(accountNumber, accountName)
         }.toList.distinct
         Json.toJson(accounts)
       }
