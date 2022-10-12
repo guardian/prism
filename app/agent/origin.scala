@@ -23,13 +23,11 @@ import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
-  val ArnIamAccountExtractor: Regex = """arn:aws:iam::(\d+):user.*""".r
   val all:Seq[Origin] = (prismConfiguration.accounts.aws.list ++ prismConfiguration.accounts.amis.list).map { awsOrigin =>
     Try {
       val stsClient = StsClient.builder().credentialsProvider(awsOrigin.credentials.provider)
         .region(Region.AWS_GLOBAL)
         .build
-
       val accountNumber = stsClient.getCallerIdentity.account()
       awsOrigin.copy(accountNumber = Some(accountNumber))
     } recover {
