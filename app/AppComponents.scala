@@ -19,7 +19,10 @@ class AppComponents(context: ApplicationLoader.Context)
     with Logging {
 
   override def httpFilters: Seq[EssentialFilter] = {
-    super.httpFilters :+ gzipFilter
+    super.httpFilters ++ Seq(
+      gzipFilter,
+      new RequestLoggingFilter(materializer)
+    )
   }
 
   val prismConfig = new PrismConfiguration(configuration)
