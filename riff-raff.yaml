@@ -19,7 +19,5 @@ deployments:
         BuiltBy: amigo
   prism:
     type: autoscaling
-    parameters:
-      bucket: deploy-tools-dist
     dependencies:
       - cloudformation
