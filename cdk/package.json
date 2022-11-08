@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@guardian/cdk": "47.3.5",
-    "@guardian/eslint-config-typescript": "^0.7.0",
+    "@guardian/eslint-config-typescript": "^1.0.11",
     "@types/jest": "^29.2.2",
     "@types/node": "18.11.9",
     "aws-cdk": "2.44.0",
