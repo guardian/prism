@@ -6,7 +6,9 @@
     "test": "jest --runInBand --detectOpenHandles",
     "format": "prettier --write \"{lib,bin}/**/*.ts\"",
     "lint": "eslint lib/** bin/** --ext .ts --no-error-on-unmatched-pattern",
-    "generate": "cdk synth --path-metadata false --version-reporting false"
+    "generate": "cdk synth --path-metadata false --version-reporting false",
+    "diff:code": "cdk diff --path-metadata false --version-reporting false Prism-CODE",
+    "diff:prod": "cdk diff --path-metadata false --version-reporting false Prism-PROD"
   },
   "devDependencies": {
     "@guardian/cdk": "48.4.0",
