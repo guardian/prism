@@ -9,9 +9,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuDynamoDBReadPolicy",
       "GuGetS3ObjectsPolicy",
       "GuAssumeRolePolicy",
-      "GuPlayApp",
       "GuVpcParameter",
       "GuSubnetListParameter",
+      "GuSubnetListParameter",
+      "GuPlayApp",
       "GuCertificate",
       "GuInstanceRole",
       "GuSSMRunCommandPolicy",
@@ -67,6 +68,11 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
     "prismPrivateSubnets": {
       "Default": "/account/vpc/primary/subnets/private",
       "Description": "A list of private subnets",
+      "Type": "AWS::SSM::Parameter::Value<List<AWS::EC2::Subnet::Id>>",
+    },
+    "prismPublicSubnets": {
+      "Default": "/account/vpc/primary/subnets/public",
+      "Description": "A list of public subnets",
       "Type": "AWS::SSM::Parameter::Value<List<AWS::EC2::Subnet::Id>>",
     },
   },
