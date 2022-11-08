@@ -1,41 +1,41 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`The PrismAccess stack matches the snapshot 1`] = `
-Object {
+{
   "Description": "CloudFormation template to create the prism role.",
-  "Metadata": Object {
-    "gu:cdk:constructs": Array [
+  "Metadata": {
+    "gu:cdk:constructs": [
       "GuArnParameter",
       "GuRole",
     ],
     "gu:cdk:version": "TEST",
   },
-  "Outputs": Object {
-    "Role": Object {
+  "Outputs": {
+    "Role": {
       "Description": "Prism Role",
-      "Value": Object {
-        "Fn::GetAtt": Array [
+      "Value": {
+        "Fn::GetAtt": [
           "PrismRole",
           "Arn",
         ],
       },
     },
   },
-  "Parameters": Object {
-    "PrismAccount": Object {
-      "AllowedPattern": "arn:aws:[a-z0-9]*:[a-z0-9\\\\-]*:[0-9]{12}:.*",
+  "Parameters": {
+    "PrismAccount": {
+      "AllowedPattern": "arn:aws:[a-z0-9]*:[a-z0-9\\-]*:[0-9]{12}:.*",
       "ConstraintDescription": "Must be a valid ARN, eg: arn:partition:service:region:account-id:resource-id",
       "Description": "The ARN of the account in which Prism is running - looks like arn:aws:iam::<account-number>:root",
       "Type": "String",
     },
   },
-  "Resources": Object {
-    "PrismPolicyF951F5B3": Object {
-      "Properties": Object {
-        "PolicyDocument": Object {
-          "Statement": Array [
-            Object {
-              "Action": Array [
+  "Resources": {
+    "PrismPolicyF951F5B3": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
                 "ec2:Describe*",
                 "iam:Get*",
                 "iam:List*",
@@ -60,23 +60,23 @@ Object {
           "Version": "2012-10-17",
         },
         "PolicyName": "PrismCollection",
-        "Roles": Array [
-          Object {
+        "Roles": [
+          {
             "Ref": "PrismRole",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
     },
-    "PrismRole": Object {
-      "Properties": Object {
-        "AssumeRolePolicyDocument": Object {
-          "Statement": Array [
-            Object {
+    "PrismRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
               "Action": "sts:AssumeRole",
               "Effect": "Allow",
-              "Principal": Object {
-                "AWS": Object {
+              "Principal": {
+                "AWS": {
                   "Ref": "PrismAccount",
                 },
               },
@@ -85,24 +85,24 @@ Object {
           "Version": "2012-10-17",
         },
         "Description": "Role Prism uses to crawl resources in this account",
-        "Tags": Array [
-          Object {
+        "Tags": [
+          {
             "Key": "App",
             "Value": "prism",
           },
-          Object {
+          {
             "Key": "gu:cdk:version",
             "Value": "TEST",
           },
-          Object {
+          {
             "Key": "gu:repo",
             "Value": "guardian/prism",
           },
-          Object {
+          {
             "Key": "Stack",
             "Value": "deploy",
           },
-          Object {
+          {
             "Key": "Stage",
             "Value": "INFRA",
           },
