@@ -24,19 +24,21 @@ import scala.util.matching.Regex
 
 class Accounts(prismConfiguration: PrismConfiguration) extends Logging {
   val all:Seq[Origin] = (prismConfiguration.accounts.aws.list ++ prismConfiguration.accounts.amis.list).map { awsOrigin =>
-    Try {
-      val stsClient = StsClient.builder().credentialsProvider(awsOrigin.credentials.provider)
-        .region(Region.AWS_GLOBAL)
-        .build
-      val accountNumber = stsClient.getCallerIdentity.account()
-      awsOrigin.copy(accountNumber = Some(accountNumber))
-    } recover {
-      case NonFatal(e) =>
-        if (awsOrigin.accountNumber.isDefined) awsOrigin else {
+    if (awsOrigin.accountNumber.isDefined) {
+      awsOrigin
+    } else {
+      Try {
+        val stsClient = StsClient.builder().credentialsProvider(awsOrigin.credentials.provider)
+          .region(Region.AWS_GLOBAL)
+          .build
+        val accountNumber = stsClient.getCallerIdentity.account()
+        awsOrigin.copy(accountNumber = Some(accountNumber))
+      } recover {
+        case NonFatal(e) =>
           log.warn(s"Failed to extract the account number for $awsOrigin", e)
           awsOrigin.copy(accountNumber = Some("?????????"))
-        }
-    } get
+      } get
+    }
   } ++ prismConfiguration.accounts.json.list
 
   def forResource(resource:String): Seq[Origin] = all.filter(origin => origin.resources.isEmpty || origin.resources.contains(resource))
