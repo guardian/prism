@@ -15,7 +15,7 @@ class AppLoader extends ApplicationLoader with Logging {
     val identity: Identity = {
       context.environment.mode match {
         case Mode.Prod => AWS.instance.identity
-        case _ => None
+        case _         => None
       }
     }.getOrElse(Identity("deploy", "prism", "DEV"))
 
@@ -30,20 +30,29 @@ class AppLoader extends ApplicationLoader with Logging {
       FileConfiguration(identity)
     )
 
-    val extraConfig: Configuration = extraConfigs.foldRight(Configuration.empty)(_.configuration(context.environment.mode).withFallback(_))
+    val extraConfig: Configuration = extraConfigs.foldRight(
+      Configuration.empty
+    )(_.configuration(context.environment.mode).withFallback(_))
 
-    val stream: Option[String] = extraConfig.getOptional[String]("LoggingStream")
+    val stream: Option[String] =
+      extraConfig.getOptional[String]("LoggingStream")
     stream match {
       case Some(stream) =>
         val maybeInstanceId = Try(EC2MetadataUtils.getInstanceId).toOption
-        val loggingContext = Map("buildId" -> prism.BuildInfo.buildNumber) ++ maybeInstanceId.map("instanceId" -> _)
+        val loggingContext = Map(
+          "buildId" -> prism.BuildInfo.buildNumber
+        ) ++ maybeInstanceId.map("instanceId" -> _)
         LogConfiguration.shipping(stream, identity, loggingContext)
-      case _ => log.info("Missing stream configuration to enable log shipping to central ELK")
+      case _ =>
+        log.info(
+          "Missing stream configuration to enable log shipping to central ELK"
+        )
     }
 
     log.info(s"Loaded config $extraConfig")
 
-    val combinedConfig: Configuration = extraConfig.withFallback(context.initialConfiguration)
+    val combinedConfig: Configuration =
+      extraConfig.withFallback(context.initialConfiguration)
 
     val contextWithConfig = context.copy(initialConfiguration = combinedConfig)
 

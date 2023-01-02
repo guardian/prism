@@ -17,8 +17,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 // use this when the API call has illegal parameters
-case class ApiCallException(failure:JsObject, status:Int = Status.BAD_REQUEST)
-  extends RuntimeException(failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; "))
+case class ApiCallException(failure: JsObject, status: Int = Status.BAD_REQUEST)
+    extends RuntimeException(
+      failure.fields.map(f => s"${f._1}: ${f._2}").mkString("; ")
+    )
 
 object ApiResult extends Logging {
   val noSourceContainer: DataContainer = new DataContainer {
@@ -27,13 +29,16 @@ object ApiResult extends Logging {
     val isStale = false
   }
 
-  def addCountToJson(data: JsValue):JsValue = {
+  def addCountToJson(data: JsValue): JsValue = {
     data match {
       case JsObject(fields) =>
         JsObject(fields.flatMap { case (key, value) =>
           value match {
             case JsArray(array) =>
-              List((s"$key.length",JsNumber(array.size)), (key, addCountToJson(value)))
+              List(
+                (s"$key.length", JsNumber(array.size)),
+                (key, addCountToJson(value))
+              )
             case _ => List((key, addCountToJson(value)))
           }
         })
@@ -48,66 +53,93 @@ object ApiResult extends Logging {
     import jsonimplicits.model.labelWriter
 
     case class SourceData[D](sourceData: Try[Map[Label, Seq[D]]]) {
-      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+      def reduce(reduce: Map[Label, Seq[D]] => JsValue)(implicit
+          request: RequestHeader,
+          ec: ExecutionContext
+      ): Future[Result] = {
         reduceAsync(input => Future.successful(reduce(input)))
       }
 
-      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+      def reduceAsync(reduce: Map[Label, Seq[D]] => Future[JsValue])(implicit
+          request: RequestHeader,
+          ec: ExecutionContext
+      ): Future[Result] = {
         sourceData.map { mapSources =>
           val filter = ResourceFilter.fromRequest
-          val filteredSources = mapSources.groupBy {
-            case (label, _) => filter.isMatch(label.origin.filterMap)
+          val filteredSources = mapSources.groupBy { case (label, _) =>
+            filter.isMatch(label.origin.filterMap)
           }
-          filteredSources.get(false).foreach(falseMap => if (falseMap.values.exists(_.isEmpty)) log.warn(s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"))
+          filteredSources
+            .get(false)
+            .foreach(falseMap =>
+              if (falseMap.values.exists(_.isEmpty))
+                log.warn(
+                  s"The origin filter contract map has been violated: data exists in a discarded source - ${request.uri} from ${request.remoteAddress}"
+                )
+            )
 
-          val sources: Map[Label, Seq[D]] = filteredSources.getOrElse(true, Map.empty)
+          val sources: Map[Label, Seq[D]] =
+            filteredSources.getOrElse(true, Map.empty)
 
-          val usedLabels = sources.filter {
-            case (_, data) => data.nonEmpty
+          val usedLabels = sources.filter { case (_, data) =>
+            data.nonEmpty
           }.keys
 
-          val staleLabels = sources.keys.filter {
-            label => label.bestBefore.isStale
+          val staleLabels = sources.keys.filter { label =>
+            label.bestBefore.isStale
           }
 
-          val lastUpdated: DateTime = usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
-            case dates: Seq[DateTime] if dates.nonEmpty => dates.min((x: DateTime, y: DateTime) => {
-              x.getMillis.compareTo(y.getMillis)
-            })
-            case _ => new DateTime(0)
-          }
+          val lastUpdated: DateTime =
+            usedLabels.toSeq.filterNot(_.isError).map(_.createdAt) match {
+              case dates: Seq[DateTime] if dates.nonEmpty =>
+                dates.min((x: DateTime, y: DateTime) => {
+                  x.getMillis.compareTo(y.getMillis)
+                })
+              case _ => new DateTime(0)
+            }
 
           val stale = sources.keys.exists(_.bestBefore.isStale)
 
-          val reduceSources = reduce(sources).map {
-            data =>
-              val dataWithMods = if (request.getQueryString("_length").isDefined) addCountToJson(data) else data
-              val json = Json.obj(
-                "status" -> "success",
-                "lastUpdated" -> lastUpdated,
-                "stale" -> stale,
-                "staleSources" -> staleLabels,
-                "data" -> dataWithMods,
-                "sources" -> usedLabels
-              )
-              request.getQueryString("_pretty") match {
-                case Some(_) => Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
-                case None => Results.Ok(json)
-              }
+          val reduceSources = reduce(sources).map { data =>
+            val dataWithMods =
+              if (request.getQueryString("_length").isDefined)
+                addCountToJson(data)
+              else data
+            val json = Json.obj(
+              "status" -> "success",
+              "lastUpdated" -> lastUpdated,
+              "stale" -> stale,
+              "staleSources" -> staleLabels,
+              "data" -> dataWithMods,
+              "sources" -> usedLabels
+            )
+            request.getQueryString("_pretty") match {
+              case Some(_) =>
+                Results.Ok(Json.prettyPrint(json)).as(ContentTypes.JSON)
+              case None => Results.Ok(json)
+            }
           }(ec)
           reduceSources
         } recover {
           case ApiCallException(failure, status) =>
-            Future.successful(Results.Status(status)(Json.obj(
-              "status" -> "fail",
-              "data" -> failure
-            )))
+            Future.successful(
+              Results.Status(status)(
+                Json.obj(
+                  "status" -> "fail",
+                  "data" -> failure
+                )
+              )
+            )
           case e: Exception =>
-            Future.successful(Results.InternalServerError(Json.obj(
-              "status" -> "error",
-              "message" -> e.getMessage,
-              "stacktrace" -> e.getStackTrace.map(_.toString)
-            )))
+            Future.successful(
+              Results.InternalServerError(
+                Json.obj(
+                  "status" -> "error",
+                  "message" -> e.getMessage,
+                  "stacktrace" -> e.getStackTrace.map(_.toString)
+                )
+              )
+            )
         } get
       }
     }
@@ -121,15 +153,18 @@ object ApiResult extends Logging {
     }
   }
 
-  def noSource(block: => JsValue)(implicit request:RequestHeader, ec: ExecutionContext): Future[Result] = {
-    val sourceLabel:Label = Label(
+  def noSource(
+      block: => JsValue
+  )(implicit request: RequestHeader, ec: ExecutionContext): Future[Result] = {
+    val sourceLabel: Label = Label(
       ResourceType(noSourceContainer.name),
       new Origin {
         val account = "unknown"
         val vendor = "unknown"
         val resources = Set.empty[String]
         val jsonFields = Map.empty[String, String]
-        val crawlRate = Map(noSourceContainer.name -> CrawlRate(15 minutes, 1 minutes))
+        val crawlRate =
+          Map(noSourceContainer.name -> CrawlRate(15 minutes, 1 minutes))
 
         override def toMarkerMap: Map[String, Any] = jsonFields
       },

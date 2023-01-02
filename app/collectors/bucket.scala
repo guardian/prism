@@ -7,7 +7,12 @@ import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.model.{GetBucketLocationRequest, ListBucketsRequest, S3Exception, Bucket => AWSBucket}
+import software.amazon.awssdk.services.s3.model.{
+  GetBucketLocationRequest,
+  ListBucketsRequest,
+  S3Exception,
+  Bucket => AWSBucket
+}
 import software.amazon.awssdk.services.s3.{S3Client, S3Configuration}
 import utils.Logging
 
@@ -15,23 +20,32 @@ import scala.jdk.CollectionConverters._
 import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.control.NonFatal
 
-
-class BucketCollectorSet(accounts: Accounts) extends CollectorSet[Bucket](ResourceType("bucket"), accounts, Some(Global)) {
+class BucketCollectorSet(accounts: Accounts)
+    extends CollectorSet[Bucket](
+      ResourceType("bucket"),
+      accounts,
+      Some(Global)
+    ) {
   val lookupCollector: PartialFunction[Origin, Collector[Bucket]] = {
-    case amazon: AmazonOrigin => AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin =>
+      AWSBucketCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[Bucket] with Logging {
+case class AWSBucketCollector(
+    origin: AmazonOrigin,
+    resource: ResourceType,
+    crawlRate: CrawlRate
+) extends Collector[Bucket]
+    with Logging {
 
   // The `useArnRegionEnabled` flag enables us to receive data on buckets in all available AWS regions
   // https://stackoverflow.com/questions/46769493/how-enable-force-global-bucket-access-in-aws-s3-sdk-java-2-0
   val s3Configuration = S3Configuration.builder.useArnRegionEnabled(true).build
 
   // The region of the S3 Client is hardcoded to EU-WEST-1, because AWS-Global and US-EAST-1 do not return all buckets.
-  // We decided to hardcode this here, instead of creating another enum for simplicity 
-  val client = S3Client
-    .builder
+  // We decided to hardcode this here, instead of creating another enum for simplicity
+  val client = S3Client.builder
     .credentialsProvider(origin.credentials.provider)
     .region(Region.EU_WEST_1)
     .overrideConfiguration(AWS.clientConfig)
@@ -40,8 +54,7 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
 
   // This second S3 client, with a region of US-EAST-1, gives us the correct createdTime value unlike the other regions,
   // as documented here: https://stackoverflow.com/questions/54353373/getting-incorrect-creation-dates-using-aws-s3
-  val clientForCorrectCreatedTime = S3Client
-    .builder
+  val clientForCorrectCreatedTime = S3Client.builder
     .credentialsProvider(origin.credentials.provider)
     .region(Region.US_EAST_1)
     .build
@@ -50,39 +63,65 @@ case class AWSBucketCollector(origin: AmazonOrigin, resource: ResourceType, craw
     val request = ListBucketsRequest.builder.build
 
     val listBuckets = client.listBuckets(request).buckets().asScala.toList
-    log.info(s"Total number of buckets with S3 Client region EU-WEST-1 for account ${origin.account} ${listBuckets.length}")
+    log.info(
+      s"Total number of buckets with S3 Client region EU-WEST-1 for account ${origin.account} ${listBuckets.length}"
+    )
 
-    val listBucketsForCorrectCreatedTime = clientForCorrectCreatedTime.listBuckets(request).buckets.asScala.toList
-    log.info(s"Total number of buckets with S3 Client region US-EAST-1 for account ${origin.account} ${listBucketsForCorrectCreatedTime.length}")
+    val listBucketsForCorrectCreatedTime =
+      clientForCorrectCreatedTime.listBuckets(request).buckets.asScala.toList
+    log.info(
+      s"Total number of buckets with S3 Client region US-EAST-1 for account ${origin.account} ${listBucketsForCorrectCreatedTime.length}"
+    )
 
-    listBuckets.zip(listBucketsForCorrectCreatedTime).map{ case (bucket, bucketWithCorrectCreatedTime) =>
-      Bucket.fromApiData(bucket, client, origin, bucketWithCorrectCreatedTime)
+    listBuckets.zip(listBucketsForCorrectCreatedTime).map {
+      case (bucket, bucketWithCorrectCreatedTime) =>
+        Bucket.fromApiData(bucket, client, origin, bucketWithCorrectCreatedTime)
     }
   }
 }
 
 object Bucket extends Logging {
 
-  private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName" 
+  private def arn(bucketName: String) = s"arn:aws:s3:::$bucketName"
 
-  def fromApiData(bucket: AWSBucket, client: S3Client, origin: AmazonOrigin, bucketWithCorrectCreatedTime: AWSBucket): Bucket = {
+  def fromApiData(
+      bucket: AWSBucket,
+      client: S3Client,
+      origin: AmazonOrigin,
+      bucketWithCorrectCreatedTime: AWSBucket
+  ): Bucket = {
     val bucketName = bucket.name
-    val bucketRegion = try {
-      Option(
-        client.getBucketLocation(GetBucketLocationRequest.builder.bucket(bucketName).build).locationConstraintAsString
-      )
-        .filterNot(region => "" == region)
-        .orElse(Some(Region.US_EAST_1.id))
-    } catch {
-      case e:S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" =>
-        log.info(s"NoSuchBucket for $bucketName in account ${origin.account}", e)
-        None
-      case e:S3Exception if e.awsErrorDetails.errorCode == "AuthorizationHeaderMalformed" =>
-        log.info(s"AuthorizationHeaderMalformed for $bucketName in account ${origin.account}", e)
-        None
-      case NonFatal(t) =>
-        throw new IllegalStateException(s"Failed when building info for bucket $bucketName", t)
-    }
+    val bucketRegion =
+      try {
+        Option(
+          client
+            .getBucketLocation(
+              GetBucketLocationRequest.builder.bucket(bucketName).build
+            )
+            .locationConstraintAsString
+        )
+          .filterNot(region => "" == region)
+          .orElse(Some(Region.US_EAST_1.id))
+      } catch {
+        case e: S3Exception if e.awsErrorDetails.errorCode == "NoSuchBucket" =>
+          log.info(
+            s"NoSuchBucket for $bucketName in account ${origin.account}",
+            e
+          )
+          None
+        case e: S3Exception
+            if e.awsErrorDetails.errorCode == "AuthorizationHeaderMalformed" =>
+          log.info(
+            s"AuthorizationHeaderMalformed for $bucketName in account ${origin.account}",
+            e
+          )
+          None
+        case NonFatal(t) =>
+          throw new IllegalStateException(
+            s"Failed when building info for bucket $bucketName",
+            t
+          )
+      }
     Bucket(
       arn = arn(bucketName),
       name = bucketName,
@@ -93,10 +132,10 @@ object Bucket extends Logging {
 }
 
 case class Bucket(
-  arn: String,
-  name: String,
-  region: Option[String],
-  createdTime: Instant
+    arn: String,
+    name: String,
+    region: Option[String],
+    createdTime: Instant
 ) extends IndexedItem {
   override def callFromArn: (String) => Call = arn => routes.Api.bucket(arn)
 }
