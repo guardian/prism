@@ -100,6 +100,7 @@ object Owners extends Owners {
     "reader.revenue.dev" -> SSA(stack = "support"),
     "newsletters.dev" -> SSA(stack = "newsletters"),
     "multimediatech" -> SSA(stack = "multimedia"),
-    "targeted.experiences.core" -> SSA(stack = "targeting")
+    "targeted.experiences.core" -> SSA(stack = "targeting"),
+    "engineering.managers" -> SSA(stack = "hiring-and-onboarding")
   )
 }
