@@ -7,8 +7,10 @@ class OwnersSpec extends Specification {
 
   "A guardian stack" should {
     "have only one owner" in {
-      val stacksWithMultipleOwners = Owners.stacks.groupBy(_._2).filter(_._2.size > 1).toSeq
-      val akaMessage = s"Number of stacks with more than one owner (${stacksWithMultipleOwners.map(_._1).mkString(", ")})"
+      val stacksWithMultipleOwners =
+        Owners.stacks.groupBy(_._2).filter(_._2.size > 1).toSeq
+      val akaMessage =
+        s"Number of stacks with more than one owner (${stacksWithMultipleOwners.map(_._1).mkString(", ")})"
       stacksWithMultipleOwners.size aka akaMessage should beEqualTo(0)
     }
   }
@@ -18,7 +20,6 @@ class OwnersSpec extends Specification {
   val ssa3 = SSA(stack = "s1", stage = Some("PROD"), app = Some("a1"))
   val ssa4 = SSA(stack = "s2", stage = Some("PROD"))
   val ssa5 = SSA(stack = "s3")
-
 
   object TestOwners extends Owners {
     override def default = Owner("aron")
@@ -43,10 +44,14 @@ class OwnersSpec extends Specification {
       TestOwners.forStack("s1", None, None).id shouldEqual "bob"
     }
     "return owner with matching stack when app doesn't exist" in {
-      TestOwners.forStack("s3", None, Some("doesNotExist")).id shouldEqual "frank"
+      TestOwners
+        .forStack("s3", None, Some("doesNotExist"))
+        .id shouldEqual "frank"
     }
     "return default owner when stack, stage and app don't exist" in {
-      TestOwners.forStack("doesNotExist", Some("doesNotExist"), Some("doesNotExist")).id shouldEqual "aron"
+      TestOwners
+        .forStack("doesNotExist", Some("doesNotExist"), Some("doesNotExist"))
+        .id shouldEqual "aron"
     }
   }
 

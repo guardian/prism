@@ -16,17 +16,21 @@ case class RegExMatchable(matcher: Regex) extends Matchable[String] {
 case class InverseMatchable[T](matcher: Matchable[T]) extends Matchable[T] {
   def isMatch(value: T): Boolean = !matcher.isMatch(value)
 }
-case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Matchable[JsValue] with Logging {
+case class ResourceFilter(filter: Map[String, Seq[Matchable[String]]])
+    extends Matchable[JsValue]
+    with Logging {
   def isMatch(json: JsValue): Boolean = {
     filter.map { case (field, values) =>
-      values -> field.split('.').foldLeft(json){case (jv, part) => (jv \ part).getOrElse(JsNull)}
+      values -> field.split('.').foldLeft(json) { case (jv, part) =>
+        (jv \ part).getOrElse(JsNull)
+      }
     } forall {
       case (values, JsString(str)) => values exists (_.isMatch(str))
-      case (values, JsNumber(int)) => values exists (_.isMatch(int.toString() ))
+      case (values, JsNumber(int)) => values exists (_.isMatch(int.toString()))
       case (values, JsArray(seq)) =>
         seq.exists {
           case JsString(str) => values exists (_.isMatch(str))
-          case _ => false
+          case _             => false
         }
       case _ => false
     }
@@ -36,10 +40,10 @@ case class ResourceFilter(filter:Map[String,Seq[Matchable[String]]]) extends Mat
     filter.map { case (field, values) =>
       val value = map.get(field)
       value match {
-        case None => true // no constraint? then match
+        case None         => true // no constraint? then match
         case Some(string) => values exists (_.isMatch(string))
       }
-    } forall(ok => ok)
+    } forall (ok => ok)
   }
 }
 object ResourceFilter {
@@ -51,23 +55,41 @@ object ResourceFilter {
   val RegexMatch: Regex = """^([a-zA-Z0-9.]*)~$""".r
   val SimpleMatch: Regex = """^([a-zA-Z0-9.]*)$""".r
 
-  def matcher(key:String, value:String): Option[(String, Matchable[String])] = {
+  def matcher(
+      key: String,
+      value: String
+  ): Option[(String, Matchable[String])] = {
     key match {
-      case InverseRegexMatch(bareKey) => Some(bareKey -> InverseMatchable(RegExMatchable(value.r)))
+      case InverseRegexMatch(bareKey) =>
+        Some(bareKey -> InverseMatchable(RegExMatchable(value.r)))
       case RegexMatch(bareKey) => Some(bareKey -> RegExMatchable(value.r))
-      case InverseMatch(bareKey) => Some(bareKey -> InverseMatchable(StringMatchable(value)))
+      case InverseMatch(bareKey) =>
+        Some(bareKey -> InverseMatchable(StringMatchable(value)))
       case SimpleMatch(bareKey) => Some(bareKey -> StringMatchable(value))
-      case _ => None
+      case _                    => None
     }
   }
 
-  def fromRequest(implicit request: RequestHeader): ResourceFilter = fromRequestWithDefaults()
+  def fromRequest(implicit request: RequestHeader): ResourceFilter =
+    fromRequestWithDefaults()
 
-  def fromRequestWithDefaults(defaults: (String,String)*)(implicit request: RequestHeader): ResourceFilter = {
-    val defaultKeys = defaults.flatMap{ d => matcher(d._1,d._2) }.groupBy(_._1).view.mapValues(_.map(_._2))
-    val filterKeys = request.queryString.view.filterKeys(key => !DenyList.contains(key)).toSeq.flatMap { case (key, values) =>
-      values.flatMap(matcher(key,_))
-    }.groupBy(_._1).view.mapValues(_.map(_._2))
+  def fromRequestWithDefaults(
+      defaults: (String, String)*
+  )(implicit request: RequestHeader): ResourceFilter = {
+    val defaultKeys = defaults
+      .flatMap { d => matcher(d._1, d._2) }
+      .groupBy(_._1)
+      .view
+      .mapValues(_.map(_._2))
+    val filterKeys = request.queryString.view
+      .filterKeys(key => !DenyList.contains(key))
+      .toSeq
+      .flatMap { case (key, values) =>
+        values.flatMap(matcher(key, _))
+      }
+      .groupBy(_._1)
+      .view
+      .mapValues(_.map(_._2))
     ResourceFilter((defaultKeys ++ filterKeys).toMap)
   }
 

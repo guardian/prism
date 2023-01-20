@@ -15,7 +15,13 @@ val awsVersion = "2.19.12"
 val awsVersionOne = "1.12.380"
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin, BuildInfoPlugin)
+  .enablePlugins(
+    PlayScala,
+    RiffRaffArtifact,
+    JDebPackaging,
+    SystemdPlugin,
+    BuildInfoPlugin
+  )
   .settings(
     Universal / packageName := normalizedName.value,
     fileDescriptorLimit := Some("16384"),
@@ -24,7 +30,7 @@ lazy val root = (project in file("."))
     riffRaffPackageName := s"devx::${name.value}",
     riffRaffManifestProjectName := riffRaffPackageName.value,
     riffRaffPackageType := (Debian / packageBin).value,
-    riffRaffArtifactResources  := Seq(
+    riffRaffArtifactResources := Seq(
       riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
       baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml",
       baseDirectory.value / "cdk/cdk.out/Prism-CODE.template.json" -> "cloudformation/Prism-CODE.template.json",
@@ -66,12 +72,13 @@ lazy val root = (project in file("."))
       "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
       specs2 % "test",
-      "net.logstash.logback" % "logstash-logback-encoder" % "7.2" exclude("com.fasterxml.jackson.core", "jackson-databind"),
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.2" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
       "com.gu" % "kinesis-logback-appender" % "2.1.1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1"
     ),
     scalacOptions ++= List(
-      "-encoding", "utf8",
+      "-encoding",
+      "utf8",
       "-deprecation",
       "-feature",
       "-unchecked",

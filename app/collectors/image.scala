@@ -6,43 +6,62 @@ import controllers.routes
 import org.joda.time.DateTime
 import play.api.mvc.Call
 import software.amazon.awssdk.services.ec2.Ec2Client
-import software.amazon.awssdk.services.ec2.model.{DescribeImagesRequest, Filter, Image => AwsImage}
+import software.amazon.awssdk.services.ec2.model.{
+  DescribeImagesRequest,
+  Filter,
+  Image => AwsImage
+}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.util.Try
 
-class ImageCollectorSet(accounts:Accounts) extends CollectorSet[Image](ResourceType("images"), accounts, Some(Regional)) {
+class ImageCollectorSet(accounts: Accounts)
+    extends CollectorSet[Image](
+      ResourceType("images"),
+      accounts,
+      Some(Regional)
+    ) {
   val lookupCollector: PartialFunction[Origin, Collector[Image]] = {
-    case amazon:AmazonOrigin => AWSImageCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin =>
+      AWSImageCollector(amazon, resource, amazon.crawlRate(resource.name))
   }
 }
 
-case class AWSImageCollector(origin:AmazonOrigin, resource:ResourceType, crawlRate: CrawlRate) extends Collector[Image] with Logging {
+case class AWSImageCollector(
+    origin: AmazonOrigin,
+    resource: ResourceType,
+    crawlRate: CrawlRate
+) extends Collector[Image]
+    with Logging {
 
-  val client: Ec2Client = Ec2Client
-    .builder
+  val client: Ec2Client = Ec2Client.builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
     .overrideConfiguration(AWS.clientConfig)
     .build
 
   def crawl: Iterable[Image] = {
-    val ownerIdFilter = Filter.builder.name("owner-id").values(origin.accountNumber.get).build
-    val imageTypeFilter = Filter.builder.name("image-type").values("machine").build
-    val result = client.describeImages(DescribeImagesRequest.builder
-      .filters(
-        ownerIdFilter,
-        imageTypeFilter
-      )
-      .build)
+    val ownerIdFilter =
+      Filter.builder.name("owner-id").values(origin.accountNumber.get).build
+    val imageTypeFilter =
+      Filter.builder.name("image-type").values("machine").build
+    val result = client.describeImages(
+      DescribeImagesRequest.builder
+        .filters(
+          ownerIdFilter,
+          imageTypeFilter
+        )
+        .build
+    )
     result.images.asScala.map(Image.fromApiData(_, origin.region))
   }
 }
 
 object Image {
-  def arn(region: String, imageId: String) = s"arn:aws:ec2:$region::image/$imageId"
+  def arn(region: String, imageId: String) =
+    s"arn:aws:ec2:$region::image/$imageId"
 
   def fromApiData(image: AwsImage, regionName: String): Image = {
     Image(
@@ -66,21 +85,21 @@ object Image {
 }
 
 case class Image(
-                arn: String,
-                name: Option[String],
-                imageId: String,
-                region: String,
-                description: Option[String],
-                tags: Map[String,String],
-                creationDate: Option[DateTime],
-                state: String,
-                architecture: String,
-                ownerId: String,
-                virtualizationType: String,
-                hypervisor: String,
-                sriovNetSupport: Option[String],
-                rootDeviceType: String,
-                imageType: String
-                  ) extends IndexedItem {
+    arn: String,
+    name: Option[String],
+    imageId: String,
+    region: String,
+    description: Option[String],
+    tags: Map[String, String],
+    creationDate: Option[DateTime],
+    state: String,
+    architecture: String,
+    ownerId: String,
+    virtualizationType: String,
+    hypervisor: String,
+    sriovNetSupport: Option[String],
+    rootDeviceType: String,
+    imageType: String
+) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.image(arn)
 }

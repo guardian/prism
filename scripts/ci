@@ -13,4 +13,4 @@ fi
   ./script/ci
 )
 
-sbt clean compile test riffRaffUpload
+sbt clean scalafmtSbtCheck scalafmtCheckAll compile test riffRaffUpload

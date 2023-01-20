@@ -7,41 +7,66 @@ import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
 import software.amazon.awssdk.services.acm.AcmClient
-import software.amazon.awssdk.services.acm.model.{CertificateDetail, DescribeCertificateRequest, ListCertificatesRequest, RenewalSummary, ResourceRecord, DomainValidation => AwsDomainValidation}
+import software.amazon.awssdk.services.acm.model.{
+  CertificateDetail,
+  DescribeCertificateRequest,
+  ListCertificatesRequest,
+  RenewalSummary,
+  ResourceRecord,
+  DomainValidation => AwsDomainValidation
+}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 
-
-class AmazonCertificateCollectorSet(accounts: Accounts) extends CollectorSet[AcmCertificate](ResourceType("acmCertificates"), accounts, Some(Regional)) {
+class AmazonCertificateCollectorSet(accounts: Accounts)
+    extends CollectorSet[AcmCertificate](
+      ResourceType("acmCertificates"),
+      accounts,
+      Some(Regional)
+    ) {
   val lookupCollector: PartialFunction[Origin, Collector[AcmCertificate]] = {
-    case amazon: AmazonOrigin => AWSAcmCertificateCollector(amazon, resource, amazon.crawlRate(resource.name))
+    case amazon: AmazonOrigin =>
+      AWSAcmCertificateCollector(
+        amazon,
+        resource,
+        amazon.crawlRate(resource.name)
+      )
   }
 }
 
-case class AWSAcmCertificateCollector(origin: AmazonOrigin, resource: ResourceType, crawlRate: CrawlRate) extends Collector[AcmCertificate] with Logging {
+case class AWSAcmCertificateCollector(
+    origin: AmazonOrigin,
+    resource: ResourceType,
+    crawlRate: CrawlRate
+) extends Collector[AcmCertificate]
+    with Logging {
 
-  val client: AcmClient = AcmClient
-    .builder
+  val client: AcmClient = AcmClient.builder
     .credentialsProvider(origin.credentials.provider)
     .region(origin.awsRegionV2)
     .overrideConfiguration(AWS.clientConfig)
     .build
 
   def crawl: Iterable[AcmCertificate] = {
-    client.listCertificatesPaginator(ListCertificatesRequest.builder.build).certificateSummaryList.asScala.map{ cert =>
-      val requestDetails = DescribeCertificateRequest.builder.certificateArn(cert.certificateArn)
-      val resultDetails = client.describeCertificate(requestDetails.build)
-      AcmCertificate.fromApiData(resultDetails.certificate, origin)
-    }
+    client
+      .listCertificatesPaginator(ListCertificatesRequest.builder.build)
+      .certificateSummaryList
+      .asScala
+      .map { cert =>
+        val requestDetails =
+          DescribeCertificateRequest.builder.certificateArn(cert.certificateArn)
+        val resultDetails = client.describeCertificate(requestDetails.build)
+        AcmCertificate.fromApiData(resultDetails.certificate, origin)
+      }
   }
 }
 
 case class DomainResourceRecord(
-  name: String,
-  resourceType: String,
-  value: String
+    name: String,
+    resourceType: String,
+    value: String
 )
 
 object DomainResourceRecord {
@@ -55,13 +80,13 @@ object DomainResourceRecord {
 }
 
 case class DomainValidation(
-                             domainName: String,
-                             validationEmails: List[String],
-                             validationDomain: String,
-                             validationStatus: String,
-                             validationMethod: String,
-                             resourceRecord: Option[DomainResourceRecord]
-                           )
+    domainName: String,
+    validationEmails: List[String],
+    validationDomain: String,
+    validationStatus: String,
+    validationMethod: String,
+    resourceRecord: Option[DomainResourceRecord]
+)
 
 object DomainValidation {
   def fromApiData(dv: AwsDomainValidation): DomainValidation = {
@@ -76,16 +101,29 @@ object DomainValidation {
   }
 }
 
-case class RenewalInfo(renewalStatus: String, domainValidationOptions: List[DomainValidation])
+case class RenewalInfo(
+    renewalStatus: String,
+    domainValidationOptions: List[DomainValidation]
+)
 
 object RenewalInfo {
   def fromApiData(ri: RenewalSummary): RenewalInfo = {
-    RenewalInfo(ri.renewalStatusAsString, Option(ri.domainValidationOptions).map(_.asScala).getOrElse(Nil).map(DomainValidation.fromApiData).toList)
+    RenewalInfo(
+      ri.renewalStatusAsString,
+      Option(ri.domainValidationOptions)
+        .map(_.asScala)
+        .getOrElse(Nil)
+        .map(DomainValidation.fromApiData)
+        .toList
+    )
   }
 }
 
 object AcmCertificate {
-  def fromApiData(cert: CertificateDetail, origin: AmazonOrigin): AcmCertificate = AcmCertificate(
+  def fromApiData(
+      cert: CertificateDetail,
+      origin: AmazonOrigin
+  ): AcmCertificate = AcmCertificate(
     arn = cert.certificateArn,
     domainName = cert.domainName,
     subjectAlternativeNames = cert.subjectAlternativeNames.asScala.toList,
@@ -102,32 +140,34 @@ object AcmCertificate {
     keyAlgorithm = cert.keyAlgorithmAsString,
     signatureAlgorithm = cert.signatureAlgorithm,
     serial = cert.serial,
-    validationMethod = cert.domainValidationOptions.asScala.headOption.map(_.validationMethodAsString),
-    domainValidationOptions = cert.domainValidationOptions.asScala.toList.map(DomainValidation.fromApiData),
+    validationMethod = cert.domainValidationOptions.asScala.headOption
+      .map(_.validationMethodAsString),
+    domainValidationOptions = cert.domainValidationOptions.asScala.toList
+      .map(DomainValidation.fromApiData),
     renewalStatus = Option(cert.renewalSummary).map(RenewalInfo.fromApiData)
   )
 }
 
 case class AcmCertificate(
-                              arn: String,
-                              domainName: String,
-                              subjectAlternativeNames: List[String],
-                              certificateType: String,
-                              status: String,
-                              issuer: String,
-                              inUseBy: List[String],
-                              notBefore: Option[Instant],
-                              notAfter: Option[Instant],
-                              createdAt: Option[Instant],
-                              issuedAt: Option[Instant],
-                              failureReason: Option[String],
-                              subject: String,
-                              keyAlgorithm: String,
-                              signatureAlgorithm: String,
-                              serial: String,
-                              validationMethod: Option[String],
-                              domainValidationOptions: List[DomainValidation],
-                              renewalStatus: Option[RenewalInfo]
-                            ) extends IndexedItem {
+    arn: String,
+    domainName: String,
+    subjectAlternativeNames: List[String],
+    certificateType: String,
+    status: String,
+    issuer: String,
+    inUseBy: List[String],
+    notBefore: Option[Instant],
+    notAfter: Option[Instant],
+    createdAt: Option[Instant],
+    issuedAt: Option[Instant],
+    failureReason: Option[String],
+    subject: String,
+    keyAlgorithm: String,
+    signatureAlgorithm: String,
+    serial: String,
+    validationMethod: Option[String],
+    domainValidationOptions: List[DomainValidation],
+    renewalStatus: Option[RenewalInfo]
+) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.acmCertificate(arn)
 }
