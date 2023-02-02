@@ -17,7 +17,7 @@
     "@types/node": "18.11.18",
     "aws-cdk": "2.45.0",
     "aws-cdk-lib": "2.45.0",
-    "constructs": "10.1.127",
+    "constructs": "10.1.238",
     "eslint": "^8.33.0",
     "jest": "^29.4.1",
     "prettier": "^2.8.1",
