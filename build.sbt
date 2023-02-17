@@ -11,8 +11,8 @@ resolvers ++= Seq(
   "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
 )
 
-val awsVersion = "2.19.12"
-val awsVersionOne = "1.12.380"
+val awsVersion = "2.20.6"
+val awsVersionOne = "1.12.408"
 
 lazy val root = (project in file("."))
   .enablePlugins(
@@ -65,8 +65,8 @@ lazy val root = (project in file("."))
       "com.beust" % "jcommander" % "1.82", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
-      "com.typesafe.play" %% "play-json" % "2.9.3",
-      "com.typesafe.play" %% "play-json-joda" % "2.9.3",
+      "com.typesafe.play" %% "play-json" % "2.9.4",
+      "com.typesafe.play" %% "play-json-joda" % "2.9.4",
       "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.11.1",
@@ -74,7 +74,7 @@ lazy val root = (project in file("."))
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "7.2" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
       "com.gu" % "kinesis-logback-appender" % "2.1.1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1"
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
     ),
     scalacOptions ++= List(
       "-encoding",
