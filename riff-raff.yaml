@@ -15,7 +15,7 @@ deployments:
       amiEncrypted: true
       amiTags:
         Recipe: arm64-focal-java11-deploy-infrastructure
-        AmigoStage: PROD
+        AmigoStage: CODE
         BuiltBy: amigo
   prism:
     type: autoscaling
