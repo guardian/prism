@@ -14,7 +14,7 @@ deployments:
       amiParameter: AMIPrism
       amiEncrypted: true
       amiTags:
-        Recipe: arm64-focal-java11-deploy-infrastructure
+        Recipe: arm64-jammy-java11-deploy-infrastructure
         AmigoStage: CODE
         BuiltBy: amigo
   prism:
