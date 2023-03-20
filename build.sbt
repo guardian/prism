@@ -12,7 +12,7 @@ resolvers ++= Seq(
 )
 
 val awsVersion = "2.20.26"
-val awsVersionOne = "1.12.430"
+val awsVersionOne = "1.12.429"
 
 lazy val root = (project in file("."))
   .enablePlugins(
