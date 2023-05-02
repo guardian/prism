@@ -11,8 +11,8 @@ resolvers ++= Seq(
   "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
 )
 
-val awsVersion = "2.20.37"
-val awsVersionOne = "1.12.439"
+val awsVersion = "2.20.56"
+val awsVersionOne = "1.12.458"
 
 lazy val root = (project in file("."))
   .enablePlugins(
@@ -74,7 +74,7 @@ lazy val root = (project in file("."))
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
       "com.gu" % "kinesis-logback-appender" % "2.1.1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.0"
     ),
     scalacOptions ++= List(
       "-encoding",
