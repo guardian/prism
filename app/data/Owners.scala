@@ -56,6 +56,7 @@ object Owners extends Owners {
     "digitalcms.dev" -> SSA("media-service"),
     "digitalcms.dev" -> SSA("grid-elasticsearch"),
     "digitalcms.dev" -> SSA("composer"),
+    "digitalcms.dev" -> SSA("editorial-feeds"),
     "digital.investigations" -> SSA("pfi"),
     "digital.investigations" -> SSA("pfi-giant"),
     "digital.investigations" -> SSA("pfi-playground"),
