@@ -118,14 +118,15 @@ case class SecurityGroup(
 }
 
 object SecurityGroup {
-  implicit val arnLookup = new ArnLookup[SecurityGroup] {
-    override def call(arn: String): Call = routes.Api.securityGroup(arn)
-    override def item(
-        arn: String,
-        prism: Prism
-    ): Option[(Label, SecurityGroup)] =
-      prism.securityGroupAgent.getTuples.find(_._2.arn == arn)
-  }
+  implicit val arnLookup: ArnLookup[SecurityGroup] =
+    new ArnLookup[SecurityGroup] {
+      override def call(arn: String): Call = routes.Api.securityGroup(arn)
+      override def item(
+          arn: String,
+          prism: Prism
+      ): Option[(Label, SecurityGroup)] =
+        prism.securityGroupAgent.getTuples.find(_._2.arn == arn)
+    }
 }
 
 case class SecurityGroupRef(
