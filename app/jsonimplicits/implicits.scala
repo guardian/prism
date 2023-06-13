@@ -95,7 +95,7 @@ object model {
   implicit val loadBalancerWriter: Writes[LoadBalancer] =
     Json.writes[LoadBalancer]
 
-  implicit val awsAccountWrites = Json.writes[AWSAccount]
+  implicit val awsAccountWrites: Writes[AWSAccount] = Json.writes[AWSAccount]
 
   implicit val labelWriter: Writes[Label] = (l: Label) => {
     Json.obj(
