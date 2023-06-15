@@ -11,8 +11,8 @@ resolvers ++= Seq(
   "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
 )
 
-val awsVersion = "2.20.84"
-val awsVersionOne = "1.12.487"
+val awsVersion = "2.20.85"
+val awsVersionOne = "1.12.488"
 
 lazy val root = (project in file("."))
   .enablePlugins(
