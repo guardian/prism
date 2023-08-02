@@ -1,17 +1,34 @@
-# See the documentation for all configuration options https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
 updates:
-  - package-ecosystem: 'npm'
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      # The CDK project does not run in a PROD environment, only CI, so we can afford to use old versions of libraries for a short time. Run Dependabot once a month to reduce the frequency of PRs.
-      interval: 'monthly'
+      interval: "weekly"
     commit-message:
       prefix: "chore(deps): "
-    directory: '/cdk'
+    labels:
+      - "dependencies"
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: "npm"
+    directory: "/cdk"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps): "
     # The version of AWS CDK libraries must match those from @guardian/cdk.
     # We'd never be able to update them here independently, so just ignore them.
     ignore:
       - dependency-name: "aws-cdk"
       - dependency-name: "aws-cdk-lib"
       - dependency-name: "constructs"
+    labels:
+      - "dependencies"
+    groups:
+      all:
+        patterns: ["*"]
+
+
