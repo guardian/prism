@@ -116,6 +116,18 @@ object Bucket extends Logging {
             e
           )
           None
+
+        /*
+        Reaching this case means that the bucket exists, but the user does not have access to it.
+        For example, the bucket's policy might be set to only allow s3:* access from a specific IP address.
+         */
+        case e: S3Exception
+            if e.awsErrorDetails().errorCode == "AccessDenied" =>
+          log.warn(
+            s"AccessDenied for $bucketName in account ${origin.account}",
+            e
+          )
+          None
         case NonFatal(t) =>
           throw new IllegalStateException(
             s"Failed when building info for bucket $bucketName",
