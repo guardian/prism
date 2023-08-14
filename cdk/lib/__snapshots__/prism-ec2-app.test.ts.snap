@@ -15,7 +15,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuPlayApp",
       "GuCertificate",
       "GuInstanceRole",
-      "GuSSMRunCommandPolicy",
       "GuDescribeEC2Policy",
       "GuLoggingStreamNameParameter",
       "GuLogShippingPolicy",
@@ -24,8 +23,8 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuParameterStoreReadPolicy",
       "GuAmiParameter",
       "GuHttpsEgressSecurityGroup",
-      "GuAutoScalingGroup",
       "GuWazuhAccess",
+      "GuAutoScalingGroup",
       "GuApplicationLoadBalancer",
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
@@ -81,8 +80,16 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "Properties": {
         "HealthCheckGracePeriod": 500,
         "HealthCheckType": "ELB",
-        "LaunchConfigurationName": {
-          "Ref": "AutoScalingGroupPrismLaunchConfig969400AD",
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "deployPRODprismA0128C9B",
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "deployPRODprismA0128C9B",
+              "LatestVersionNumber",
+            ],
+          },
         },
         "MaxSize": "4",
         "MinSize": "2",
@@ -91,11 +98,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "Key": "App",
             "PropagateAtLaunch": true,
             "Value": "prism",
-          },
-          {
-            "Key": "gu:cdk:pattern-name",
-            "PropagateAtLaunch": true,
-            "Value": "GuPlayApp",
           },
           {
             "Key": "gu:cdk:version",
@@ -113,11 +115,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "Value": {
               "Ref": "LoggingStreamName",
             },
-          },
-          {
-            "Key": "Name",
-            "PropagateAtLaunch": true,
-            "Value": "prism/AutoScalingGroupPrism",
           },
           {
             "Key": "Stack",
@@ -141,74 +138,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup",
     },
-    "AutoScalingGroupPrismInstanceProfile4740771B": {
-      "Properties": {
-        "Roles": [
-          {
-            "Ref": "InstanceRolePrism96D154B7",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::InstanceProfile",
-    },
-    "AutoScalingGroupPrismLaunchConfig969400AD": {
-      "DependsOn": [
-        "InstanceRolePrism96D154B7",
-      ],
-      "Properties": {
-        "BlockDeviceMappings": [
-          {
-            "DeviceName": "/dev/sda1",
-            "Ebs": {
-              "VolumeSize": 8,
-              "VolumeType": "gp2",
-            },
-          },
-        ],
-        "IamInstanceProfile": {
-          "Ref": "AutoScalingGroupPrismInstanceProfile4740771B",
-        },
-        "ImageId": {
-          "Ref": "AMIPrism",
-        },
-        "InstanceType": "t4g.medium",
-        "MetadataOptions": {
-          "HttpTokens": "required",
-        },
-        "SecurityGroups": [
-          {
-            "Fn::GetAtt": [
-              "GuHttpsEgressSecurityGroupPrism4A68FA56",
-              "GroupId",
-            ],
-          },
-          {
-            "Fn::GetAtt": [
-              "WazuhSecurityGroup",
-              "GroupId",
-            ],
-          },
-        ],
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/bash
-mkdir -p $(dirname '/prism/prism.deb')
-aws s3 cp 's3://",
-                {
-                  "Ref": "DistributionBucketName",
-                },
-                "/deploy/PROD/prism/prism.deb' '/prism/prism.deb'
-dpkg -i /prism/prism.deb",
-              ],
-            ],
-          },
-        },
-      },
-      "Type": "AWS::AutoScaling::LaunchConfiguration",
-    },
     "CertificatePrism0841D21D": {
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -225,6 +154,10 @@ dpkg -i /prism/prism.deb",
           {
             "Key": "gu:repo",
             "Value": "guardian/prism",
+          },
+          {
+            "Key": "Name",
+            "Value": "prism/CertificatePrism",
           },
           {
             "Key": "Stack",
@@ -538,22 +471,26 @@ dpkg -i /prism/prism.deb",
               "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Principal": {
-                "Service": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "ec2.",
-                      {
-                        "Ref": "AWS::URLSuffix",
-                      },
-                    ],
-                  ],
-                },
+                "Service": "ec2.amazonaws.com",
               },
             },
           ],
           "Version": "2012-10-17",
         },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
         "Path": "/",
         "Tags": [
           {
@@ -626,6 +563,27 @@ dpkg -i /prism/prism.deb",
         "DestinationSecurityGroupId": {
           "Fn::GetAtt": [
             "GuHttpsEgressSecurityGroupPrism4A68FA56",
+            "GroupId",
+          ],
+        },
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "InternalIngressSecurityGroupPrism75546EB8",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "InternalIngressSecurityGroupPrismtoprismWazuhSecurityGroupCEA52DC59000F2CB81F1": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
             "GroupId",
           ],
         },
@@ -770,6 +728,27 @@ dpkg -i /prism/prism.deb",
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
+    "LoadBalancerPrismSecurityGrouptoprismWazuhSecurityGroupCEA52DC59000B5566477": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "LoadBalancerPrismSecurityGroupB966F197",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
     "ParameterStoreReadPrism8EED3EF6": {
       "Properties": {
         "PolicyDocument": {
@@ -821,42 +800,6 @@ dpkg -i /prism/prism.deb",
           "Version": "2012-10-17",
         },
         "PolicyName": "parameter-store-read-policy",
-        "Roles": [
-          {
-            "Ref": "InstanceRolePrism96D154B7",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "SSMRunCommandPolicy244E1613": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "ec2messages:AcknowledgeMessage",
-                "ec2messages:DeleteMessage",
-                "ec2messages:FailMessage",
-                "ec2messages:GetEndpoint",
-                "ec2messages:GetMessages",
-                "ec2messages:SendReply",
-                "ssm:UpdateInstanceInformation",
-                "ssm:ListInstanceAssociations",
-                "ssm:DescribeInstanceProperties",
-                "ssm:DescribeDocumentParameters",
-                "ssmmessages:CreateControlChannel",
-                "ssmmessages:CreateDataChannel",
-                "ssmmessages:OpenControlChannel",
-                "ssmmessages:OpenDataChannel",
-              ],
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "ssm-run-command-policy",
         "Roles": [
           {
             "Ref": "InstanceRolePrism96D154B7",
@@ -1055,6 +998,202 @@ dpkg -i /prism/prism.deb",
         },
       },
       "Type": "AWS::EC2::SecurityGroup",
+    },
+    "WazuhSecurityGroupfromprismInternalIngressSecurityGroupPrism88D0F57890002E31759F": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "InternalIngressSecurityGroupPrism75546EB8",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "WazuhSecurityGroupfromprismLoadBalancerPrismSecurityGroupE6A4FDFF90009CACFBEB": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "LoadBalancerPrismSecurityGroupB966F197",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "deployPRODprismA0128C9B": {
+      "DependsOn": [
+        "InstanceRolePrism96D154B7",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "VolumeSize": 8,
+                "VolumeType": "gp2",
+              },
+            },
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": [
+                "deployPRODprismProfileAE47A6A9",
+                "Arn",
+              ],
+            },
+          },
+          "ImageId": {
+            "Ref": "AMIPrism",
+          },
+          "InstanceType": "t4g.medium",
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "GuHttpsEgressSecurityGroupPrism4A68FA56",
+                "GroupId",
+              ],
+            },
+            {
+              "Fn::GetAtt": [
+                "WazuhSecurityGroup",
+                "GroupId",
+              ],
+            },
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "instance",
+              "Tags": [
+                {
+                  "Key": "gu:cdk:version",
+                  "Value": "TEST",
+                },
+                {
+                  "Key": "gu:repo",
+                  "Value": "guardian/prism",
+                },
+                {
+                  "Key": "Name",
+                  "Value": "prism/deploy-PROD-prism",
+                },
+                {
+                  "Key": "Stack",
+                  "Value": "deploy",
+                },
+                {
+                  "Key": "Stage",
+                  "Value": "PROD",
+                },
+              ],
+            },
+            {
+              "ResourceType": "volume",
+              "Tags": [
+                {
+                  "Key": "gu:cdk:version",
+                  "Value": "TEST",
+                },
+                {
+                  "Key": "gu:repo",
+                  "Value": "guardian/prism",
+                },
+                {
+                  "Key": "Name",
+                  "Value": "prism/deploy-PROD-prism",
+                },
+                {
+                  "Key": "Stack",
+                  "Value": "deploy",
+                },
+                {
+                  "Key": "Stage",
+                  "Value": "PROD",
+                },
+              ],
+            },
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#!/bin/bash
+mkdir -p $(dirname '/prism/prism.deb')
+aws s3 cp 's3://",
+                  {
+                    "Ref": "DistributionBucketName",
+                  },
+                  "/deploy/PROD/prism/prism.deb' '/prism/prism.deb'
+dpkg -i /prism/prism.deb",
+                ],
+              ],
+            },
+          },
+        },
+        "TagSpecifications": [
+          {
+            "ResourceType": "launch-template",
+            "Tags": [
+              {
+                "Key": "gu:cdk:version",
+                "Value": "TEST",
+              },
+              {
+                "Key": "gu:repo",
+                "Value": "guardian/prism",
+              },
+              {
+                "Key": "Name",
+                "Value": "prism/deploy-PROD-prism",
+              },
+              {
+                "Key": "Stack",
+                "Value": "deploy",
+              },
+              {
+                "Key": "Stage",
+                "Value": "PROD",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "deployPRODprismProfileAE47A6A9": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "InstanceRolePrism96D154B7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
     },
   },
 }
