@@ -4,7 +4,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.11"
+ThisBuild / scalaVersion := "2.13.12"
 
 resolvers ++= Seq(
   "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
