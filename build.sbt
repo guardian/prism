@@ -66,7 +66,7 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
       "com.typesafe.play" %% "play-json" % "2.10.2",
-      "com.typesafe.play" %% "play-json-joda" % "2.10.1",
+      "com.typesafe.play" %% "play-json-joda" % "2.10.2",
       "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.11.1",
