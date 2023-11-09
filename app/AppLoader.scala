@@ -1,10 +1,7 @@
 import com.amazonaws.regions.Regions
 import conf._
 import play.api.{Configuration, _}
-import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils
 import utils.{AWSCredentialProviders, Logging}
-
-import scala.util.Try
 
 class AppLoader extends ApplicationLoader with Logging {
   def load(context: ApplicationLoader.Context): Application = {
@@ -33,21 +30,6 @@ class AppLoader extends ApplicationLoader with Logging {
     val extraConfig: Configuration = extraConfigs.foldRight(
       Configuration.empty
     )(_.configuration(context.environment.mode).withFallback(_))
-
-    val stream: Option[String] =
-      extraConfig.getOptional[String]("LoggingStream")
-    stream match {
-      case Some(stream) =>
-        val maybeInstanceId = Try(EC2MetadataUtils.getInstanceId).toOption
-        val loggingContext = Map(
-          "buildId" -> prism.BuildInfo.buildNumber
-        ) ++ maybeInstanceId.map("instanceId" -> _)
-        LogConfiguration.shipping(stream, identity, loggingContext)
-      case _ =>
-        log.info(
-          "Missing stream configuration to enable log shipping to central ELK"
-        )
-    }
 
     log.info(s"Loaded config $extraConfig")
 
