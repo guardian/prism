@@ -1,11 +1,11 @@
 package utils
 
-import akka.actor.{ActorSystem, Cancellable}
-import akka.agent.Agent
+import org.apache.pekko.actor.{ActorSystem, Cancellable}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.joda.time.{DateTime, Interval, LocalDate, LocalTime}
+import org.apache.pekko.agent.Agent
 
 import scala.concurrent.ExecutionContext
 
