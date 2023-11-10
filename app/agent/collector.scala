@@ -1,9 +1,9 @@
 package agent
 
-import akka.actor.ActorSystem
-import akka.agent.Agent
+import org.apache.pekko.actor.ActorSystem
 import net.logstash.logback.marker.Markers
 import org.joda.time.DateTime
+import org.apache.pekko.agent.Agent
 import utils._
 
 import scala.collection.mutable

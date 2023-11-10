@@ -15,11 +15,11 @@
 /** Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
   */
 
-package akka.agent
+package org.apache.pekko.agent
 
 import scala.concurrent.stm._
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import akka.util.{SerializedSuspendableExecutionContext}
+import org.apache.pekko.util.{SerializedSuspendableExecutionContext}
 
 object Agent {
 

@@ -1,7 +1,7 @@
 package controllers
 
 import agent.{Accounts, CollectorAgent, SourceStatusAgent}
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import collectors._
 import conf.PrismConfiguration
 import utils.StopWatch
