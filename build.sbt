@@ -76,6 +76,10 @@ lazy val root = (project in file("."))
       "com.gu" % "kinesis-logback-appender" % "2.1.1",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.3"
     ),
+    excludeDependencies ++= Seq(
+      // As of Play 3.0, groupId has changed to org.playframework; exclude transitive dependencies to the old artifacts
+      ExclusionRule(organization = "com.typesafe.play")
+    ),
     scalacOptions ++= List(
       "-encoding",
       "utf8",
