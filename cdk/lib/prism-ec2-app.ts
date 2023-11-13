@@ -30,6 +30,9 @@ export class PrismEc2App extends GuStack {
 
     const pattern = new GuPlayApp(this, {
       ...PrismEc2App.app,
+      applicationLogging: {
+        enabled: true,
+      },
       instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
       userData: {
         distributable: {

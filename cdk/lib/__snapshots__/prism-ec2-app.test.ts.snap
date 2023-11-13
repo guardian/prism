@@ -126,6 +126,11 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "PropagateAtLaunch": true,
             "Value": "PROD",
           },
+          {
+            "Key": "SystemdUnit",
+            "PropagateAtLaunch": true,
+            "Value": "prism.service",
+          },
         ],
         "TargetGroupARNs": [
           {
