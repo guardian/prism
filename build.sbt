@@ -73,7 +73,7 @@ lazy val root = (project in file("."))
       filters,
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "7.4" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.3"
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.16.0"
     ),
     excludeDependencies ++= Seq(
       // As of Play 3.0, groupId has changed to org.playframework; exclude transitive dependencies to the old artifacts
