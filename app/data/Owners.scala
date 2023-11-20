@@ -60,7 +60,6 @@ object Owners extends Owners {
     "digital.investigations" -> SSA("pfi"),
     "digital.investigations" -> SSA("pfi-giant"),
     "digital.investigations" -> SSA("pfi-playground"),
-    "digital.investigations" -> SSA("pfi-llama"),
     "digital.investigations" -> SSA("pfi-structured"),
     "digital.investigations" -> SSA("pfi-lurch"),
     "digital.investigations" -> SSA("investigations"),
