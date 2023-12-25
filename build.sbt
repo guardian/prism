@@ -75,7 +75,7 @@ lazy val root = (project in file("."))
       "net.logstash.logback" % "logstash-logback-encoder" % "7.4" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
       // Transient dependency of Play. No newer version of Play 3.0.1 with this vulnerability fixed.
       "ch.qos.logback" % "logback-classic" % "1.4.14",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.16.0"
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.16.1"
     ),
     excludeDependencies ++= Seq(
       // As of Play 3.0, groupId has changed to org.playframework; exclude transitive dependencies to the old artifacts
