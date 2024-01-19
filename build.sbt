@@ -65,8 +65,8 @@ lazy val root = (project in file("."))
       "com.beust" % "jcommander" % "1.82", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
-      "org.playframework" %% "play-json" % "3.0.1",
-      "org.playframework" %% "play-json-joda" % "3.0.1",
+      "org.playframework" %% "play-json" % "3.0.2",
+      "org.playframework" %% "play-json-joda" % "3.0.2",
       "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.11.1",
