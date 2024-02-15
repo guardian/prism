@@ -6,11 +6,6 @@ version := "1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.12"
 
-resolvers ++= Seq(
-  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-  "Guardian Github Snapshots" at "https://guardian.github.io/maven/repo-releases"
-)
-
 val awsVersion = "2.23.12"
 val awsVersionOne = "1.12.656"
 
