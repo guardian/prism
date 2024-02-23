@@ -46,6 +46,7 @@ object Owners extends Owners {
     "dotcom.platform" -> SSA("frontend-elk"),
     "identitydev" -> SSA(stack = "discussion"),
     "identitydev" -> SSA(stack = "identity"),
+    "newsroom.resilience" -> SSA("print-production"),
     "digitalcms.dev" -> SSA("crosswords"),
     "digitalcms.dev" -> SSA("flexible"),
     "digitalcms.dev" -> SSA("flexible-secondary"),
