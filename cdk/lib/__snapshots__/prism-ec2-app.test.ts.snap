@@ -15,6 +15,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuPlayApp",
       "GuCertificate",
       "GuInstanceRole",
+      "GuSsmSshPolicy",
       "GuDescribeEC2Policy",
       "GuLoggingStreamNameParameter",
       "GuLogShippingPolicy",
@@ -500,20 +501,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           ],
           "Version": "2012-10-17",
         },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
-              ],
-            ],
-          },
-        ],
         "Path": "/",
         "Tags": [
           {
@@ -823,6 +810,42 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           "Version": "2012-10-17",
         },
         "PolicyName": "parameter-store-read-policy",
+        "Roles": [
+          {
+            "Ref": "InstanceRolePrism96D154B7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SsmSshPolicy4CFC977E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ec2messages:AcknowledgeMessage",
+                "ec2messages:DeleteMessage",
+                "ec2messages:FailMessage",
+                "ec2messages:GetEndpoint",
+                "ec2messages:GetMessages",
+                "ec2messages:SendReply",
+                "ssm:UpdateInstanceInformation",
+                "ssm:ListInstanceAssociations",
+                "ssm:DescribeInstanceProperties",
+                "ssm:DescribeDocumentParameters",
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ssm-ssh-policy",
         "Roles": [
           {
             "Ref": "InstanceRolePrism96D154B7",
