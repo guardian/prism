@@ -11,7 +11,7 @@
     "diff:prod": "cdk diff --path-metadata false --version-reporting false Prism-PROD"
   },
   "devDependencies": {
-    "@guardian/cdk": "54.1.0",
+    "@guardian/cdk": "55.0.0",
     "@guardian/eslint-config-typescript": "^9.0.3",
     "@types/jest": "^29.5.12",
     "@types/node": "20.11.24",
