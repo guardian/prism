@@ -64,6 +64,7 @@ object Owners extends Owners {
     "digital.investigations" -> SSA("pfi-structured"),
     "digital.investigations" -> SSA("pfi-lurch"),
     "digital.investigations" -> SSA("investigations"),
+    "digital.investigations" -> SSA(stack = "secure-collaboration"),
     "commercial.dev" -> SSA(stack = "frontend", app = Some("ipad-ad-preview")),
     "commercial.dev" -> SSA(stack = "flexible", app = Some("campaign-central")),
     "consent" -> SSA(stack = "baton"),
