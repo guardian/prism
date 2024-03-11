@@ -11,10 +11,10 @@
     "diff:prod": "cdk diff --path-metadata false --version-reporting false Prism-PROD"
   },
   "devDependencies": {
-    "@guardian/cdk": "55.0.0",
+    "@guardian/cdk": "56.0.0",
     "@guardian/eslint-config-typescript": "^9.0.3",
     "@types/jest": "^29.5.12",
-    "@types/node": "20.11.24",
+    "@types/node": "20.11.25",
     "aws-cdk": "2.127.0",
     "aws-cdk-lib": "2.127.0",
     "constructs": "10.3.0",
@@ -24,6 +24,6 @@
     "source-map-support": "^0.5.21",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "5.3.3"
+    "typescript": "5.4.2"
   }
 }
