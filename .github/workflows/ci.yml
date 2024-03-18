@@ -41,7 +41,7 @@ jobs:
           roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
           configPath: riff-raff.yaml # TODO switch to auto-generating this file
           contentDirectories: |
-            cdk.out:
+            cloudformation:
               - cdk/cdk.out
             prism:
               - target/prism.deb
