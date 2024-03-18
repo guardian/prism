@@ -1,5 +1,3 @@
-import com.gu.riffraff.artifact.BuildInfo
-
 name := "prism"
 
 version := "1.0-SNAPSHOT"
@@ -9,10 +7,12 @@ ThisBuild / scalaVersion := "2.13.13"
 val awsVersion = "2.25.13"
 val awsVersionOne = "1.12.689"
 
+def env(propName: String): String =
+  sys.env.get(propName).filter(_.trim.nonEmpty).getOrElse("DEV")
+
 lazy val root = (project in file("."))
   .enablePlugins(
     PlayScala,
-    RiffRaffArtifact,
     JDebPackaging,
     SystemdPlugin,
     BuildInfoPlugin
@@ -22,26 +22,23 @@ lazy val root = (project in file("."))
     fileDescriptorLimit := Some("16384"),
     maintainer := "Guardian Developers <dig.dev.software@theguardian.com>",
     Universal / topLevelDirectory := Some(normalizedName.value),
-    riffRaffPackageName := s"devx::${name.value}",
-    riffRaffManifestProjectName := riffRaffPackageName.value,
-    riffRaffPackageType := (Debian / packageBin).value,
-    riffRaffArtifactResources := Seq(
-      riffRaffPackageType.value -> s"${name.value}/${name.value}.deb",
-      baseDirectory.value / "riff-raff.yaml" -> "riff-raff.yaml",
-      baseDirectory.value / "cdk/cdk.out/Prism-CODE.template.json" -> "cloudformation/Prism-CODE.template.json",
-      baseDirectory.value / "cdk/cdk.out/Prism-PROD.template.json" -> "cloudformation/Prism-PROD.template.json"
+    buildInfoKeys := Seq[BuildInfoKey](
+      name,
+      version,
+      scalaVersion,
+      sbtVersion,
+
+      // These env vars are set by GitHub Actions
+      // See https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+      "buildNumber" -> env("GITHUB_RUN_NUMBER"),
+      "gitCommitId" -> env("GITHUB_SHA"),
+
+      // so this next one is constant to avoid it always recompiling on dev machines.
+      // we only really care about build time on teamcity, when a constant based on when
+      // it was loaded is just fine
+      "buildTime" -> System.currentTimeMillis
     ),
-    buildInfoKeys := {
-      lazy val buildInfo = BuildInfo(baseDirectory.value)
-      Seq[BuildInfoKey](
-        BuildInfoKey("buildNumber" -> buildInfo.buildIdentifier),
-        // so this next one is constant to avoid it always recompiling on dev machines.
-        // we only really care about build time on teamcity, when a constant based on when
-        // it was loaded is just fine
-        BuildInfoKey("buildTime" -> System.currentTimeMillis),
-        BuildInfoKey("gitCommitId" -> buildInfo.revision)
-      )
-    },
+    buildInfoOptions += BuildInfoOption.BuildTime,
     buildInfoPackage := "prism",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % "3.0.2",

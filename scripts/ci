@@ -2,15 +2,13 @@
 
 set -e
 
-if [[ ! -z "${TEAMCITY_VERSION}" ]]; then
-  echo "Running in TeamCity. Nope!"
-  exit 0
-fi
-
 # build CDK first to ensure it is on disk for SBT to pick up
 (
   cd cdk
   ./script/ci
 )
 
-sbt clean scalafmtSbtCheck scalafmtCheckAll compile test riffRaffUpload
+sbt clean scalafmtSbtCheck scalafmtCheckAll compile test debian:packageBin
+
+# `sbt debian:packageBin` produces `target/prism_1.0-SNAPSHOT_all.deb`. Rename it to something easier.
+mv target/prism_1.0-SNAPSHOT_all.deb target/prism.deb
