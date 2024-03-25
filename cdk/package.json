@@ -12,9 +12,9 @@
   },
   "devDependencies": {
     "@guardian/cdk": "56.0.1",
-    "@guardian/eslint-config-typescript": "^9.0.3",
+    "@guardian/eslint-config-typescript": "^9.0.4",
     "@types/jest": "^29.5.12",
-    "@types/node": "20.11.28",
+    "@types/node": "20.11.30",
     "aws-cdk": "2.132.0",
     "aws-cdk-lib": "2.132.0",
     "constructs": "10.3.0",
@@ -24,6 +24,6 @@
     "source-map-support": "^0.5.21",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "5.3.3"
+    "typescript": "5.4.3"
   }
 }
