@@ -7,7 +7,7 @@ version := "1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "2.13.13"
 
 val awsVersion = "2.25.13"
-val awsVersionOne = "1.12.688"
+val awsVersionOne = "1.12.689"
 
 lazy val root = (project in file("."))
   .enablePlugins(
