@@ -4,7 +4,7 @@ version := "1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.13"
 
-val awsVersion = "2.25.13"
+val awsVersion = "2.25.31"
 val awsVersionOne = "1.12.700"
 
 def env(propName: String): String =
@@ -54,7 +54,6 @@ lazy val root = (project in file("."))
       "software.amazon.awssdk" % "iam" % awsVersion,
       "software.amazon.awssdk" % "rds" % awsVersion,
       "software.amazon.awssdk" % "cloudformation" % awsVersion,
-      "com.beust" % "jcommander" % "1.82", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
       "org.playframework" %% "play-json" % "3.0.2",
