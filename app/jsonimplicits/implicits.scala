@@ -5,8 +5,6 @@ import java.time.{Instant, ZoneId, ZoneOffset}
 
 import _root_.model.{Owner, SSA}
 import agent._
-import ai.x.play.json.Encoders.encoder
-import ai.x.play.json.Jsonx
 import collectors._
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -73,8 +71,43 @@ object model {
       Json.writes[RecurringCharge]
     Json.writes[Reservation]
   }
-  // this case class contains over 22 fields, which is more than Scala permits, so using the play-json-extensions library instead of the normal Json.writes
-  implicit val rdsWriter: Writes[Rds] = Jsonx.formatCaseClass[Rds]
+  // json-play does not support automatically generating a writer for case clases with 22+ fields.
+  // Manually write one to get around this limitation.
+  implicit val rdsWriter: Writes[Rds] = OWrites[Rds](obj =>
+    JsObject(
+      Seq(
+        "arn" -> Json.toJson(obj.arn),
+        "allocatedStorage" -> Json.toJson(obj.allocatedStorage),
+        "availabilityZone" -> Json.toJson(obj.availabilityZone),
+        "secondaryAvailabilityZone" -> Json.toJson(
+          obj.secondaryAvailabilityZone
+        ),
+        "engineVersion" -> Json.toJson(obj.engineVersion),
+        "instanceCreateTime" -> Json.toJson(obj.instanceCreateTime),
+        "dbInstanceClass" -> Json.toJson(obj.dbInstanceClass),
+        "dbInstanceStatus" -> Json.toJson(obj.dbInstanceStatus),
+        "caCertificateIdentifier" -> Json.toJson(obj.caCertificateIdentifier),
+        "dbiResourceId" -> Json.toJson(obj.dbiResourceId),
+        "dbInstanceIdentifier" -> Json.toJson(obj.dbInstanceIdentifier),
+        "engine" -> Json.toJson(obj.engine),
+        "publiclyAccessible" -> Json.toJson(obj.publiclyAccessible),
+        "iamDatabaseAuthenticationEnabled" -> Json.toJson(
+          obj.iamDatabaseAuthenticationEnabled
+        ),
+        "performanceInsightsEnabled" -> Json.toJson(
+          obj.performanceInsightsEnabled
+        ),
+        "multiAZ" -> Json.toJson(obj.multiAZ),
+        "storageEncrypted" -> Json.toJson(obj.storageEncrypted),
+        "vpcId" -> Json.toJson(obj.vpcId),
+        "dbSubnetGroupName" -> Json.toJson(obj.dbSubnetGroupName),
+        "vpcSecurityGroupId" -> Json.toJson(obj.vpcSecurityGroupId),
+        "storageType" -> Json.toJson(obj.storageType),
+        "autoMinorVersionUpgrade" -> Json.toJson(obj.autoMinorVersionUpgrade),
+        "tags" -> Json.toJson(obj.tags)
+      )
+    )
+  )
 
   implicit val domainResourceRecordWriter: Writes[DomainResourceRecord] =
     Json.writes[DomainResourceRecord]

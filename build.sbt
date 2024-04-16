@@ -59,7 +59,6 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
       "org.playframework" %% "play-json" % "3.0.2",
       "org.playframework" %% "play-json-joda" % "3.0.2",
-      "ai.x" %% "play-json-extensions" % "0.42.0",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
@@ -68,10 +67,6 @@ lazy val root = (project in file("."))
       // Transient dependency of Play. No newer version of Play 3.0.2 with this vulnerability fixed.
       "ch.qos.logback" % "logback-classic" % "1.5.5",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.17.0"
-    ),
-    excludeDependencies ++= Seq(
-      // As of Play 3.0, groupId has changed to org.playframework; exclude transitive dependencies to the old artifacts
-      ExclusionRule(organization = "com.typesafe.play")
     ),
     scalacOptions ++= List(
       "-encoding",
