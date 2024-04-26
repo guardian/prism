@@ -5,7 +5,7 @@ version := "1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "2.13.13"
 
 val awsVersion = "2.25.13"
-val awsVersionOne = "1.12.700"
+val awsVersionOne = "1.12.709"
 
 def env(propName: String): String =
   sys.env.get(propName).filter(_.trim.nonEmpty).getOrElse("DEV")
@@ -65,7 +65,7 @@ lazy val root = (project in file("."))
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "7.4" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
       // Transient dependency of Play. No newer version of Play 3.0.2 with this vulnerability fixed.
-      "ch.qos.logback" % "logback-classic" % "1.5.5",
+      "ch.qos.logback" % "logback-classic" % "1.5.6",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.17.0"
     ),
     scalacOptions ++= List(
