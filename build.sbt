@@ -64,7 +64,7 @@ lazy val root = (project in file("."))
       filters,
       specs2 % "test",
       "net.logstash.logback" % "logstash-logback-encoder" % "7.4" exclude ("com.fasterxml.jackson.core", "jackson-databind"),
-      // Transient dependency of Play. No newer version of Play 3.0.2 with this vulnerability fixed.
+      // Transient dependency of Play. No newer version of Play 3.0.3 with this vulnerability fixed.
       "ch.qos.logback" % "logback-classic" % "1.5.6",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.17.1"
     ),
