@@ -65,7 +65,6 @@ export class PrismAccess extends GuStack {
             "elasticloadbalancing:Describe*",
             "lambda:ListFunctions",
             "lambda:ListTags",
-            "rds:Describe*",
             "cloudformation:Describe*",
             "cloudformation:Get*",
           ],

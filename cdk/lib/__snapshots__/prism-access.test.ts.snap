@@ -49,7 +49,6 @@ exports[`The PrismAccess stack matches the snapshot 1`] = `
                 "elasticloadbalancing:Describe*",
                 "lambda:ListFunctions",
                 "lambda:ListTags",
-                "rds:Describe*",
                 "cloudformation:Describe*",
                 "cloudformation:Get*",
               ],
