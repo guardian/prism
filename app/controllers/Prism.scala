@@ -48,11 +48,6 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     sourceStatusAgent,
     lazyStartup
   )(actorSystem)
-  val serverCertificateAgent = new CollectorAgent[ServerCertificate](
-    new ServerCertificateCollectorSet(accounts),
-    sourceStatusAgent,
-    lazyStartup
-  )(actorSystem)
   val acmCertificateAgent = new CollectorAgent[AcmCertificate](
     new AmazonCertificateCollectorSet(accounts),
     sourceStatusAgent,
@@ -91,7 +86,6 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     securityGroupAgent,
     imageAgent,
     launchConfigurationAgent,
-    serverCertificateAgent,
     acmCertificateAgent,
     route53ZoneAgent,
     elbAgent,
