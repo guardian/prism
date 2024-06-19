@@ -62,8 +62,6 @@ object model {
   implicit val imageWriter: Writes[Image] = Json.writes[Image]
   implicit val launchConfigurationWriter: Writes[LaunchConfiguration] =
     Json.writes[LaunchConfiguration]
-  implicit val serverCertificateWriter: Writes[ServerCertificate] =
-    Json.writes[ServerCertificate]
   implicit val bucketWriter: Writes[Bucket] = Json.writes[Bucket]
   implicit val lambdaWriter: Writes[Lambda] = Json.writes[Lambda]
   implicit val reservationWriter: Writes[Reservation] = {

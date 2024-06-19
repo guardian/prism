@@ -215,13 +215,6 @@ class Api(
     Api.singleItem(prismDataStore.launchConfigurationAgent, arn)
   }
 
-  def serverCertificateList = Action.async { implicit request =>
-    Api.itemList(prismDataStore.serverCertificateAgent, "server-certificates")
-  }
-  def serverCertificate(arn: String) = Action.async { implicit request =>
-    Api.singleItem(prismDataStore.serverCertificateAgent, arn)
-  }
-
   def acmCertificateList = Action.async { implicit request =>
     Api.itemList(prismDataStore.acmCertificateAgent, "acm-certificates")
   }
