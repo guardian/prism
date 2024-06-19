@@ -78,11 +78,6 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     sourceStatusAgent,
     lazyStartup
   )(actorSystem)
-  val rdsAgent = new CollectorAgent[Rds](
-    new RdsCollectorSet(accounts),
-    sourceStatusAgent,
-    lazyStartup
-  )(actorSystem)
   val vpcAgent = new CollectorAgent[Vpc](
     new VpcCollectorSet(accounts),
     sourceStatusAgent,
@@ -102,7 +97,6 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     elbAgent,
     bucketAgent,
     reservationAgent,
-    rdsAgent,
     vpcAgent
   )
 }

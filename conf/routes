@@ -58,9 +58,6 @@ GET        /data/keys                         controllers.Api.dataKeysList
 GET        /data/lookup/:key                  controllers.Api.dataLookup(key)
 GET        /data/:arn                         controllers.Api.data(arn)
 
-GET        /rds-instances                     controllers.Api.rdsList
-GET        /rds-instances/:arn                controllers.Api.rds(arn)
-
 GET        /vpcs                              controllers.Api.vpcList
 GET        /vpcs/:arn                         controllers.Api.vpcs(arn)
 
