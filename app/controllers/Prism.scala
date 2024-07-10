@@ -48,6 +48,11 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     sourceStatusAgent,
     lazyStartup
   )(actorSystem)
+  val launchTemplateAgent = new CollectorAgent[LaunchTemplateVersion](
+    new LaunchTemplateCollectorSet(accounts),
+    sourceStatusAgent,
+    lazyStartup
+  )(actorSystem)
   val acmCertificateAgent = new CollectorAgent[AcmCertificate](
     new AmazonCertificateCollectorSet(accounts),
     sourceStatusAgent,
