@@ -2,7 +2,6 @@ package collectors
 
 import java.time.Instant
 import agent._
-import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
@@ -10,7 +9,6 @@ import software.amazon.awssdk.services.autoscaling.AutoScalingClient
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{
   DescribeLaunchTemplateVersionsRequest,
-  DescribeLaunchTemplatesRequest,
   LaunchTemplateVersion => AwsLaunchTemplateVersion
 }
 import utils.Logging
@@ -58,13 +56,17 @@ case class AWSLaunchTemplateCollector(
     .build
 
   def crawl: Iterable[LaunchTemplateVersion] = {
-    val asgs = asgClient.describeAutoScalingGroups().autoScalingGroups().asScala
-    val launchTemplates = asgs.map(asg =>
-      AsgLaunchTemplate(
-        asg.launchTemplate().launchTemplateId(),
-        asg.launchTemplate().version()
+    val asgs =
+      asgClient.describeAutoScalingGroups().autoScalingGroups().asScala.toList
+    val launchTemplates = asgs
+      // not all asgs have launch templates (they might have launch configurations instead
+      .filter(asg => asg.launchTemplate() != null)
+      .map(asg =>
+        AsgLaunchTemplate(
+          asg.launchTemplate().launchTemplateId(),
+          asg.launchTemplate().version()
+        )
       )
-    )
 
     launchTemplates.map { lt =>
       // might need to filter out asgs which don't have launch templates?
