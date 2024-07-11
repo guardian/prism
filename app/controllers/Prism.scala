@@ -91,6 +91,7 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     securityGroupAgent,
     imageAgent,
     launchConfigurationAgent,
+    launchTemplateAgent,
     acmCertificateAgent,
     route53ZoneAgent,
     elbAgent,
