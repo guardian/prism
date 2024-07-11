@@ -21,7 +21,7 @@ import scala.util.Try
 
 class LaunchTemplateCollectorSet(accounts: Accounts)
     extends CollectorSet[LaunchTemplateVersion](
-      ResourceType("launch-configurations"),
+      ResourceType("launch-templates"),
       accounts,
       Some(Regional)
     ) {
