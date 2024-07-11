@@ -67,7 +67,7 @@ case class AWSLaunchTemplateCollector(
     )
 
     launchTemplates.map { lt =>
-      // need to filter out asgs with launch configurations
+      // might need to filter out asgs which don't have launch templates?
       val requestLt = DescribeLaunchTemplateVersionsRequest.builder
         .launchTemplateId(lt.id)
         .versions(lt.version)
@@ -79,18 +79,6 @@ case class AWSLaunchTemplateCollector(
         .head
       LaunchTemplateVersion.fromApiData(template, origin)
     }
-
-//    val request = DescribeLaunchTemplatesRequest.builder.build
-//    val templates = ec2Client
-//      .describeLaunchTemplates(request)
-//      .launchTemplates()
-//      .asScala
-//
-//    templates.map(lt => {
-//      val requestLt = DescribeLaunchTemplateVersionsRequest.builder.launchTemplateId(lt.launchTemplateId()).versions(lt.latestVersionNumber().toString).build
-//      val latestVersion = ec2Client.describeLaunchTemplateVersions(requestLt).launchTemplateVersions().asScala.head
-//      LaunchTemplateVersion.fromApiData(latestVersion, origin)
-//    })
 
   }
 }
