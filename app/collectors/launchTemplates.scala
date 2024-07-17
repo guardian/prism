@@ -5,11 +5,12 @@ import agent._
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
-import software.amazon.awssdk.services.autoscaling.AutoScalingClient
 import software.amazon.awssdk.services.ec2.Ec2Client
 import software.amazon.awssdk.services.ec2.model.{
   DescribeLaunchTemplateVersionsRequest,
-  LaunchTemplateVersion => AwsLaunchTemplateVersion
+  DescribeLaunchTemplatesRequest,
+  LaunchTemplateVersion => AwsLaunchTemplateVersion,
+  LaunchTemplate => AwsLaunchTemplate
 }
 import utils.Logging
 
@@ -18,13 +19,12 @@ import scala.language.postfixOps
 import scala.util.Try
 
 class LaunchTemplateCollectorSet(accounts: Accounts)
-    extends CollectorSet[LaunchTemplateVersion](
+    extends CollectorSet[LaunchTemplate](
       ResourceType("launch-templates"),
       accounts,
       Some(Regional)
     ) {
-  val lookupCollector
-      : PartialFunction[Origin, Collector[LaunchTemplateVersion]] = {
+  val lookupCollector: PartialFunction[Origin, Collector[LaunchTemplate]] = {
     case amazon: AmazonOrigin =>
       AWSLaunchTemplateCollector(
         amazon,
@@ -34,20 +34,12 @@ class LaunchTemplateCollectorSet(accounts: Accounts)
   }
 }
 
-case class AsgLaunchTemplate(id: String, version: String)
-
 case class AWSLaunchTemplateCollector(
     origin: AmazonOrigin,
     resource: ResourceType,
     crawlRate: CrawlRate
-) extends Collector[LaunchTemplateVersion]
+) extends Collector[LaunchTemplate]
     with Logging {
-
-  val asgClient: AutoScalingClient = AutoScalingClient.builder
-    .credentialsProvider(origin.credentials.provider)
-    .region(origin.awsRegionV2)
-    .overrideConfiguration(AWS.clientConfig)
-    .build
 
   val ec2Client: Ec2Client = Ec2Client.builder
     .credentialsProvider(origin.credentials.provider)
@@ -55,68 +47,76 @@ case class AWSLaunchTemplateCollector(
     .overrideConfiguration(AWS.clientConfig)
     .build
 
-  def crawl: Iterable[LaunchTemplateVersion] = {
-    val asgs =
-      asgClient.describeAutoScalingGroups().autoScalingGroups().asScala.toList
-    val launchTemplates = asgs
-      // not all asgs have launch templates (they might have launch configurations instead
-      .filter(asg => asg.launchTemplate() != null)
-      .map(asg =>
-        AsgLaunchTemplate(
-          asg.launchTemplate().launchTemplateId(),
-          asg.launchTemplate().version()
-        )
-      )
+  def crawl: Iterable[LaunchTemplate] = {
+
+    val launchTemplateRequest = DescribeLaunchTemplatesRequest.builder.build()
+    val launchTemplates = ec2Client
+      .describeLaunchTemplates(launchTemplateRequest)
+      .launchTemplates()
+      .asScala
+      .toList
 
     launchTemplates.map { lt =>
       // might need to filter out asgs which don't have launch templates?
       val requestLt = DescribeLaunchTemplateVersionsRequest.builder
-        .launchTemplateId(lt.id)
-        .versions(lt.version)
+        .launchTemplateId(lt.launchTemplateId())
         .build
-      val template = ec2Client
+      val versions = ec2Client
         .describeLaunchTemplateVersions(requestLt)
         .launchTemplateVersions()
         .asScala
-        .head
-      LaunchTemplateVersion.fromApiData(template, origin)
+        .toList
+      LaunchTemplate.fromApiData(lt, versions, origin)
     }
 
   }
 }
 
-object LaunchTemplateVersion {
+object LaunchTemplate {
   def fromApiData(
-      config: AwsLaunchTemplateVersion,
+      template: AwsLaunchTemplate,
+      versions: List[AwsLaunchTemplateVersion],
       origin: AmazonOrigin
-  ): LaunchTemplateVersion = {
-    LaunchTemplateVersion(
-      arn = config.launchTemplateId(),
-      name = config.launchTemplateName(),
-      imageId = config.launchTemplateData().imageId(),
+  ): LaunchTemplate = {
+    LaunchTemplate(
+      arn = template.launchTemplateId(),
+      name = template.launchTemplateName(),
       region = origin.region,
-      instanceProfile =
-        Option(config.launchTemplateData().iamInstanceProfile().arn()),
-      createdTime = Try(config.createTime()).toOption,
-      instanceType = config.launchTemplateData().instanceType().toString,
-      securityGroups = Option(
-        config.launchTemplateData().securityGroups()
-      ).toList.flatMap(_.asScala).map { sg =>
-        s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
-      }
+      createdTime = Try(template.createTime()).toOption,
+      versions = versions.map(v =>
+        LaunchTemplateVersion(
+          versionNumber = v.versionNumber(),
+          imageId = v.launchTemplateData().imageId(),
+          instanceProfile =
+            Option(v.launchTemplateData().iamInstanceProfile().arn()),
+          createdTime = Try(v.createTime()).toOption,
+          instanceType = v.launchTemplateData().instanceType().toString,
+          securityGroups = Option(
+            v.launchTemplateData().securityGroups()
+          ).toList.flatMap(_.asScala).map { sg =>
+            s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
+          }
+        )
+      )
     )
   }
 }
 
 case class LaunchTemplateVersion(
-    arn: String,
-    name: String,
+    versionNumber: Long,
     imageId: String,
-    region: String,
     instanceProfile: Option[String],
     createdTime: Option[Instant],
     instanceType: String,
     securityGroups: List[String]
+)
+
+case class LaunchTemplate(
+    arn: String,
+    name: String,
+    region: String,
+    createdTime: Option[Instant],
+    versions: List[LaunchTemplateVersion]
 ) extends IndexedItem {
   def callFromArn: (String) => Call = arn => routes.Api.launchTemplate(arn)
 }

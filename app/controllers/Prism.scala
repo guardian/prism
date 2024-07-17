@@ -48,7 +48,7 @@ class Prism(prismConfiguration: PrismConfiguration)(actorSystem: ActorSystem) {
     sourceStatusAgent,
     lazyStartup
   )(actorSystem)
-  val launchTemplateAgent = new CollectorAgent[LaunchTemplateVersion](
+  val launchTemplateAgent = new CollectorAgent[LaunchTemplate](
     new LaunchTemplateCollectorSet(accounts),
     sourceStatusAgent,
     lazyStartup
