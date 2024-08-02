@@ -19,7 +19,7 @@ import scala.util.Try
 
 class LaunchTemplateCollectorSet(accounts: Accounts)
     extends CollectorSet[LaunchTemplateVersion](
-      ResourceType("launch-templates"),
+      ResourceType("active-launch-template-versions"),
       accounts,
       Some(Regional)
     ) {
@@ -69,7 +69,6 @@ case class AWSLaunchTemplateCollector(
       )
 
     launchTemplates.map { lt =>
-      // might need to filter out asgs which don't have launch templates?
       val requestLt = DescribeLaunchTemplateVersionsRequest.builder
         .launchTemplateId(lt.id)
         .versions(lt.version)
@@ -93,6 +92,7 @@ object LaunchTemplateVersion {
     LaunchTemplateVersion(
       arn = config.launchTemplateId(),
       name = config.launchTemplateName(),
+      versionNumber = config.versionNumber(),
       imageId = config.launchTemplateData().imageId(),
       region = origin.region,
       instanceProfile =
@@ -100,7 +100,7 @@ object LaunchTemplateVersion {
       createdTime = Try(config.createTime()).toOption,
       instanceType = config.launchTemplateData().instanceType().toString,
       securityGroups = Option(
-        config.launchTemplateData().securityGroups()
+        config.launchTemplateData().securityGroupIds()
       ).toList.flatMap(_.asScala).map { sg =>
         s"arn:aws:ec2:${origin.region}:${origin.accountNumber.get}:security-group/$sg"
       }
@@ -111,6 +111,7 @@ object LaunchTemplateVersion {
 case class LaunchTemplateVersion(
     arn: String,
     name: String,
+    versionNumber: Long,
     imageId: String,
     region: String,
     instanceProfile: Option[String],

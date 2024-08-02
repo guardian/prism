@@ -218,7 +218,7 @@ class Api(
   def launchTemplateList = Action.async { implicit request =>
     Api.itemList(
       prismDataStore.launchTemplateAgent,
-      "asg-launch-templates"
+      "active-launch-template-versions"
     )
   }
 

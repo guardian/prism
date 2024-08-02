@@ -35,8 +35,8 @@ GET        /images/:arn                       controllers.Api.image(arn)
 GET        /launch-configurations             controllers.Api.launchConfigurationList
 GET        /launch-configurations/:arn        controllers.Api.launchConfiguration(arn)
 
-GET        /launch-templates                  controllers.Api.launchTemplateList
-GET        /launch-templates/:arn             controllers.Api.launchTemplate(arn)
+GET        /active-launch-template-versions      controllers.Api.launchTemplateList
+GET        /active-launch-template-versions/:arn controllers.Api.launchTemplate(arn)
 
 GET        /acm-certificates                  controllers.Api.acmCertificateList
 GET        /acm-certificates/:arn             controllers.Api.acmCertificate(arn)
