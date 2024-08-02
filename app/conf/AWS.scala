@@ -1,9 +1,8 @@
 package conf
 
 import java.net.InetAddress
-
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
-import software.amazon.awssdk.core.retry.RetryPolicy
+import software.amazon.awssdk.core.retry.RetryMode
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.regions.internal.util.EC2MetadataUtils
 import software.amazon.awssdk.services.ec2.Ec2Client
@@ -13,7 +12,6 @@ import software.amazon.awssdk.services.ec2.model.{
   Filter
 }
 import utils.Logging
-
 import scala.collection.MapView
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -21,12 +19,7 @@ import scala.util.Try
 object AWS extends Logging {
   val clientConfig: ClientOverrideConfiguration = ClientOverrideConfiguration
     .builder()
-    .retryPolicy(
-      RetryPolicy
-        .builder()
-        .numRetries(10)
-        .build()
-    )
+    .retryStrategy(RetryMode.ADAPTIVE_V2)
     .build()
 
   // This is to detect if we are running in AWS or on GC2. The 169.254.169.254
