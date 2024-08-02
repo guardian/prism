@@ -59,13 +59,15 @@ case class AWSLaunchTemplateCollector(
     val asgs =
       asgClient.describeAutoScalingGroups().autoScalingGroups().asScala.toList
     val launchTemplates = asgs
-      // not all asgs have launch templates (they might have launch configurations instead
-      .filter(asg => asg.launchTemplate() != null)
-      .map(asg =>
-        AsgLaunchTemplate(
-          asg.launchTemplate().launchTemplateId(),
-          asg.launchTemplate().version()
-        )
+      .collect(
+        // not all asgs have launch templates (they might have launch configurations instead
+        {
+          case asg if asg.launchTemplate() != null =>
+            AsgLaunchTemplate(
+              asg.launchTemplate().launchTemplateId(),
+              asg.launchTemplate().version()
+            )
+        }
       )
 
     launchTemplates.map { lt =>
