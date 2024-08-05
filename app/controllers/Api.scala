@@ -215,6 +215,17 @@ class Api(
     Api.singleItem(prismDataStore.launchConfigurationAgent, arn)
   }
 
+  def launchTemplateList = Action.async { implicit request =>
+    Api.itemList(
+      prismDataStore.launchTemplateAgent,
+      "active-launch-template-versions"
+    )
+  }
+
+  def launchTemplate(arn: String) = Action.async { implicit request =>
+    Api.singleItem(prismDataStore.launchTemplateAgent, arn)
+  }
+
   def acmCertificateList = Action.async { implicit request =>
     Api.itemList(prismDataStore.acmCertificateAgent, "acm-certificates")
   }
