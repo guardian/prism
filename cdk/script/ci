@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-npm ci
-npm run lint
-npm run build
-npm test
-npm run generate
