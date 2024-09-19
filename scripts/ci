@@ -5,7 +5,10 @@ set -e
 # build CDK first to ensure it is on disk for SBT to pick up
 (
   cd cdk
-  ./script/ci
+  npm ci
+  npm run lint
+  npm test
+  npm run synth
 )
 
 sbt clean scalafmtSbtCheck scalafmtCheckAll compile test debian:packageBin

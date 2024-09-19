@@ -13,13 +13,13 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuSubnetListParameter",
       "GuSubnetListParameter",
       "GuPlayApp",
+      "GuDistributionBucketParameter",
       "GuCertificate",
       "GuInstanceRole",
       "GuSsmSshPolicy",
       "GuDescribeEC2Policy",
       "GuLoggingStreamNameParameter",
       "GuLogShippingPolicy",
-      "GuDistributionBucketParameter",
       "GuGetDistributablePolicy",
       "GuParameterStoreReadPolicy",
       "GuAmiParameter",
@@ -93,6 +93,11 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           },
         },
         "MaxSize": "4",
+        "MetricsCollection": [
+          {
+            "Granularity": "1Minute",
+          },
+        ],
         "MinSize": "2",
         "Tags": [
           {
@@ -631,6 +636,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
         },
         "Port": 443,
         "Protocol": "HTTPS",
+        "SslPolicy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
       },
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
     },
@@ -1005,6 +1011,24 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
         "Namespace": "AWS/ApplicationELB",
         "Period": 60,
         "Statistic": "Maximum",
+        "Tags": [
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/prism",
+          },
+          {
+            "Key": "Stack",
+            "Value": "deploy",
+          },
+          {
+            "Key": "Stage",
+            "Value": "PROD",
+          },
+        ],
         "Threshold": 1,
         "TreatMissingData": "notBreaching",
       },
@@ -1124,6 +1148,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           "InstanceType": "t4g.medium",
           "MetadataOptions": {
             "HttpTokens": "required",
+            "InstanceMetadataTags": "enabled",
           },
           "SecurityGroupIds": [
             {
