@@ -1013,6 +1013,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
         "Statistic": "Maximum",
         "Tags": [
           {
+            "Key": "App",
+            "Value": "prism",
+          },
+          {
             "Key": "gu:cdk:version",
             "Value": "TEST",
           },
@@ -1054,6 +1058,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           },
         ],
         "Tags": [
+          {
+            "Key": "App",
+            "Value": "prism",
+          },
           {
             "Key": "gu:cdk:version",
             "Value": "TEST",

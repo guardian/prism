@@ -19,7 +19,10 @@ export class PrismAccess extends GuStack {
 		super(scope, id, {
 			description: 'CloudFormation template to create the prism role.',
 			stack: 'deploy',
-			stage: 'INFRA', // singleton stack
+			stage: 'INFRA', // singleton stack,
+			env: {
+				region: 'eu-west-1',
+			},
 		});
 
 		/*
