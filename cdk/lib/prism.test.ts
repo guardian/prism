@@ -9,6 +9,7 @@ describe('The PrismEc2App stack', () => {
 			stage: 'PROD',
 			domainName: 'prism.gutools.co.uk',
 			minimumInstances: 2,
+			buildIdentifier: 'TEST',
 		});
 		expect(Template.fromStack(stack).toJSON()).toMatchSnapshot();
 	});

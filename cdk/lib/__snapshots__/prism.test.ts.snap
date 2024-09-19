@@ -1238,13 +1238,13 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "",
                 [
                   "#!/bin/bash
-mkdir -p $(dirname '/prism/prism.deb')
+mkdir -p $(dirname '/prism/prism-TEST.deb')
 aws s3 cp 's3://",
                   {
                     "Ref": "DistributionBucketName",
                   },
-                  "/deploy/PROD/prism/prism.deb' '/prism/prism.deb'
-dpkg -i /prism/prism.deb",
+                  "/deploy/PROD/prism/prism-TEST.deb' '/prism/prism-TEST.deb'
+dpkg -i /prism/prism-TEST.deb",
                 ],
               ],
             },

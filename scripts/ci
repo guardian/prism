@@ -13,5 +13,5 @@ set -e
 
 sbt clean scalafmtSbtCheck scalafmtCheckAll compile test debian:packageBin
 
-# `sbt debian:packageBin` produces `target/prism_1.0-SNAPSHOT_all.deb`. Rename it to something easier.
-mv target/prism_1.0-SNAPSHOT_all.deb target/prism.deb
+mkdir -p dist
+mv target/prism_1.0-SNAPSHOT_all.deb "dist/prism-$GITHUB_RUN_NUMBER.deb"

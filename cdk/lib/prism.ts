@@ -25,6 +25,12 @@ import {
 interface PrismProps extends Omit<GuStackProps, 'description' | 'stack'> {
 	domainName: string;
 	minimumInstances: number;
+
+	/**
+	 * Which application build to run.
+	 * This will typically match the build number provided by CI.
+	 */
+	buildIdentifier: string;
 }
 
 export class Prism extends GuStack {
@@ -37,6 +43,10 @@ export class Prism extends GuStack {
 			app,
 		});
 
+		const { buildIdentifier } = props;
+
+		const filename = `${app}-${buildIdentifier}.deb`;
+
 		const pattern = new GuPlayApp(this, {
 			app,
 			applicationLogging: {
@@ -46,8 +56,8 @@ export class Prism extends GuStack {
 			instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
 			userData: {
 				distributable: {
-					fileName: `${app}.deb`,
-					executionStatement: `dpkg -i /${app}/${app}.deb`,
+					fileName: filename,
+					executionStatement: `dpkg -i /${app}/${filename}`,
 				},
 			},
 			certificateProps: {
