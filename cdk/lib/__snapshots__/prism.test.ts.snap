@@ -12,7 +12,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuVpcParameter",
       "GuSubnetListParameter",
       "GuSubnetListParameter",
-      "GuPlayApp",
+      "GuEc2AppExperimental",
       "GuDistributionBucketParameter",
       "GuCertificate",
       "GuInstanceRole",
@@ -77,8 +77,49 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
     },
   },
   "Resources": {
-    "AutoScalingGroupPrismASG36691601": {
+    "AsgRollingUpdatePolicy2A1DDC6F": {
       "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "cloudformation:SignalResource",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "AWS::StackId",
+              },
+            },
+            {
+              "Action": "elasticloadbalancing:DescribeTargetHealth",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AsgRollingUpdatePolicy2A1DDC6F",
+        "Roles": [
+          {
+            "Ref": "InstanceRolePrism96D154B7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "AutoScalingGroupPrismASG36691601": {
+      "CreationPolicy": {
+        "AutoScalingCreationPolicy": {
+          "MinSuccessfulInstancesPercent": 100,
+        },
+        "ResourceSignal": {
+          "Count": 2,
+          "Timeout": "PT16M",
+        },
+      },
+      "DependsOn": [
+        "AsgRollingUpdatePolicy2A1DDC6F",
+      ],
+      "Properties": {
+        "DesiredCapacity": "2",
         "HealthCheckGracePeriod": 900,
         "HealthCheckType": "ELB",
         "LaunchTemplate": {
@@ -148,6 +189,18 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
         },
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MaxBatchSize": 4,
+          "MinInstancesInService": 2,
+          "MinSuccessfulInstancesPercent": 100,
+          "PauseTime": "PT16M",
+          "SuspendProcesses": [
+            "AlarmNotification",
+          ],
+          "WaitOnResourceSignals": true,
+        },
+      },
     },
     "CertificatePrism0841D21D": {
       "DeletionPolicy": "Retain",
@@ -1181,6 +1234,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                   "Value": "prism",
                 },
                 {
+                  "Key": "gu:build-identifier",
+                  "Value": "TEST",
+                },
+                {
                   "Key": "gu:cdk:version",
                   "Value": "TEST",
                 },
@@ -1208,6 +1265,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 {
                   "Key": "App",
                   "Value": "prism",
+                },
+                {
+                  "Key": "gu:build-identifier",
+                  "Value": "TEST",
                 },
                 {
                   "Key": "gu:cdk:version",
@@ -1238,13 +1299,60 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "",
                 [
                   "#!/bin/bash
+function exitTrap(){
+exitCode=$?
+
+        cfn-signal --stack ",
+                  {
+                    "Ref": "AWS::StackId",
+                  },
+                  "           --resource AutoScalingGroupPrismASG36691601           --region ",
+                  {
+                    "Ref": "AWS::Region",
+                  },
+                  "           --exit-code $exitCode || echo 'Failed to send Cloudformation Signal'
+        
+}
+trap exitTrap EXIT
 mkdir -p $(dirname '/prism/prism-TEST.deb')
 aws s3 cp 's3://",
                   {
                     "Ref": "DistributionBucketName",
                   },
                   "/deploy/PROD/prism/prism-TEST.deb' '/prism/prism-TEST.deb'
-dpkg -i /prism/prism-TEST.deb",
+dpkg -i /prism/prism-TEST.deb
+# GuEc2AppExperimental UserData Start
+
+      TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+      INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/instance-id")
+
+      STATE=$(aws elbv2 describe-target-health         --target-group-arn ",
+                  {
+                    "Ref": "TargetGroupPrismC8B388A7",
+                  },
+                  "         --region ",
+                  {
+                    "Ref": "AWS::Region",
+                  },
+                  "         --targets Id=$INSTANCE_ID,Port=9000         --query "TargetHealthDescriptions[0].TargetHealth.State")
+
+      until [ "$STATE" == "\\"healthy\\"" ]; do
+        echo "Instance running build TEST not yet healthy within target group. Current state $STATE. Sleeping..."
+        sleep 5
+        STATE=$(aws elbv2 describe-target-health           --target-group-arn ",
+                  {
+                    "Ref": "TargetGroupPrismC8B388A7",
+                  },
+                  "           --region ",
+                  {
+                    "Ref": "AWS::Region",
+                  },
+                  "           --targets Id=$INSTANCE_ID,Port=9000           --query "TargetHealthDescriptions[0].TargetHealth.State")
+      done
+
+      echo "Instance running build TEST is healthy in target group."
+      
+# GuEc2AppExperimental UserData End",
                 ],
               ],
             },
@@ -1257,6 +1365,10 @@ dpkg -i /prism/prism-TEST.deb",
               {
                 "Key": "App",
                 "Value": "prism",
+              },
+              {
+                "Key": "gu:build-identifier",
+                "Value": "TEST",
               },
               {
                 "Key": "gu:cdk:version",

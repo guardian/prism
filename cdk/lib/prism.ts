@@ -1,4 +1,3 @@
-import { GuPlayApp } from '@guardian/cdk';
 import { AccessScope } from '@guardian/cdk/lib/constants';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core/stack';
 import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
@@ -8,6 +7,7 @@ import {
 	GuDynamoDBReadPolicy,
 	GuGetS3ObjectsPolicy,
 } from '@guardian/cdk/lib/constructs/iam';
+import { GuEc2AppExperimental } from '@guardian/cdk/lib/experimental/patterns/ec2-app';
 import type { App } from 'aws-cdk-lib';
 import { Duration } from 'aws-cdk-lib';
 import type { CfnAutoScalingGroup } from 'aws-cdk-lib/aws-autoscaling';
@@ -47,7 +47,9 @@ export class Prism extends GuStack {
 
 		const filename = `${app}-${buildIdentifier}.deb`;
 
-		const pattern = new GuPlayApp(this, {
+		const pattern = new GuEc2AppExperimental(this, {
+			buildIdentifier,
+			applicationPort: 9000,
 			app,
 			applicationLogging: {
 				enabled: true,
