@@ -1,6 +1,5 @@
 import { GuPlayApp } from '@guardian/cdk';
 import { AccessScope } from '@guardian/cdk/lib/constants';
-import type { AppIdentity } from '@guardian/cdk/lib/constructs/core/identity';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core/stack';
 import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
 import {
@@ -23,33 +22,32 @@ import {
 	Peer,
 } from 'aws-cdk-lib/aws-ec2';
 
-interface PrismEc2AppProps extends Omit<GuStackProps, 'description' | 'stack'> {
+interface PrismProps extends Omit<GuStackProps, 'description' | 'stack'> {
 	domainName: string;
 	minimumInstances: number;
 }
 
-export class PrismEc2App extends GuStack {
-	private static app: AppIdentity = {
-		app: 'prism',
-	};
-
-	constructor(scope: App, id: string, props: PrismEc2AppProps) {
+export class Prism extends GuStack {
+	constructor(scope: App, id: string, props: PrismProps) {
+		const app = 'prism';
 		super(scope, id, {
 			...props,
 			description: 'Prism - service discovery',
 			stack: 'deploy',
+			app,
 		});
 
 		const pattern = new GuPlayApp(this, {
-			...PrismEc2App.app,
+			app,
 			applicationLogging: {
 				enabled: true,
 			},
+			imageRecipe: 'arm64-focal-java11-deploy-infrastructure',
 			instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
 			userData: {
 				distributable: {
-					fileName: 'prism.deb',
-					executionStatement: `dpkg -i /${PrismEc2App.app.app}/prism.deb`,
+					fileName: `${app}.deb`,
+					executionStatement: `dpkg -i /${app}/${app}.deb`,
 				},
 			},
 			certificateProps: {

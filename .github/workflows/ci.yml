@@ -39,9 +39,9 @@ jobs:
           projectName: devx::prism
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
-          configPath: riff-raff.yaml # TODO switch to auto-generating this file
+          configPath: cdk/cdk.out/riff-raff.yaml
           contentDirectories: |
-            cloudformation:
+            cdk.out:
               - cdk/cdk.out
             prism:
               - target/prism.deb
