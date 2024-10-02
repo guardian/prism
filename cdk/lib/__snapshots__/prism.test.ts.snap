@@ -79,7 +79,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
   "Resources": {
     "AutoScalingGroupPrismASG36691601": {
       "Properties": {
-        "HealthCheckGracePeriod": 500,
+        "HealthCheckGracePeriod": 900,
         "HealthCheckType": "ELB",
         "LaunchTemplate": {
           "LaunchTemplateId": {
