@@ -44,4 +44,4 @@ jobs:
             cdk.out:
               - cdk/cdk.out
             prism:
-              - target/prism.deb
+              - dist

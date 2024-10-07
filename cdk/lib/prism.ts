@@ -1,4 +1,3 @@
-import { GuPlayApp } from '@guardian/cdk';
 import { AccessScope } from '@guardian/cdk/lib/constants';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core/stack';
 import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
@@ -8,6 +7,7 @@ import {
 	GuDynamoDBReadPolicy,
 	GuGetS3ObjectsPolicy,
 } from '@guardian/cdk/lib/constructs/iam';
+import { GuEc2AppExperimental } from '@guardian/cdk/lib/experimental/patterns/ec2-app';
 import type { App } from 'aws-cdk-lib';
 import { Duration } from 'aws-cdk-lib';
 import type { CfnAutoScalingGroup } from 'aws-cdk-lib/aws-autoscaling';
@@ -25,6 +25,12 @@ import {
 interface PrismProps extends Omit<GuStackProps, 'description' | 'stack'> {
 	domainName: string;
 	minimumInstances: number;
+
+	/**
+	 * Which application build to run.
+	 * This will typically match the build number provided by CI.
+	 */
+	buildIdentifier: string;
 }
 
 export class Prism extends GuStack {
@@ -37,7 +43,13 @@ export class Prism extends GuStack {
 			app,
 		});
 
-		const pattern = new GuPlayApp(this, {
+		const { buildIdentifier } = props;
+
+		const filename = `${app}-${buildIdentifier}.deb`;
+
+		const pattern = new GuEc2AppExperimental(this, {
+			buildIdentifier,
+			applicationPort: 9000,
 			app,
 			applicationLogging: {
 				enabled: true,
@@ -46,8 +58,8 @@ export class Prism extends GuStack {
 			instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
 			userData: {
 				distributable: {
-					fileName: `${app}.deb`,
-					executionStatement: `dpkg -i /${app}/${app}.deb`,
+					fileName: filename,
+					executionStatement: `dpkg -i /${app}/${filename}`,
 				},
 			},
 			certificateProps: {

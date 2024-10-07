@@ -13,6 +13,7 @@ new Prism(app, 'Prism-CODE', {
 	minimumInstances: 1,
 	cloudFormationStackName: 'prism-CODE',
 	env: { region: 'eu-west-1' },
+	buildIdentifier: process.env.GITHUB_RUN_NUMBER ?? 'DEV',
 });
 
 new Prism(app, 'Prism-PROD', {
@@ -21,6 +22,7 @@ new Prism(app, 'Prism-PROD', {
 	minimumInstances: 2,
 	cloudFormationStackName: 'prism-PROD',
 	env: { region: 'eu-west-1' },
+	buildIdentifier: process.env.GITHUB_RUN_NUMBER ?? 'DEV',
 });
 
 new PrismAccess(app, 'PrismAccessStackSet');
