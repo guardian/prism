@@ -4,7 +4,7 @@ version := "1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.15"
 
-val awsVersion = "2.28.20"
+val awsVersion = "2.28.29"
 val awsVersionOne = "1.12.777"
 
 def env(propName: String): String =
