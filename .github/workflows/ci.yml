@@ -26,12 +26,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'cdk/package-lock.json'
 
-      # Java is needed for the Scala Play app
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '11' # TODO read this from the `.java-version` file in the repository
-          distribution: 'corretto'
+      - uses: guardian/setup-scala@v1
+
       - run: ./scripts/ci
 
       - uses: guardian/actions-riff-raff@v4
