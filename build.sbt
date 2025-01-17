@@ -2,7 +2,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.15"
+ThisBuild / scalaVersion := "2.13.16"
 
 val awsVersion = "2.29.44"
 val awsVersionOne = "1.12.780"
