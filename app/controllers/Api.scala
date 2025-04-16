@@ -226,13 +226,6 @@ class Api(
     Api.singleItem(prismDataStore.launchTemplateAgent, arn)
   }
 
-  def acmCertificateList = Action.async { implicit request =>
-    Api.itemList(prismDataStore.acmCertificateAgent, "acm-certificates")
-  }
-  def acmCertificate(arn: String) = Action.async { implicit request =>
-    Api.singleItem(prismDataStore.acmCertificateAgent, arn)
-  }
-
   def route53ZoneList = Action.async { implicit request =>
     Api.itemList(prismDataStore.route53ZoneAgent, "route53-zones")
   }

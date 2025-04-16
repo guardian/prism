@@ -71,13 +71,6 @@ object model {
       Json.writes[RecurringCharge]
     Json.writes[Reservation]
   }
-  implicit val domainResourceRecordWriter: Writes[DomainResourceRecord] =
-    Json.writes[DomainResourceRecord]
-  implicit val domainValidationWriter: Writes[DomainValidation] =
-    Json.writes[DomainValidation]
-  implicit val renewalInfoWriter: Writes[RenewalInfo] = Json.writes[RenewalInfo]
-  implicit val acmCertificateWriter: Writes[AcmCertificate] =
-    Json.writes[AcmCertificate]
   implicit val route53AliasWriter: Writes[Route53Alias] =
     Json.writes[Route53Alias]
   implicit val route53RecordWriter: Writes[Route53Record] =
