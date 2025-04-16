@@ -46,7 +46,6 @@ lazy val root = (project in file("."))
       "software.amazon.awssdk" % "s3" % awsVersion,
       "software.amazon.awssdk" % "auth" % awsVersion,
       "software.amazon.awssdk" % "sts" % awsVersion,
-      "software.amazon.awssdk" % "acm" % awsVersion,
       "software.amazon.awssdk" % "ec2" % awsVersion,
       "software.amazon.awssdk" % "autoscaling" % awsVersion,
       "software.amazon.awssdk" % "elasticloadbalancing" % awsVersion,

@@ -38,9 +38,6 @@ GET        /launch-configurations/:arn        controllers.Api.launchConfiguratio
 GET        /active-launch-template-versions      controllers.Api.launchTemplateList
 GET        /active-launch-template-versions/:arn controllers.Api.launchTemplate(arn)
 
-GET        /acm-certificates                  controllers.Api.acmCertificateList
-GET        /acm-certificates/:arn             controllers.Api.acmCertificate(arn)
-
 GET        /route53-zones                     controllers.Api.route53ZoneList
 GET        /route53-zones/:arn                controllers.Api.route53Zone(arn)
 
