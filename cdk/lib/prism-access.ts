@@ -68,8 +68,6 @@ export class PrismAccess extends GuStack {
 						'autoscaling:Describe*',
 						's3:ListAllMyBuckets',
 						's3:GetBucketLocation',
-						'acm:ListCertificates',
-						'acm:DescribeCertificate',
 						'route53:List*',
 						'route53:Get*',
 						'elasticloadbalancing:Describe*',
