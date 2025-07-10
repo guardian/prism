@@ -65,7 +65,7 @@ lazy val root = (project in file("."))
         "com.fasterxml.jackson.core",
         "jackson-databind"
       ),
-      // Transient dependency of Play. No newer version of Play 3.0.7 with this vulnerability fixed.
+      // Transient dependency of Play. No newer version of Play 3.0.8 with this vulnerability fixed.
       "ch.qos.logback" % "logback-classic" % "1.5.18",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.19.1"
     ),
