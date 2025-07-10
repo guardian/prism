@@ -55,8 +55,8 @@ lazy val root = (project in file("."))
       "com.beust" % "jcommander" % "1.82", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsVersionOne,
       "com.amazonaws" % "aws-java-sdk-autoscaling" % awsVersionOne,
-      "org.playframework" %% "play-json" % "3.0.4",
-      "org.playframework" %% "play-json-joda" % "3.0.4",
+      "org.playframework" %% "play-json" % "3.0.5",
+      "org.playframework" %% "play-json-joda" % "3.0.5",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
@@ -65,7 +65,7 @@ lazy val root = (project in file("."))
         "com.fasterxml.jackson.core",
         "jackson-databind"
       ),
-      // Transient dependency of Play. No newer version of Play 3.0.7 with this vulnerability fixed.
+      // Transient dependency of Play. No newer version of Play 3.0.8 with this vulnerability fixed.
       "ch.qos.logback" % "logback-classic" % "1.5.18",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.19.1"
     ),
