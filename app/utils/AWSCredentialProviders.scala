@@ -29,7 +29,7 @@ object AWSCredentialProviders extends Logging {
   def deployToolsCredentialsProviderChain: AwsCredentialsProviderChain =
     AwsCredentialsProviderChain.of(
       ProfileCredentialsProvider.builder.profileName(deployToolsProfile).build,
-      DefaultCredentialsProvider.create
+      DefaultCredentialsProvider.builder.build
     )
 
   def profileCredentialsProviderV1(profileName: String) = {
