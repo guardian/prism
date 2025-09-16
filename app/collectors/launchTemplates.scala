@@ -8,7 +8,10 @@ import controllers.routes
 import play.api.mvc.Call
 import software.amazon.awssdk.services.autoscaling.AutoScalingClient
 import software.amazon.awssdk.services.ec2.Ec2Client
-import software.amazon.awssdk.services.ec2.model.{DescribeLaunchTemplateVersionsRequest, LaunchTemplateVersion => AwsLaunchTemplateVersion}
+import software.amazon.awssdk.services.ec2.model.{
+  DescribeLaunchTemplateVersionsRequest,
+  LaunchTemplateVersion => AwsLaunchTemplateVersion
+}
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
@@ -55,7 +58,11 @@ case class AWSLaunchTemplateCollector(
 
   def crawl: Iterable[LaunchTemplateVersion] = {
     val asgs =
-      asgClient.describeAutoScalingGroupsPaginator().autoScalingGroups().asScala.toList
+      asgClient
+        .describeAutoScalingGroupsPaginator()
+        .autoScalingGroups()
+        .asScala
+        .toList
     val launchTemplates = asgs
       .collect(
         // not all asgs have launch templates (they might have launch configurations instead
