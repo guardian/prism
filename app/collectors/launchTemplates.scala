@@ -72,6 +72,22 @@ case class AWSLaunchTemplateCollector(
               asg.launchTemplate().launchTemplateId(),
               asg.launchTemplate().version()
             )
+          case asg
+              if asg.mixedInstancesPolicy() != null && asg
+                .mixedInstancesPolicy()
+                .launchTemplate() != null =>
+            AsgLaunchTemplate(
+              asg
+                .mixedInstancesPolicy()
+                .launchTemplate()
+                .launchTemplateSpecification()
+                .launchTemplateId(),
+              asg
+                .mixedInstancesPolicy()
+                .launchTemplate()
+                .launchTemplateSpecification()
+                .version()
+            )
         }
       )
 
