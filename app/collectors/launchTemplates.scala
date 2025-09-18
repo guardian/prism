@@ -2,6 +2,7 @@ package collectors
 
 import java.time.Instant
 import agent._
+import software.amazon.awssdk.services.autoscaling.model.DescribeAutoScalingGroupsRequest
 import conf.AWS
 import controllers.routes
 import play.api.mvc.Call
@@ -57,7 +58,11 @@ case class AWSLaunchTemplateCollector(
 
   def crawl: Iterable[LaunchTemplateVersion] = {
     val asgs =
-      asgClient.describeAutoScalingGroups().autoScalingGroups().asScala.toList
+      asgClient
+        .describeAutoScalingGroupsPaginator()
+        .autoScalingGroups()
+        .asScala
+        .toList
     val launchTemplates = asgs
       .collect(
         // not all asgs have launch templates (they might have launch configurations instead
@@ -66,6 +71,22 @@ case class AWSLaunchTemplateCollector(
             AsgLaunchTemplate(
               asg.launchTemplate().launchTemplateId(),
               asg.launchTemplate().version()
+            )
+          case asg
+              if asg.mixedInstancesPolicy() != null && asg
+                .mixedInstancesPolicy()
+                .launchTemplate() != null =>
+            AsgLaunchTemplate(
+              asg
+                .mixedInstancesPolicy()
+                .launchTemplate()
+                .launchTemplateSpecification()
+                .launchTemplateId(),
+              asg
+                .mixedInstancesPolicy()
+                .launchTemplate()
+                .launchTemplateSpecification()
+                .version()
             )
         }
       )
