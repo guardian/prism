@@ -106,6 +106,7 @@ object Owners extends Owners {
     "targeted.experiences.core" -> SSA(stack = "targeting"),
     "engineering.managers" -> SSA(stack = "hiring-and-onboarding"),
     "ai.dev" -> SSA(stack = "ai"),
-    "data.scientists" -> SSA(stack = "data-science")
+    "data.scientists" -> SSA(stack = "data-science"),
+    "feast.devs" -> SSA(stack = "feast")
   )
 }
