@@ -30,6 +30,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuHttpsApplicationListener",
       "GuSecurityGroup",
       "GuUnhealthyInstancesAlarm",
+      "GuRiffRaffDeploymentIdParameter",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -58,6 +59,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
       "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "RiffRaffDeploymentId": {
+      "Description": "Used by Riff-Raff to inject the deployment ID.",
+      "Type": "String",
     },
     "VpcId": {
       "Default": "/account/vpc/primary/id",
@@ -1186,7 +1191,12 @@ aws s3 cp 's3://",
                   },
                   "/deploy/PROD/prism/prism-TEST.deb' '/prism/prism-TEST.deb'
 dpkg -i /prism/prism-TEST.deb
-# GuEc2AppExperimental UserData Start
+echo "Launch template last updated by Riff-Raff deployment ID: ",
+                  {
+                    "Ref": "RiffRaffDeploymentId",
+                  },
+                  ""
+# GuEc2AppExperimental Instance Health Check Start
 
       TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
       INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/instance-id")
@@ -1217,7 +1227,7 @@ dpkg -i /prism/prism-TEST.deb
 
       echo "Instance running build TEST is healthy in target group."
       
-# GuEc2AppExperimental UserData End",
+# GuEc2AppExperimental Instance Health Check End",
                 ],
               ],
             },
