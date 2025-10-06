@@ -10,6 +10,8 @@ describe('The PrismEc2App stack', () => {
 			domainName: 'prism.gutools.co.uk',
 			minimumInstances: 2,
 			buildIdentifier: 'TEST',
+			instanceMetricGranularity: '1Minute',
+			env: { region: 'eu-west-1' },
 		});
 		expect(Template.fromStack(stack).toJSON()).toMatchSnapshot();
 	});

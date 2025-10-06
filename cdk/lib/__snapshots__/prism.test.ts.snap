@@ -24,13 +24,14 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuParameterStoreReadPolicy",
       "GuAmiParameter",
       "GuHttpsEgressSecurityGroup",
-      "GuWazuhAccess",
       "GuAutoScalingGroup",
       "GuApplicationLoadBalancer",
+      "GuAccessLoggingBucketParameter",
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
       "GuSecurityGroup",
       "GuUnhealthyInstancesAlarm",
+      "GuRiffRaffDeploymentIdParameter",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -50,6 +51,11 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "Description": "Amazon Machine Image ID for the app prism. Use this in conjunction with AMIgo to keep AMIs up to date.",
       "Type": "AWS::EC2::Image::Id",
     },
+    "AccessLoggingBucket": {
+      "Default": "/account/services/access-logging/bucket",
+      "Description": "S3 bucket to store your access logs",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
     "DistributionBucketName": {
       "Default": "/account/services/artifact.bucket",
       "Description": "SSM parameter containing the S3 bucket name holding distribution artifacts",
@@ -59,6 +65,10 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
       "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "RiffRaffDeploymentId": {
+      "Description": "Used by Riff-Raff to inject the deployment ID.",
+      "Type": "String",
     },
     "VpcId": {
       "Default": "/account/vpc/primary/id",
@@ -255,11 +265,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                   "Fn::Join": [
                     "",
                     [
-                      "arn:aws:dynamodb:",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      ":",
+                      "arn:aws:dynamodb:eu-west-1:",
                       {
                         "Ref": "AWS::AccountId",
                       },
@@ -271,11 +277,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                   "Fn::Join": [
                     "",
                     [
-                      "arn:aws:dynamodb:",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      ":",
+                      "arn:aws:dynamodb:eu-west-1:",
                       {
                         "Ref": "AWS::AccountId",
                       },
@@ -517,11 +519,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:kinesis:",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ":",
+                    "arn:aws:kinesis:eu-west-1:",
                     {
                       "Ref": "AWS::AccountId",
                     },
@@ -646,27 +644,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "InternalIngressSecurityGroupPrismtoprismWazuhSecurityGroupCEA52DC59000F2CB81F1": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "DestinationSecurityGroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "InternalIngressSecurityGroupPrism75546EB8",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupEgress",
-    },
     "ListenerPrism140519A6": {
       "Properties": {
         "Certificates": [
@@ -707,6 +684,20 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           {
             "Key": "routing.http.drop_invalid_header_fields.enabled",
             "Value": "true",
+          },
+          {
+            "Key": "access_logs.s3.enabled",
+            "Value": "true",
+          },
+          {
+            "Key": "access_logs.s3.bucket",
+            "Value": {
+              "Ref": "AccessLoggingBucket",
+            },
+          },
+          {
+            "Key": "access_logs.s3.prefix",
+            "Value": "application-load-balancer/PROD/deploy/prism",
           },
         ],
         "Scheme": "internal",
@@ -805,27 +796,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "LoadBalancerPrismSecurityGrouptoprismWazuhSecurityGroupCEA52DC59000B5566477": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "DestinationSecurityGroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "LoadBalancerPrismSecurityGroupB966F197",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupEgress",
-    },
     "ParameterStoreReadPrism8EED3EF6": {
       "Properties": {
         "PolicyDocument": {
@@ -837,11 +807,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:ssm:",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ":",
+                    "arn:aws:ssm:eu-west-1:",
                     {
                       "Ref": "AWS::AccountId",
                     },
@@ -860,11 +826,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:ssm:",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ":",
+                    "arn:aws:ssm:eu-west-1:",
                     {
                       "Ref": "AWS::AccountId",
                     },
@@ -976,11 +938,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "Fn::Join": [
               "",
               [
-                "arn:aws:sns:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":",
+                "arn:aws:sns:eu-west-1:",
                 {
                   "Ref": "AWS::AccountId",
                 },
@@ -1091,95 +1049,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::CloudWatch::Alarm",
     },
-    "WazuhSecurityGroup": {
-      "Properties": {
-        "GroupDescription": "Allow outbound traffic from wazuh agent to manager",
-        "SecurityGroupEgress": [
-          {
-            "CidrIp": "0.0.0.0/0",
-            "Description": "Wazuh event logging",
-            "FromPort": 1514,
-            "IpProtocol": "tcp",
-            "ToPort": 1514,
-          },
-          {
-            "CidrIp": "0.0.0.0/0",
-            "Description": "Wazuh agent registration",
-            "FromPort": 1515,
-            "IpProtocol": "tcp",
-            "ToPort": 1515,
-          },
-        ],
-        "Tags": [
-          {
-            "Key": "App",
-            "Value": "prism",
-          },
-          {
-            "Key": "gu:cdk:version",
-            "Value": "TEST",
-          },
-          {
-            "Key": "gu:repo",
-            "Value": "guardian/prism",
-          },
-          {
-            "Key": "Stack",
-            "Value": "deploy",
-          },
-          {
-            "Key": "Stage",
-            "Value": "PROD",
-          },
-        ],
-        "VpcId": {
-          "Ref": "VpcId",
-        },
-      },
-      "Type": "AWS::EC2::SecurityGroup",
-    },
-    "WazuhSecurityGroupfromprismInternalIngressSecurityGroupPrism88D0F57890002E31759F": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "InternalIngressSecurityGroupPrism75546EB8",
-            "GroupId",
-          ],
-        },
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupIngress",
-    },
-    "WazuhSecurityGroupfromprismLoadBalancerPrismSecurityGroupE6A4FDFF90009CACFBEB": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "LoadBalancerPrismSecurityGroupB966F197",
-            "GroupId",
-          ],
-        },
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupIngress",
-    },
     "deployPRODprismA0128C9B": {
       "DependsOn": [
         "InstanceRolePrism96D154B7",
@@ -1211,16 +1080,13 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "HttpTokens": "required",
             "InstanceMetadataTags": "enabled",
           },
+          "Monitoring": {
+            "Enabled": true,
+          },
           "SecurityGroupIds": [
             {
               "Fn::GetAtt": [
                 "GuHttpsEgressSecurityGroupPrism4A68FA56",
-                "GroupId",
-              ],
-            },
-            {
-              "Fn::GetAtt": [
-                "WazuhSecurityGroup",
                 "GroupId",
               ],
             },
@@ -1306,11 +1172,7 @@ exitCode=$?
                   {
                     "Ref": "AWS::StackId",
                   },
-                  "           --resource AutoScalingGroupPrismASG36691601           --region ",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  "           --exit-code $exitCode || echo 'Failed to send Cloudformation Signal'
+                  "           --resource AutoScalingGroupPrismASG36691601           --region eu-west-1           --exit-code $exitCode || echo 'Failed to send Cloudformation Signal'
         
 }
 trap exitTrap EXIT
@@ -1321,7 +1183,12 @@ aws s3 cp 's3://",
                   },
                   "/deploy/PROD/prism/prism-TEST.deb' '/prism/prism-TEST.deb'
 dpkg -i /prism/prism-TEST.deb
-# GuEc2AppExperimental UserData Start
+echo "Launch template last updated by Riff-Raff deployment ID: ",
+                  {
+                    "Ref": "RiffRaffDeploymentId",
+                  },
+                  ""
+# GuEc2AppExperimental Instance Health Check Start
 
       TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
       INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/instance-id")
@@ -1330,11 +1197,7 @@ dpkg -i /prism/prism-TEST.deb
                   {
                     "Ref": "TargetGroupPrismC8B388A7",
                   },
-                  "         --region ",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  "         --targets Id=$INSTANCE_ID,Port=9000         --query "TargetHealthDescriptions[0].TargetHealth.State")
+                  "         --region eu-west-1         --targets Id=$INSTANCE_ID,Port=9000         --query "TargetHealthDescriptions[0].TargetHealth.State")
 
       until [ "$STATE" == "\\"healthy\\"" ]; do
         echo "Instance running build TEST not yet healthy within target group. Current state $STATE. Sleeping..."
@@ -1343,16 +1206,12 @@ dpkg -i /prism/prism-TEST.deb
                   {
                     "Ref": "TargetGroupPrismC8B388A7",
                   },
-                  "           --region ",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  "           --targets Id=$INSTANCE_ID,Port=9000           --query "TargetHealthDescriptions[0].TargetHealth.State")
+                  "           --region eu-west-1           --targets Id=$INSTANCE_ID,Port=9000           --query "TargetHealthDescriptions[0].TargetHealth.State")
       done
 
       echo "Instance running build TEST is healthy in target group."
       
-# GuEc2AppExperimental UserData End",
+# GuEc2AppExperimental Instance Health Check End",
                 ],
               ],
             },

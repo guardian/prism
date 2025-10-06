@@ -31,6 +31,8 @@ interface PrismProps extends Omit<GuStackProps, 'description' | 'stack'> {
 	 * This will typically match the build number provided by CI.
 	 */
 	buildIdentifier: string;
+
+	instanceMetricGranularity: '1Minute' | '5Minute';
 }
 
 export class Prism extends GuStack {
@@ -43,7 +45,7 @@ export class Prism extends GuStack {
 			app,
 		});
 
-		const { buildIdentifier } = props;
+		const { buildIdentifier, instanceMetricGranularity } = props;
 
 		const filename = `${app}-${buildIdentifier}.deb`;
 
@@ -108,6 +110,7 @@ export class Prism extends GuStack {
 					}),
 				},
 			],
+			instanceMetricGranularity,
 		});
 
 		// The pattern does not currently offer support for customising healthchecks via props
