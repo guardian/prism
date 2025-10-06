@@ -24,7 +24,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuParameterStoreReadPolicy",
       "GuAmiParameter",
       "GuHttpsEgressSecurityGroup",
-      "GuWazuhAccess",
       "GuAutoScalingGroup",
       "GuApplicationLoadBalancer",
       "GuApplicationTargetGroup",
@@ -646,27 +645,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "InternalIngressSecurityGroupPrismtoprismWazuhSecurityGroupCEA52DC59000F2CB81F1": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "DestinationSecurityGroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "InternalIngressSecurityGroupPrism75546EB8",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupEgress",
-    },
     "ListenerPrism140519A6": {
       "Properties": {
         "Certificates": [
@@ -790,27 +768,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
         "DestinationSecurityGroupId": {
           "Fn::GetAtt": [
             "GuHttpsEgressSecurityGroupPrism4A68FA56",
-            "GroupId",
-          ],
-        },
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "LoadBalancerPrismSecurityGroupB966F197",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupEgress",
-    },
-    "LoadBalancerPrismSecurityGrouptoprismWazuhSecurityGroupCEA52DC59000B5566477": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "DestinationSecurityGroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
             "GroupId",
           ],
         },
@@ -1091,95 +1048,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::CloudWatch::Alarm",
     },
-    "WazuhSecurityGroup": {
-      "Properties": {
-        "GroupDescription": "Allow outbound traffic from wazuh agent to manager",
-        "SecurityGroupEgress": [
-          {
-            "CidrIp": "0.0.0.0/0",
-            "Description": "Wazuh event logging",
-            "FromPort": 1514,
-            "IpProtocol": "tcp",
-            "ToPort": 1514,
-          },
-          {
-            "CidrIp": "0.0.0.0/0",
-            "Description": "Wazuh agent registration",
-            "FromPort": 1515,
-            "IpProtocol": "tcp",
-            "ToPort": 1515,
-          },
-        ],
-        "Tags": [
-          {
-            "Key": "App",
-            "Value": "prism",
-          },
-          {
-            "Key": "gu:cdk:version",
-            "Value": "TEST",
-          },
-          {
-            "Key": "gu:repo",
-            "Value": "guardian/prism",
-          },
-          {
-            "Key": "Stack",
-            "Value": "deploy",
-          },
-          {
-            "Key": "Stage",
-            "Value": "PROD",
-          },
-        ],
-        "VpcId": {
-          "Ref": "VpcId",
-        },
-      },
-      "Type": "AWS::EC2::SecurityGroup",
-    },
-    "WazuhSecurityGroupfromprismInternalIngressSecurityGroupPrism88D0F57890002E31759F": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "InternalIngressSecurityGroupPrism75546EB8",
-            "GroupId",
-          ],
-        },
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupIngress",
-    },
-    "WazuhSecurityGroupfromprismLoadBalancerPrismSecurityGroupE6A4FDFF90009CACFBEB": {
-      "Properties": {
-        "Description": "Load balancer to target",
-        "FromPort": 9000,
-        "GroupId": {
-          "Fn::GetAtt": [
-            "WazuhSecurityGroup",
-            "GroupId",
-          ],
-        },
-        "IpProtocol": "tcp",
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "LoadBalancerPrismSecurityGroupB966F197",
-            "GroupId",
-          ],
-        },
-        "ToPort": 9000,
-      },
-      "Type": "AWS::EC2::SecurityGroupIngress",
-    },
     "deployPRODprismA0128C9B": {
       "DependsOn": [
         "InstanceRolePrism96D154B7",
@@ -1215,12 +1083,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             {
               "Fn::GetAtt": [
                 "GuHttpsEgressSecurityGroupPrism4A68FA56",
-                "GroupId",
-              ],
-            },
-            {
-              "Fn::GetAtt": [
-                "WazuhSecurityGroup",
                 "GroupId",
               ],
             },
