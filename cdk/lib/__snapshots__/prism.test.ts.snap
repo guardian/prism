@@ -1079,6 +1079,9 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "HttpTokens": "required",
             "InstanceMetadataTags": "enabled",
           },
+          "Monitoring": {
+            "Enabled": true,
+          },
           "SecurityGroupIds": [
             {
               "Fn::GetAtt": [

@@ -14,6 +14,7 @@ new Prism(app, 'Prism-CODE', {
 	cloudFormationStackName: 'prism-CODE',
 	env: { region: 'eu-west-1' },
 	buildIdentifier: process.env.GITHUB_RUN_NUMBER ?? 'DEV',
+	instanceMetricGranularity: '5Minute',
 });
 
 new Prism(app, 'Prism-PROD', {
@@ -23,6 +24,7 @@ new Prism(app, 'Prism-PROD', {
 	cloudFormationStackName: 'prism-PROD',
 	env: { region: 'eu-west-1' },
 	buildIdentifier: process.env.GITHUB_RUN_NUMBER ?? 'DEV',
+	instanceMetricGranularity: '1Minute',
 });
 
 new PrismAccess(app, 'PrismAccessStackSet');
