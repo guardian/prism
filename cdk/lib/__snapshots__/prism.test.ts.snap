@@ -259,11 +259,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                   "Fn::Join": [
                     "",
                     [
-                      "arn:aws:dynamodb:",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      ":",
+                      "arn:aws:dynamodb:eu-west-1:",
                       {
                         "Ref": "AWS::AccountId",
                       },
@@ -275,11 +271,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                   "Fn::Join": [
                     "",
                     [
-                      "arn:aws:dynamodb:",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      ":",
+                      "arn:aws:dynamodb:eu-west-1:",
                       {
                         "Ref": "AWS::AccountId",
                       },
@@ -521,11 +513,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:kinesis:",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ":",
+                    "arn:aws:kinesis:eu-west-1:",
                     {
                       "Ref": "AWS::AccountId",
                     },
@@ -799,11 +787,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:ssm:",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ":",
+                    "arn:aws:ssm:eu-west-1:",
                     {
                       "Ref": "AWS::AccountId",
                     },
@@ -822,11 +806,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
                 "Fn::Join": [
                   "",
                   [
-                    "arn:aws:ssm:",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ":",
+                    "arn:aws:ssm:eu-west-1:",
                     {
                       "Ref": "AWS::AccountId",
                     },
@@ -938,11 +918,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
             "Fn::Join": [
               "",
               [
-                "arn:aws:sns:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":",
+                "arn:aws:sns:eu-west-1:",
                 {
                   "Ref": "AWS::AccountId",
                 },
@@ -1176,11 +1152,7 @@ exitCode=$?
                   {
                     "Ref": "AWS::StackId",
                   },
-                  "           --resource AutoScalingGroupPrismASG36691601           --region ",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  "           --exit-code $exitCode || echo 'Failed to send Cloudformation Signal'
+                  "           --resource AutoScalingGroupPrismASG36691601           --region eu-west-1           --exit-code $exitCode || echo 'Failed to send Cloudformation Signal'
         
 }
 trap exitTrap EXIT
@@ -1205,11 +1177,7 @@ echo "Launch template last updated by Riff-Raff deployment ID: ",
                   {
                     "Ref": "TargetGroupPrismC8B388A7",
                   },
-                  "         --region ",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  "         --targets Id=$INSTANCE_ID,Port=9000         --query "TargetHealthDescriptions[0].TargetHealth.State")
+                  "         --region eu-west-1         --targets Id=$INSTANCE_ID,Port=9000         --query "TargetHealthDescriptions[0].TargetHealth.State")
 
       until [ "$STATE" == "\\"healthy\\"" ]; do
         echo "Instance running build TEST not yet healthy within target group. Current state $STATE. Sleeping..."
@@ -1218,11 +1186,7 @@ echo "Launch template last updated by Riff-Raff deployment ID: ",
                   {
                     "Ref": "TargetGroupPrismC8B388A7",
                   },
-                  "           --region ",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  "           --targets Id=$INSTANCE_ID,Port=9000           --query "TargetHealthDescriptions[0].TargetHealth.State")
+                  "           --region eu-west-1           --targets Id=$INSTANCE_ID,Port=9000           --query "TargetHealthDescriptions[0].TargetHealth.State")
       done
 
       echo "Instance running build TEST is healthy in target group."
