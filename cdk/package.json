@@ -9,9 +9,12 @@
     "format": "prettier --write \"{lib,bin}/**/*.ts\"",
     "lint": "eslint lib/** bin/** --no-error-on-unmatched-pattern",
     "synth": "cdk synth --path-metadata false --version-reporting false",
-    "diff": "cdk diff --path-metadata false --version-reporting false"
+    "diff": "cdk diff --path-metadata false --version-reporting false",
+    "dynamo-download": "mkdir -p config && ts-node lib/dynamo-download.ts"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.902.0",
+    "@aws-sdk/util-dynamodb": "^3.902.0",
     "@guardian/cdk": "62.0.0",
     "@guardian/eslint-config": "11.0.0",
     "@guardian/prettier": "8.0.1",
