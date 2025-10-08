@@ -17,6 +17,13 @@ case class FileConfiguration(
 
     if (mode == Mode.Test) globalConfig
     else {
+      // This file is created within the UserData
+      val etcGuConfig = Configuration(
+        ConfigFactory.parseFileAnySyntax(
+          new File(s"/etc/gu/${identity.app}/${identity.stage}.conf")
+        )
+      )
+
       val stageConfig = Configuration(
         ConfigFactory.parseResourcesAnySyntax(
           s"$classPathPrefix${identity.stage}.conf"
@@ -29,7 +36,10 @@ case class FileConfiguration(
         )
       )
 
-      developerConfig.withFallback(stageConfig).withFallback(globalConfig)
+      etcGuConfig
+        .withFallback(developerConfig)
+        .withFallback(stageConfig)
+        .withFallback(globalConfig)
     }
   }
 }

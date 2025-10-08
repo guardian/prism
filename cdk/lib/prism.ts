@@ -1,5 +1,8 @@
 import { AccessScope } from '@guardian/cdk/lib/constants';
-import { GuDistributionBucketParameter } from '@guardian/cdk/lib/constructs/core';
+import {
+	GuDistributionBucketParameter,
+	GuPrivateConfigBucketParameter,
+} from '@guardian/cdk/lib/constructs/core';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core/stack';
 import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
 import {
@@ -57,7 +60,20 @@ export class Prism extends GuStack {
 			GuDistributionBucketParameter.getInstance(this).valueAsString,
 		);
 
+		const configBucket = Bucket.fromBucketName(
+			this,
+			'ConfigBucket',
+			new GuPrivateConfigBucketParameter(this).valueAsString,
+		);
+		const configObjectKey = `${stack}/${app}/${stage}.conf`;
+
 		const userData = UserData.forLinux();
+
+		userData.addS3DownloadCommand({
+			bucket: configBucket,
+			bucketKey: configObjectKey,
+			localFile: `/etc/gu/${app}/${stage}.conf`,
+		});
 
 		const debianFilename = `${app}-${buildIdentifier}.deb`;
 		const debianFile = userData.addS3DownloadCommand({
@@ -103,6 +119,10 @@ export class Prism extends GuStack {
 					}),
 					new GuGetS3ObjectsPolicy(this, 'DataPolicy', {
 						bucketName: 'prism-data',
+					}),
+					new GuGetS3ObjectsPolicy(this, 'ReadConfigPolicy', {
+						bucketName: configBucket.bucketName,
+						paths: [configObjectKey],
 					}),
 					new GuAssumeRolePolicy(this, 'CrawlerPolicy', {
 						resources: [
