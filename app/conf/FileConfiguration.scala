@@ -1,8 +1,8 @@
 package conf
 
 import java.io.File
-
 import com.typesafe.config.ConfigFactory
+import model.Identity
 import play.api.Configuration
 import play.api.Mode
 

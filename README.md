@@ -61,7 +61,7 @@ A typical Prism response includes the following top level fields:
 
 * Create a new stack with `cloudformation/prism-role.template`. In the AWS account requiring Prism. Give it a Stack Name of PrismAccess. When prompted add the Prism account parameter.  The format is `arn:aws:iam::<account-number>:root`, please ask a Guardian developer for the account-number.
 * The output of the stack created is a Key named Role. Take the value of Role (`arn:aws:iam:[account-number]/PrismAccess-PrismRole-[code]`) and add it the spreadsheet listing all AWS Role values (ask a fellow Guardian developer for access to the sheet).
-* In DeployTools AWS account go the `config-deploy` DynamoDB table. Select the App `prism`, Stage `PROD` item. Choose `Text` view. Details of the AWS account requiring prism will need to be added here. There are many examples to follow, the format of the name must be the `[aws-account-name].role` (we strongly recommend that this matches the short name used by janus) with the output Role value of the step above. Save and close.
+* In the DeployTools AWS account, edit the private configuration in the S3 bucket at `/account/services/private.config.bucket`. Details of the AWS account requiring prism will need to be added here. There are many examples to follow, the format of the name must be the `[aws-account-name].role` (we strongly recommend that this matches the short name used by janus) with the output Role value of the step above. Save and close.
 * Re-deploy latest prism for the changes to be picked up.
 
 Using prism from the command line

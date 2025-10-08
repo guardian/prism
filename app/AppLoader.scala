@@ -1,7 +1,7 @@
-import com.amazonaws.regions.Regions
 import conf._
+import model.Identity
 import play.api.{Configuration, _}
-import utils.{AWSCredentialProviders, Logging}
+import utils.Logging
 
 class AppLoader extends ApplicationLoader with Logging {
   def load(context: ApplicationLoader.Context): Application = {
@@ -19,11 +19,6 @@ class AppLoader extends ApplicationLoader with Logging {
     log.info(s"Getting config for $identity")
 
     val extraConfigs = List(
-      DynamoConfiguration(
-        AWSCredentialProviders.deployToolsCredentialsProviderChainV1,
-        Regions.EU_WEST_1,
-        identity
-      ),
       FileConfiguration(identity)
     )
 

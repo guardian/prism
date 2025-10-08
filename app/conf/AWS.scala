@@ -1,5 +1,7 @@
 package conf
 
+import model.Identity
+
 import java.net.InetAddress
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.core.retry.RetryMode
@@ -12,6 +14,7 @@ import software.amazon.awssdk.services.ec2.model.{
   Filter
 }
 import utils.Logging
+
 import scala.collection.MapView
 import scala.jdk.CollectionConverters._
 import scala.util.Try

@@ -8,7 +8,6 @@ import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
 import {
 	GuAllowPolicy,
 	GuAssumeRolePolicy,
-	GuDynamoDBReadPolicy,
 	GuGetS3ObjectsPolicy,
 } from '@guardian/cdk/lib/constructs/iam';
 import { GuEc2AppExperimental } from '@guardian/cdk/lib/experimental/patterns/ec2-app';
@@ -113,9 +112,6 @@ export class Prism extends GuStack {
 					new GuAllowPolicy(this, 'DescribeEC2BonusPolicy', {
 						resources: ['*'],
 						actions: ['EC2:Describe*'],
-					}),
-					new GuDynamoDBReadPolicy(this, 'ConfigPolicy', {
-						tableName: 'config-deploy',
 					}),
 					new GuGetS3ObjectsPolicy(this, 'DataPolicy', {
 						bucketName: 'prism-data',

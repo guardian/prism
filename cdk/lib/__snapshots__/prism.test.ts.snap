@@ -8,7 +8,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuDistributionBucketParameter",
       "GuPrivateConfigBucketParameter",
       "GuAllowPolicy",
-      "GuDynamoDBReadPolicy",
       "GuGetS3ObjectsPolicy",
       "GuGetS3ObjectsPolicy",
       "GuAssumeRolePolicy",
@@ -253,58 +252,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::CertificateManager::Certificate",
       "UpdateReplacePolicy": "Retain",
-    },
-    "ConfigPolicyA2EB9456": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:Query",
-                "dynamodb:GetRecords",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:dynamodb:eu-west-1:",
-                      {
-                        "Ref": "AWS::AccountId",
-                      },
-                      ":table/config-deploy",
-                    ],
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:dynamodb:eu-west-1:",
-                      {
-                        "Ref": "AWS::AccountId",
-                      },
-                      ":table/config-deploy/index/*",
-                    ],
-                  ],
-                },
-              ],
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "ConfigPolicyA2EB9456",
-        "Roles": [
-          {
-            "Ref": "InstanceRolePrism96D154B7",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
     },
     "CrawlerPolicyB8C49604": {
       "Properties": {
