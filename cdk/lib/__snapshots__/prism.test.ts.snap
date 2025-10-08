@@ -5,6 +5,7 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
   "Description": "Prism - service discovery",
   "Metadata": {
     "gu:cdk:constructs": [
+      "GuDistributionBucketParameter",
       "GuAllowPolicy",
       "GuDynamoDBReadPolicy",
       "GuGetS3ObjectsPolicy",
@@ -13,7 +14,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       "GuSubnetListParameter",
       "GuSubnetListParameter",
       "GuEc2AppExperimental",
-      "GuDistributionBucketParameter",
       "GuCertificate",
       "GuInstanceRole",
       "GuSsmSshPolicy",

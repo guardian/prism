@@ -1,4 +1,5 @@
 import { AccessScope } from '@guardian/cdk/lib/constants';
+import { GuDistributionBucketParameter } from '@guardian/cdk/lib/constructs/core';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core/stack';
 import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
 import {
@@ -20,7 +21,9 @@ import {
 	InstanceSize,
 	InstanceType,
 	Peer,
+	UserData,
 } from 'aws-cdk-lib/aws-ec2';
+import { Bucket } from 'aws-cdk-lib/aws-s3';
 
 interface PrismProps extends Omit<GuStackProps, 'description' | 'stack'> {
 	domainName: string;
@@ -46,8 +49,23 @@ export class Prism extends GuStack {
 		});
 
 		const { buildIdentifier, instanceMetricGranularity } = props;
+		const { stack, stage } = this;
 
-		const filename = `${app}-${buildIdentifier}.deb`;
+		const distBucket = Bucket.fromBucketName(
+			this,
+			'DistBucket',
+			GuDistributionBucketParameter.getInstance(this).valueAsString,
+		);
+
+		const userData = UserData.forLinux();
+
+		const debianFilename = `${app}-${buildIdentifier}.deb`;
+		const debianFile = userData.addS3DownloadCommand({
+			bucket: distBucket,
+			bucketKey: `${stack}/${stage}/${app}/${debianFilename}`,
+			localFile: `/${app}/${debianFilename}`,
+		});
+		userData.addCommands(`dpkg -i ${debianFile}`);
 
 		const pattern = new GuEc2AppExperimental(this, {
 			buildIdentifier,
@@ -58,12 +76,7 @@ export class Prism extends GuStack {
 			},
 			imageRecipe: 'arm64-focal-java11-deploy-infrastructure',
 			instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
-			userData: {
-				distributable: {
-					fileName: filename,
-					executionStatement: `dpkg -i /${app}/${filename}`,
-				},
-			},
+			userData,
 			certificateProps: {
 				domainName: props.domainName,
 			},
