@@ -1,7 +1,6 @@
 package conf
 
 import java.io.File
-
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
 import play.api.Mode

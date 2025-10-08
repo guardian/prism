@@ -12,9 +12,12 @@ import software.amazon.awssdk.services.ec2.model.{
   Filter
 }
 import utils.Logging
+
 import scala.collection.MapView
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+
+case class Identity(stack: String, app: String, stage: String)
 
 object AWS extends Logging {
   val clientConfig: ClientOverrideConfiguration = ClientOverrideConfiguration
