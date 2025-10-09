@@ -17,29 +17,25 @@ case class FileConfiguration(
 
     if (mode == Mode.Test) globalConfig
     else {
-      // This file is created within the UserData
-      val etcGuConfig = Configuration(
-        ConfigFactory.parseFileAnySyntax(
-          new File(s"/etc/gu/${identity.app}/${identity.stage}.conf")
+      val stageConfigFile = if (identity.stage == "DEV") {
+        val home = System.getProperty("user.home")
+        new File(s"$home/.gu/${identity.app}/${identity.stage}.conf")
+      } else {
+        // This file is created within the EC2 instance UserData
+        new File(s"/etc/gu/${identity.app}/${identity.stage}.conf")
+      }
+
+      if (!stageConfigFile.exists || !stageConfigFile.isFile) {
+        throw new RuntimeException(
+          s"Config file does not exist (path: ${stageConfigFile.getAbsolutePath})"
         )
-      )
+      }
 
       val stageConfig = Configuration(
-        ConfigFactory.parseResourcesAnySyntax(
-          s"$classPathPrefix${identity.stage}.conf"
-        )
-      )
-      val home = System.getProperty("user.home")
-      val developerConfig = Configuration(
-        ConfigFactory.parseFileAnySyntax(
-          new File(s"$home/.gu/${identity.stack}-${identity.app}.conf")
-        )
+        ConfigFactory.parseFileAnySyntax(stageConfigFile)
       )
 
-      etcGuConfig
-        .withFallback(developerConfig)
-        .withFallback(stageConfig)
-        .withFallback(globalConfig)
+      stageConfig.withFallback(globalConfig)
     }
   }
 }
