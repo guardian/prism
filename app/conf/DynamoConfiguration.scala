@@ -9,8 +9,13 @@ import com.amazonaws.services.dynamodbv2.document.{
   PrimaryKey,
   TableKeysAndAttributes
 }
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import play.api.{Configuration, Mode}
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
+import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import utils.Logging
 
 import scala.jdk.CollectionConverters._
@@ -93,14 +98,58 @@ class DynamoConfiguration(
   }
 
   def fromItem(item: Item, originDescription: String): Configuration = {
-    Configuration(
+    val config = Configuration(
       ConfigFactory.parseMap(item.getMap("Config"), originDescription)
+    )
+
+    // Now that we've a HOCON configuration from the DynamoDb row, copy it to S3.
+    writeHoconConfigToS3(config, item.getString("Stage"))
+
+    config
+  }
+
+  private def writeHoconConfigToS3(config: Configuration, stage: String) = {
+    val content: String = config.underlying
+      .root()
+      .render(
+        ConfigRenderOptions
+          .defaults()
+
+          // Preserve HOCON format
+          .setJson(false)
+
+          // Remove comments from line 93 above (`s"Dynamo DB table $tableName [App=$app, Stage=$stage]"`)
+          .setOriginComments(false)
+      )
+
+    val client = S3Client.builder
+      .credentialsProvider(ProfileCredentialsProvider.create("deployTools"))
+      .region(Region.EU_WEST_1)
+      .build()
+
+    val bucket = System.getenv("PRISM_CONFIG_BUCKET")
+    val objectKey = s"deploy/prism/$stage.conf"
+
+    val request =
+      PutObjectRequest
+        .builder()
+        .bucket(bucket)
+        .key(objectKey)
+        .build()
+
+    val response = client.putObject(request, RequestBody.fromString(content))
+
+    println(
+      s"Copied configuration to s3://$bucket/$objectKey (size: ${response.size()})"
     )
   }
 
+  // The rows to read from DynamoDb
   def configSegmentsFromIdentity(identity: Identity) = Seq(
     ConfigSegment("global", "global"),
     ConfigSegment(identity.app, "global"),
-    ConfigSegment(identity.app, identity.stage)
+    ConfigSegment(identity.app, "DEV"),
+    ConfigSegment(identity.app, "CODE"),
+    ConfigSegment(identity.app, "PROD")
   )
 }
