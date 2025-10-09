@@ -18,6 +18,7 @@ case class FileConfiguration(
     if (mode == Mode.Test) globalConfig
     else {
       val stageConfigFile = if (identity.stage == "DEV") {
+        // This file is created in the setup script
         val home = System.getProperty("user.home")
         new File(s"$home/.gu/${identity.app}/${identity.stage}.conf")
       } else {

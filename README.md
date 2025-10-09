@@ -72,11 +72,9 @@ There is a [ruby gem](./marauder/README.md) that allows you to query the api fro
 Running locally
 ------------------------------
 1. Get Deploy Tools Janus credentials.
-
-2. Ensure you are running Java 11
-
-3. Run `sbt`
-
-4. Start the application: `sbt:prism> run`
+2. Run `./scripts/setup`
+3. Ensure you are running Java 11
+4. Run `sbt`
+5. Start the application: `sbt:prism> run`
 
 Once the sever has started, the webapp is accessible at [http://localhost:9000/](http://localhost:9000/)
