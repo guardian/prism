@@ -5,15 +5,16 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
   "Description": "Prism - service discovery",
   "Metadata": {
     "gu:cdk:constructs": [
+      "GuDistributionBucketParameter",
+      "GuPrivateConfigBucketParameter",
       "GuAllowPolicy",
-      "GuDynamoDBReadPolicy",
+      "GuGetS3ObjectsPolicy",
       "GuGetS3ObjectsPolicy",
       "GuAssumeRolePolicy",
       "GuVpcParameter",
       "GuSubnetListParameter",
       "GuSubnetListParameter",
       "GuEc2AppExperimental",
-      "GuDistributionBucketParameter",
       "GuCertificate",
       "GuInstanceRole",
       "GuSsmSshPolicy",
@@ -64,6 +65,11 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
     "LoggingStreamName": {
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "PrivateConfigBucketName": {
+      "Default": "/account/services/private.config.bucket",
+      "Description": "SSM parameter containing the S3 bucket name holding the app's private configuration",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "RiffRaffDeploymentId": {
@@ -246,58 +252,6 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::CertificateManager::Certificate",
       "UpdateReplacePolicy": "Retain",
-    },
-    "ConfigPolicyA2EB9456": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:Query",
-                "dynamodb:GetRecords",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:dynamodb:eu-west-1:",
-                      {
-                        "Ref": "AWS::AccountId",
-                      },
-                      ":table/config-deploy",
-                    ],
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:dynamodb:eu-west-1:",
-                      {
-                        "Ref": "AWS::AccountId",
-                      },
-                      ":table/config-deploy/index/*",
-                    ],
-                  ],
-                },
-              ],
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "ConfigPolicyA2EB9456",
-        "Roles": [
-          {
-            "Ref": "InstanceRolePrism96D154B7",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
     },
     "CrawlerPolicyB8C49604": {
       "Properties": {
@@ -847,6 +801,38 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "ReadConfigPolicy0E2E466D": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "PrivateConfigBucketName",
+                    },
+                    "/deploy/prism/PROD.conf",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ReadConfigPolicy0E2E466D",
+        "Roles": [
+          {
+            "Ref": "InstanceRolePrism96D154B7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "SsmSshPolicy4CFC977E": {
       "Properties": {
         "PolicyDocument": {
@@ -1176,6 +1162,12 @@ exitCode=$?
         
 }
 trap exitTrap EXIT
+mkdir -p $(dirname '/etc/gu/prism/PROD.conf')
+aws s3 cp 's3://",
+                  {
+                    "Ref": "PrivateConfigBucketName",
+                  },
+                  "/deploy/prism/PROD.conf' '/etc/gu/prism/PROD.conf'
 mkdir -p $(dirname '/prism/prism-TEST.deb')
 aws s3 cp 's3://",
                   {

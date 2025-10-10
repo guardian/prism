@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -e
+
+red='\033[0;31m'
+yellow='\033[1;33m'
+clear='\033[0m'
+
+PROFILE=deployTools
+REGION=eu-west-1
+
+CONFIG_LOCATION="$HOME/.gu/prism/DEV.conf"
+
+checkCredentials() {
+  echo "Checking AWS credentials"
+
+  STATUS=$(aws sts get-caller-identity --profile "$PROFILE" 2>&1 || true)
+  if [[ ${STATUS} =~ (ExpiredToken) ]]; then
+    echo -e "  ❌ ${red}Credentials for the ${yellow}$PROFILE${red} profile have expired${clear}. Please fetch new credentials and rerun the script."
+    exit 1
+  elif [[ ${STATUS} =~ ("could not be found") ]]; then
+    echo -e "  ❌ ${red}Credentials for the ${yellow}$PROFILE${red} profile are missing${clear}. Please fetch new credentials and rerun the script."
+    exit 1
+  else
+    echo "  ✅ AWS credentials for $PROFILE are valid"
+  fi
+}
+
+downloadConfig() {
+  echo "Downloading private configuration from S3"
+
+  BUCKET=$(aws ssm get-parameter --name /account/services/private.config.bucket --profile "$PROFILE" --region "$REGION" | jq -r '.Parameter.Value')
+
+  mkdir -p "$(dirname "$CONFIG_LOCATION")"
+  aws s3 cp "s3://$BUCKET/deploy/prism/DEV.conf" "$CONFIG_LOCATION" --profile "$PROFILE" --region "$REGION"
+}
+
+main() {
+  checkCredentials
+  downloadConfig
+
+  echo "Setup complete"
+}
+
+main

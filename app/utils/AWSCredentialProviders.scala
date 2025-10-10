@@ -1,12 +1,5 @@
 package utils
 
-import com.amazonaws.auth.profile.{
-  ProfileCredentialsProvider => ProfileCredentialsProviderV1
-}
-import com.amazonaws.auth.{
-  AWSCredentialsProviderChain,
-  DefaultAWSCredentialsProviderChain
-}
 import software.amazon.awssdk.auth.credentials.{
   AwsCredentialsProviderChain,
   DefaultCredentialsProvider,
@@ -31,16 +24,4 @@ object AWSCredentialProviders extends Logging {
       ProfileCredentialsProvider.builder.profileName(deployToolsProfile).build,
       DefaultCredentialsProvider.builder.build
     )
-
-  def profileCredentialsProviderV1(profileName: String) = {
-    log.info(s"Using $profileName profile credentials")
-    new ProfileCredentialsProviderV1(profileName)
-  }
-
-  def deployToolsCredentialsProviderChainV1: AWSCredentialsProviderChain =
-    new AWSCredentialsProviderChain(
-      profileCredentialsProviderV1(deployToolsProfile),
-      new DefaultAWSCredentialsProviderChain
-    )
-
 }

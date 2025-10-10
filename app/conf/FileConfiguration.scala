@@ -1,8 +1,8 @@
 package conf
 
 import java.io.File
-
 import com.typesafe.config.ConfigFactory
+import model.Identity
 import play.api.Configuration
 import play.api.Mode
 
@@ -17,19 +17,26 @@ case class FileConfiguration(
 
     if (mode == Mode.Test) globalConfig
     else {
+      val stageConfigFile = if (identity.stage == "DEV") {
+        // This file is created in the setup script
+        val home = System.getProperty("user.home")
+        new File(s"$home/.gu/${identity.app}/${identity.stage}.conf")
+      } else {
+        // This file is created within the EC2 instance UserData
+        new File(s"/etc/gu/${identity.app}/${identity.stage}.conf")
+      }
+
+      if (!stageConfigFile.exists || !stageConfigFile.isFile) {
+        throw new RuntimeException(
+          s"Config file does not exist (path: ${stageConfigFile.getAbsolutePath})"
+        )
+      }
+
       val stageConfig = Configuration(
-        ConfigFactory.parseResourcesAnySyntax(
-          s"$classPathPrefix${identity.stage}.conf"
-        )
-      )
-      val home = System.getProperty("user.home")
-      val developerConfig = Configuration(
-        ConfigFactory.parseFileAnySyntax(
-          new File(s"$home/.gu/${identity.stack}-${identity.app}.conf")
-        )
+        ConfigFactory.parseFileAnySyntax(stageConfigFile)
       )
 
-      developerConfig.withFallback(stageConfig).withFallback(globalConfig)
+      stageConfig.withFallback(globalConfig)
     }
   }
 }
