@@ -2,7 +2,7 @@ name := "prism"
 
 version := "1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.17"
 
 val awsVersion = "2.32.33"
 
@@ -52,8 +52,8 @@ lazy val root = (project in file("."))
       "software.amazon.awssdk" % "route53" % awsVersion,
       "software.amazon.awssdk" % "cloudformation" % awsVersion,
       "com.beust" % "jcommander" % "1.82", // TODO: remove once security vulnerability introduced by aws sdk v2 fixed: https://snyk.io/vuln/maven:com.beust%3Ajcommanderbu
-      "org.playframework" %% "play-json" % "3.0.5",
-      "org.playframework" %% "play-json-joda" % "3.0.5",
+      "org.playframework" %% "play-json" % "3.0.6",
+      "org.playframework" %% "play-json-joda" % "3.0.6",
       ws,
       "org.scala-stm" %% "scala-stm" % "0.11.1",
       filters,
