@@ -213,6 +213,11 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
           "PauseTime": "PT16M",
           "SuspendProcesses": [
             "AlarmNotification",
+            "AZRebalance",
+            "HealthCheck",
+            "InstanceRefresh",
+            "ReplaceUnhealthy",
+            "ScheduledActions",
           ],
           "WaitOnResourceSignals": true,
         },
