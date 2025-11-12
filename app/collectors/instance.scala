@@ -170,7 +170,7 @@ object ManagementEndpoint {
       tag: Option[String]
   ): Option[Seq[ManagementEndpoint]] = {
     tag match {
-      case Some("none") => None
+      case Some("none")     => None
       case Some(tagContent) =>
         Some(
           tagContent

@@ -27,7 +27,7 @@ case class ResourceFilter(filter: Map[String, Seq[Matchable[String]]])
     } forall {
       case (values, JsString(str)) => values exists (_.isMatch(str))
       case (values, JsNumber(int)) => values exists (_.isMatch(int.toString()))
-      case (values, JsArray(seq)) =>
+      case (values, JsArray(seq))  =>
         seq.exists {
           case JsString(str) => values exists (_.isMatch(str))
           case _             => false
@@ -62,7 +62,7 @@ object ResourceFilter {
     key match {
       case InverseRegexMatch(bareKey) =>
         Some(bareKey -> InverseMatchable(RegExMatchable(value.r)))
-      case RegexMatch(bareKey) => Some(bareKey -> RegExMatchable(value.r))
+      case RegexMatch(bareKey)   => Some(bareKey -> RegExMatchable(value.r))
       case InverseMatch(bareKey) =>
         Some(bareKey -> InverseMatchable(StringMatchable(value)))
       case SimpleMatch(bareKey) => Some(bareKey -> StringMatchable(value))
