@@ -43,8 +43,8 @@ class Api(
 
   def sortString(jsv: JsValue): String =
     jsv match {
-      case JsString(str) => str
-      case JsArray(seq)  => seq.map(sortString).mkString
+      case JsString(str)    => str
+      case JsArray(seq)     => seq.map(sortString).mkString
       case JsObject(fields) =>
         fields.map { case (key, value) => s"$key${sortString(value)}" }.mkString
       case _ => ""

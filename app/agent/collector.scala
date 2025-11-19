@@ -184,7 +184,7 @@ class SourceStatusAgent(
       val previous = previousMap.get(key)
       val next = label match {
         case good if !good.isError => SourceStatus(good)
-        case bad =>
+        case bad                   =>
           SourceStatus(previous.map(_.state).getOrElse(bad), Some(bad))
       }
       previousMap + (key -> next)
