@@ -64,10 +64,6 @@ A typical Prism response includes the following top level fields:
 * In the DeployTools AWS account, download the private configuration file from the S3 bucket at `/account/services/private.config.bucket`. Details of the AWS account requiring prism will need to be added to this file. There are many examples to follow, the format of the name must be the `[aws-account-name].role` (we strongly recommend that this matches the short name used by janus) with the output Role value of the step above. Save your changes and upload the new version of this file to S3.
 * Re-deploy latest prism for the changes to be picked up.
 
-Using prism from the command line
-------------------------------
-There is a [ruby gem](./marauder/README.md) that allows you to query the api from the command line.
-
 
 Running locally
 ------------------------------
