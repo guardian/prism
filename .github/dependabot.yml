@@ -1,4 +1,3 @@
-
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -25,10 +24,12 @@ updates:
       - dependency-name: "aws-cdk"
       - dependency-name: "aws-cdk-lib"
       - dependency-name: "constructs"
+      # Ignore patch updates to reduce PR noise
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
     labels:
       - "dependencies"
     groups:
       all:
         patterns: ["*"]
-
-
