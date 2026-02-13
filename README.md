@@ -69,7 +69,7 @@ Running locally
 ------------------------------
 1. Get Deploy Tools Janus credentials.
 2. Run `./scripts/setup`
-3. Ensure you are running Java 11
+3. Ensure you are running Java 21
 4. Run `sbt`
 5. Start the application: `sbt:prism> run`
 
