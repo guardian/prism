@@ -1,29 +1,29 @@
 import { AccessScope } from '@guardian/cdk/lib/constants';
 import {
-    GuDistributionBucketParameter,
-    GuPrivateConfigBucketParameter,
+	GuDistributionBucketParameter,
+	GuPrivateConfigBucketParameter,
 } from '@guardian/cdk/lib/constructs/core';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core/stack';
 import { GuStack } from '@guardian/cdk/lib/constructs/core/stack';
 import {
-    GuAllowPolicy,
-    GuAssumeRolePolicy,
-    GuGetS3ObjectsPolicy,
+	GuAllowPolicy,
+	GuAssumeRolePolicy,
+	GuGetS3ObjectsPolicy,
 } from '@guardian/cdk/lib/constructs/iam';
 import { GuEc2AppExperimental } from '@guardian/cdk/lib/experimental/patterns/ec2-app';
 import type { App } from 'aws-cdk-lib';
 import { Duration } from 'aws-cdk-lib';
 import type { CfnAutoScalingGroup } from 'aws-cdk-lib/aws-autoscaling';
 import {
-    BlockDeviceVolume,
-    EbsDeviceVolumeType,
+	BlockDeviceVolume,
+	EbsDeviceVolumeType,
 } from 'aws-cdk-lib/aws-autoscaling';
 import {
-    InstanceClass,
-    InstanceSize,
-    InstanceType,
-    Peer,
-    UserData,
+	InstanceClass,
+	InstanceSize,
+	InstanceType,
+	Peer,
+	UserData,
 } from 'aws-cdk-lib/aws-ec2';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 
