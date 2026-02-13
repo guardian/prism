@@ -1,7 +1,7 @@
 package agent
 
 import java.io.FileNotFoundException
-import java.net.{URI, URL, URLConnection, URLStreamHandler}
+import java.net.URI
 
 import collectors.Instance
 import conf.{AWS, PrismConfiguration}
@@ -206,17 +206,6 @@ case class JsonOrigin(
     crawlRate: Map[String, CrawlRate]
 ) extends Origin
     with Logging {
-  private val classpathHandler = new URLStreamHandler {
-    override def openConnection(u: URL): URLConnection = {
-      Option(getClass.getResource(u.getPath))
-        .map(_.openConnection())
-        .getOrElse {
-          throw new FileNotFoundException(
-            "%s not found on classpath" format u.getPath
-          )
-        }
-    }
-  }
 
   def credsFromS3Url(url: URI): AwsCredentialsProvider = {
     Option(url.getUserInfo) match {
@@ -237,10 +226,11 @@ case class JsonOrigin(
       url.replace("%resource%", resource.name)
     ) match {
       case classPathLocation if classPathLocation.getScheme == "classpath" =>
-        Source.fromURL(
-          new URL(null, classPathLocation.toString, classpathHandler),
-          "utf-8"
-        )
+        val path = classPathLocation.getPath
+        val resourceURL = Option(getClass.getResource(path)).getOrElse {
+          throw new FileNotFoundException(s"$path not found on classpath")
+        }
+        Source.fromURL(resourceURL, "utf-8")
       case s3Location if s3Location.getScheme == "s3" =>
         val s3Client = S3Client.builder
           .credentialsProvider(credsFromS3Url(s3Location))
