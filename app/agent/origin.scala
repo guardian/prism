@@ -2,6 +2,7 @@ package agent
 
 import java.io.FileNotFoundException
 import java.net.{URI, URL, URLConnection, URLStreamHandler}
+import scala.annotation.nowarn
 
 import collectors.Instance
 import conf.{AWS, PrismConfiguration}
@@ -233,6 +234,7 @@ case class JsonOrigin(
   }
 
   def data(resource: ResourceType): JsValue = {
+    @nowarn("cat=deprecation")
     val source: Source = new URI(
       url.replace("%resource%", resource.name)
     ) match {
