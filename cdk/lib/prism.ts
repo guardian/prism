@@ -89,7 +89,7 @@ export class Prism extends GuStack {
 			applicationLogging: {
 				enabled: true,
 			},
-			imageRecipe: 'arm64-noble-java21-deploy-infrastructure',
+			imageRecipe: 'arm64-jammy-java21-deploy-infrastructure',
 			instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MEDIUM),
 			userData,
 			certificateProps: {
