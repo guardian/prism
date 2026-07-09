@@ -12,18 +12,18 @@
 		"diff": "cdk diff --path-metadata false --version-reporting false"
 	},
 	"devDependencies": {
-		"@guardian/cdk": "63.6.2",
+		"@guardian/cdk": "62.6.1",
 		"@guardian/eslint-config": "16.0.0",
 		"@guardian/prettier": "11.0.0",
 		"@guardian/tsconfig": "^2.0.0",
 		"@types/jest": "30.0.0",
 		"@types/node": "26.1.0",
-		"eslint": "10.6.0",
+		"eslint": "9.39.4",
 		"eslint-plugin-prettier": "5.5.4",
 		"jest": "30.4.2",
 		"prettier": "3.9.4",
 		"source-map-support": "^0.5.20",
-		"ts-jest": "29.4.6",
+		"ts-jest": "29.4.11",
 		"ts-node": "10.9.2",
 		"typescript": "6.0.3"
 	},
