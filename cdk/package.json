@@ -13,19 +13,19 @@
 	},
 	"devDependencies": {
 		"@guardian/cdk": "62.6.1",
-		"@guardian/eslint-config": "14.0.0",
-		"@guardian/prettier": "10.0.0",
-		"@guardian/tsconfig": "^1.0.1",
+		"@guardian/eslint-config": "16.0.0",
+		"@guardian/prettier": "11.0.0",
+		"@guardian/tsconfig": "^2.0.0",
 		"@types/jest": "30.0.0",
-		"@types/node": "25.5.0",
-		"eslint": "9.39.2",
+		"@types/node": "26.1.0",
+		"eslint": "9.39.4",
 		"eslint-plugin-prettier": "5.5.4",
-		"jest": "30.3.0",
-		"prettier": "3.8.1",
+		"jest": "30.4.2",
+		"prettier": "3.9.4",
 		"source-map-support": "^0.5.20",
-		"ts-jest": "29.4.6",
+		"ts-jest": "29.4.11",
 		"ts-node": "10.9.2",
-		"typescript": "5.9.3"
+		"typescript": "6.0.3"
 	},
 	"prettier": "@guardian/prettier",
 	"jest": {
