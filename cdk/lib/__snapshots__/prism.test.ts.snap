@@ -1011,6 +1011,20 @@ exports[`The PrismEc2App stack matches the snapshot 1`] = `
         "EvaluationPeriods": 60,
         "MetricName": "UnHealthyHostCount",
         "Namespace": "AWS/ApplicationELB",
+        "OKActions": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:sns:eu-west-1:",
+                {
+                  "Ref": "AWS::AccountId",
+                },
+                ":devx-alerts",
+              ],
+            ],
+          },
+        ],
         "Period": 60,
         "Statistic": "Maximum",
         "Tags": [
