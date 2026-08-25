@@ -1,4 +1,5 @@
 import { AccessScope } from '@guardian/cdk/lib/constants';
+import { GuUnhealthyInstancesAlarm } from '@guardian/cdk/lib/constructs/cloudwatch';
 import {
 	GuDistributionBucketParameter,
 	GuPrivateConfigBucketParameter,
@@ -18,6 +19,7 @@ import {
 	BlockDeviceVolume,
 	EbsDeviceVolumeType,
 } from 'aws-cdk-lib/aws-autoscaling';
+import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
 import {
 	InstanceClass,
 	InstanceSize,
@@ -26,6 +28,7 @@ import {
 	UserData,
 } from 'aws-cdk-lib/aws-ec2';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Topic } from 'aws-cdk-lib/aws-sns';
 
 interface PrismProps extends Omit<GuStackProps, 'description' | 'stack'> {
 	domainName: string;
@@ -51,7 +54,8 @@ export class Prism extends GuStack {
 		});
 
 		const { buildIdentifier, instanceMetricGranularity } = props;
-		const { stack, stage } = this;
+		const { stack, stage, region, account } = this;
+		const snsTopicName = 'devx-alerts';
 
 		const distBucket = Bucket.fromBucketName(
 			this,
@@ -98,7 +102,7 @@ export class Prism extends GuStack {
 			monitoringConfiguration:
 				this.stage === 'PROD'
 					? {
-							snsTopicName: 'devx-alerts',
+							snsTopicName,
 							http5xxAlarm: false,
 							unhealthyInstancesAlarm: true,
 						}
@@ -154,5 +158,23 @@ export class Prism extends GuStack {
 		const cfnAsg = pattern.autoScalingGroup.node
 			.defaultChild as CfnAutoScalingGroup;
 		cfnAsg.healthCheckGracePeriod = Duration.minutes(15).toSeconds();
+
+		// Configure OK action to receive a notification once alarm has resolved.
+		// TODO Set the OK action at the construct level within GuCDK
+		const maybeUnhealthyInstanceAlarm = this.node.children.filter(
+			(child): child is GuUnhealthyInstancesAlarm =>
+				child instanceof GuUnhealthyInstancesAlarm,
+		);
+		if (maybeUnhealthyInstanceAlarm.length > 0) {
+			const snsTopic = Topic.fromTopicArn(
+				this,
+				`SnsTopic`,
+				`arn:aws:sns:${region}:${account}:${snsTopicName}`,
+			);
+
+			maybeUnhealthyInstanceAlarm.forEach((alarm) => {
+				alarm.addOkAction(new SnsAction(snsTopic));
+			});
+		}
 	}
 }
