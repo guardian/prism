@@ -64,7 +64,7 @@ lazy val root = (project in file("."))
       ),
       // Transient dependency of Play. No newer version of Play 3.0.9 with this vulnerability fixed.
       "ch.qos.logback" % "logback-classic" % "1.6.3",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.22.1"
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.22.2"
     ),
     scalacOptions ++= List(
       "-encoding",
