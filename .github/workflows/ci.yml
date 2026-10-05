@@ -21,13 +21,13 @@ jobs:
 
       # Node is needed for CDK
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: 'cdk/package-lock.json'
 
-      - uses: guardian/setup-scala@v1
+      - uses: guardian/setup-scala@v2
 
       - run: ./scripts/ci
 
