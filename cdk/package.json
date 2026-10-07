@@ -12,15 +12,15 @@
 		"diff": "cdk diff --path-metadata false --version-reporting false"
 	},
 	"devDependencies": {
-		"@guardian/cdk": "62.6.1",
+		"@guardian/cdk": "64.7.0",
 		"@guardian/eslint-config": "16.0.0",
 		"@guardian/prettier": "11.0.0",
 		"@guardian/tsconfig": "^2.0.0",
 		"@types/jest": "30.0.0",
-		"@types/node": "26.1.0",
+		"@types/node": "26.6.3",
 		"eslint": "9.39.4",
 		"eslint-plugin-prettier": "5.5.4",
-		"jest": "30.4.2",
+		"jest": "30.5.2",
 		"prettier": "3.9.4",
 		"source-map-support": "^0.5.20",
 		"ts-jest": "29.4.11",
