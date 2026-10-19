@@ -29,6 +29,8 @@ updates:
       - dependency-name: "aws-cdk"
       - dependency-name: "aws-cdk-lib"
       - dependency-name: "constructs"
+      - dependency-name: "eslint"
+      - dependency-name: "typescript"
       # Ignore patch updates to reduce PR noise
       - dependency-name: "*"
         update-types:
